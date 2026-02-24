@@ -46,14 +46,14 @@ public class LifeInsuranceAssessmentRequestValidator : AbstractValidator<LifeIns
                 
             When(x => x.FinancialContext.Debts != null, () =>
             {
-                RuleFor(x => x.FinancialContext.Debts.TotalAmount)
+                RuleFor(x => x.FinancialContext.Debts!.TotalAmount)
                     .GreaterThanOrEqualTo(0)
                     .WithMessage("O valor total da dívida não pode ser negativo.");
             });
             
             When(x => x.FinancialContext.CurrentLifeInsurance != null, () =>
             {
-                RuleFor(x => x.FinancialContext.CurrentLifeInsurance.CoverageAmount)
+                RuleFor(x => x.FinancialContext.CurrentLifeInsurance!.CoverageAmount)
                     .GreaterThanOrEqualTo(0)
                     .WithMessage("O valor da cobertura atual não pode ser negativo.");
             });

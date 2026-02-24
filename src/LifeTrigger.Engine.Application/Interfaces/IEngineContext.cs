@@ -22,4 +22,19 @@ public interface IEngineContext
     /// Relógio determinístico ancorado para a avaliação. Substitui o DateTimeOffset.UtcNow proibido no Core.
     /// </summary>
     DateTimeOffset CurrentTime { get; }
+
+    /// <summary>
+    /// Hash md5/sha estrito representando a fotografia exata de regras (TenantSettings + Weights) no momento do cálculo.
+    /// </summary>
+    string RuleSetHash { get; }
+
+    /// <summary>
+    /// Snapshot serializado (opcional) usado para Replays e Deep-Audits.
+    /// </summary>
+    string? ParametersSnapshotJson { get; }
+
+    /// <summary>
+    /// Injeta os parâmetros de regras antes do cálculo para compor o Hash Criptográfico final.
+    /// </summary>
+    void SetParametersSnapshot(string jsonSnapshot, string hash);
 }

@@ -21,13 +21,41 @@ public class LifeInsuranceCalculator : ILifeInsuranceCalculator
 
     public LifeInsuranceAssessmentResult Calculate(LifeInsuranceAssessmentRequest request, TenantSettings? tenantSettings = null)
     {
-        var evalContext = new EvaluationContext();
+        var evalRecorder = new EvaluationRecorder();
+
+        if (!request.FinancialContext.MonthlyIncome.ExactValue.HasValue || request.FinancialContext.MonthlyIncome.ExactValue.Value <= 0)
+        {
+            evalRecorder.TrackRule(_ruleJustificationProvider.Build(
+                EngineRuleId.RULE_INPUT_INSUFFICIENT_FOR_EVALUATION, 
+                new Dictionary<string, RuleArgValue>()));
+            
+            var earlySnapshot = evalRecorder.FreezeAndGenerateSnapshot();
+            
+            return new LifeInsuranceAssessmentResult
+            {
+                RecommendedCoverageAmount = 0m,
+                CurrentCoverageAmount = request.FinancialContext.CurrentLifeInsurance?.CoverageAmount ?? 0m,
+                ProtectionScore = 0,
+                RiskClassification = RiskClassification.CRITICO,
+                RecommendedAction = RecommendedAction.REVISAR,
+                RegrasAplicadas = earlySnapshot.AppliedRuleIds,
+                JustificationsStructured = earlySnapshot.Justifications,
+                Audit = new AuditMetadata(
+                    EngineVersion: _engineContext.EngineVersion,
+                    RuleSetVersion: _engineContext.RuleSetVersion,
+                    RuleSetHash: _engineContext.RuleSetHash,
+                    AppliedRules: earlySnapshot.AppliedRuleIds,
+                    Timestamp: _engineContext.CurrentTime,
+                    ConsentId: request.OperationalData.ConsentId
+                )
+            };
+        }
 
         decimal annualIncome = CalculateAnnualIncome(request.FinancialContext.MonthlyIncome);
 
-        decimal rawRecommendedCoverage = CalculateCoverage(request, annualIncome, evalContext, tenantSettings);
+        decimal rawRecommendedCoverage = CalculateCoverage(request, annualIncome, evalRecorder, tenantSettings);
         
-        decimal finalRecommendedCoverage = ApplyGuardrails(rawRecommendedCoverage, annualIncome, evalContext, tenantSettings);
+        decimal finalRecommendedCoverage = ApplyGuardrails(rawRecommendedCoverage, annualIncome, evalRecorder, tenantSettings);
 
         decimal currentCoverage = request.FinancialContext.CurrentLifeInsurance?.CoverageAmount ?? 0m;
         
@@ -37,19 +65,22 @@ public class LifeInsuranceCalculator : ILifeInsuranceCalculator
             CurrentCoverageAmount = currentCoverage,
         };
 
-        var scoreAndClassification = DetermineScoreAndAction(partialResult, request, annualIncome, evalContext);
+        var scoreAndClassification = DetermineScoreAndAction(partialResult, request, annualIncome, evalRecorder);
+        
+        var finalSnapshot = evalRecorder.FreezeAndGenerateSnapshot();
         
         return partialResult with 
         {
             ProtectionScore = scoreAndClassification.Score,
             RiskClassification = scoreAndClassification.Classification,
             RecommendedAction = scoreAndClassification.Action,
-            RegrasAplicadas = [.. evalContext.AppliedRules],
-            Justificativas = [.. evalContext.Justifications],
+            RegrasAplicadas = finalSnapshot.AppliedRuleIds,
+            JustificationsStructured = finalSnapshot.Justifications,
             Audit = new AuditMetadata(
                 EngineVersion: _engineContext.EngineVersion,
                 RuleSetVersion: _engineContext.RuleSetVersion,
-                AppliedRules: [.. evalContext.AppliedRules],
+                RuleSetHash: _engineContext.RuleSetHash,
+                AppliedRules: finalSnapshot.AppliedRuleIds,
                 Timestamp: _engineContext.CurrentTime,
                 ConsentId: request.OperationalData.ConsentId
             )
@@ -61,24 +92,25 @@ public class LifeInsuranceCalculator : ILifeInsuranceCalculator
         return (monthlyIncome.ExactValue ?? 0m) * 12;
     }
 
-    private decimal CalculateCoverage(LifeInsuranceAssessmentRequest request, decimal annualIncome, EvaluationContext evalContext, TenantSettings? settings)
+    private decimal CalculateCoverage(LifeInsuranceAssessmentRequest request, decimal annualIncome, EvaluationRecorder evalRecorder, TenantSettings? settings)
     {
-        decimal incomeReplacementAmount = CalculateIncomeReplacement(annualIncome, request.FamilyContext, evalContext, settings);
-        decimal debtClearanceAmount = CalculateDebtClearance(request.FinancialContext.Debts, evalContext);
-        decimal transitionReserveAmount = CalculateTransitionReserve(request.FinancialContext.MonthlyIncome, request.FinancialContext.EmergencyFundMonths, evalContext, settings);
+        decimal incomeReplacementAmount = CalculateIncomeReplacement(annualIncome, request.FamilyContext, evalRecorder, settings);
+        decimal debtClearanceAmount = CalculateDebtClearance(request.FinancialContext.Debts, evalRecorder);
+        decimal transitionReserveAmount = CalculateTransitionReserve(request.FinancialContext.MonthlyIncome, request.FinancialContext.EmergencyFundMonths, evalRecorder, settings);
 
         return incomeReplacementAmount + debtClearanceAmount + transitionReserveAmount;
     }
 
-    private decimal CalculateIncomeReplacement(decimal annualIncome, FamilyContext familyContext, EvaluationContext evalContext, TenantSettings? settings)
+    private decimal CalculateIncomeReplacement(decimal annualIncome, FamilyContext familyContext, EvaluationRecorder evalRecorder, TenantSettings? settings)
     {
         int yearsToReplace = 0;
 
         if (familyContext.DependentsCount == 0)
         {
             yearsToReplace = settings?.IncomeReplacementYearsSingle ?? CalculationRules.BaseIncomeReplacementYearsNoDependents;
-            evalContext.TrackRule(EngineRules.IncomeReplacementNoDependents, 
-                _ruleJustificationProvider.GetJustification(EngineRules.IncomeReplacementNoDependents, yearsToReplace));
+            evalRecorder.TrackRule(_ruleJustificationProvider.Build(
+                EngineRuleId.RULE_INCOME_REPLACEMENT_NO_DEPENDENTS, 
+                new Dictionary<string, RuleArgValue> { { "years", yearsToReplace } }));
         }
         else
         {
@@ -94,27 +126,32 @@ public class LifeInsuranceCalculator : ILifeInsuranceCalculator
                 CalculationRules.MaxTotalIncomeReplacementYears
             );
             
-            evalContext.TrackRule(EngineRules.IncomeReplacementWithDependents, 
-                _ruleJustificationProvider.GetJustification(EngineRules.IncomeReplacementWithDependents, yearsToReplace, familyContext.DependentsCount));
+            evalRecorder.TrackRule(_ruleJustificationProvider.Build(
+                EngineRuleId.RULE_INCOME_REPLACEMENT_WITH_DEPENDENTS, 
+                new Dictionary<string, RuleArgValue> { 
+                    { "years", yearsToReplace }, 
+                    { "dependentsCount", familyContext.DependentsCount } 
+                }));
         }
 
         return annualIncome * yearsToReplace;
     }
 
-    private decimal CalculateDebtClearance(DebtData? debts, EvaluationContext evalContext)
+    private decimal CalculateDebtClearance(DebtData? debts, EvaluationRecorder evalRecorder)
     {
         if (debts == null || debts.TotalAmount <= 0)
         {
             return 0m;
         }
 
-        evalContext.TrackRule(EngineRules.DebtClearanceFull, 
-            _ruleJustificationProvider.GetJustification(EngineRules.DebtClearanceFull, debts.TotalAmount));
+        evalRecorder.TrackRule(_ruleJustificationProvider.Build(
+            EngineRuleId.RULE_DEBT_CLEARANCE_FULL, 
+            new Dictionary<string, RuleArgValue> { { "amount", debts.TotalAmount } }));
         
         return debts.TotalAmount;
     }
 
-    private decimal CalculateTransitionReserve(IncomeData monthlyIncome, int? emergencyFundMonths, EvaluationContext evalContext, TenantSettings? settings)
+    private decimal CalculateTransitionReserve(IncomeData monthlyIncome, int? emergencyFundMonths, EvaluationRecorder evalRecorder, TenantSettings? settings)
     {
         decimal income = monthlyIncome.ExactValue ?? 0m;
         int bufferMonths;
@@ -135,20 +172,25 @@ public class LifeInsuranceCalculator : ILifeInsuranceCalculator
             // Restores the rigid ceiling:
             bufferMonths = Math.Min(bufferMonths, clampedDefaultBuffer);
             
-            evalContext.TrackRule(EngineRules.TransitionReserveWithFund, 
-                _ruleJustificationProvider.GetJustification(EngineRules.TransitionReserveWithFund, bufferMonths, emergencyFundMonths.Value));
+            evalRecorder.TrackRule(_ruleJustificationProvider.Build(
+                EngineRuleId.RULE_TRANSITION_RESERVE_WITH_FUND, 
+                new Dictionary<string, RuleArgValue> { 
+                    { "bufferMonths", bufferMonths }, 
+                    { "currentFundMonths", emergencyFundMonths.Value } 
+                }));
         }
         else
         {
             bufferMonths = clampedDefaultBuffer;
-            evalContext.TrackRule(EngineRules.TransitionReserveDefaultNoFund, 
-                _ruleJustificationProvider.GetJustification(EngineRules.TransitionReserveDefaultNoFund, bufferMonths));
+            evalRecorder.TrackRule(_ruleJustificationProvider.Build(
+                EngineRuleId.RULE_TRANSITION_RESERVE_DEFAULT_NO_FUND, 
+                new Dictionary<string, RuleArgValue> { { "bufferMonths", bufferMonths } }));
         }
 
         return income * bufferMonths;
     }
 
-    private decimal ApplyGuardrails(decimal rawCoverage, decimal annualIncome, EvaluationContext evalContext, TenantSettings? settings)
+    private decimal ApplyGuardrails(decimal rawCoverage, decimal annualIncome, EvaluationRecorder evalRecorder, TenantSettings? settings)
     {
         decimal minMult = settings?.MinCoverageAnnualIncomeMultiplier ?? CalculationRules.MinCoverageAnnualIncomeMultiplier;
         decimal maxMult = settings?.MaxTotalCoverageMultiplier ?? CalculationRules.MaxCoverageAnnualIncomeMultiplier;
@@ -158,15 +200,17 @@ public class LifeInsuranceCalculator : ILifeInsuranceCalculator
 
         if (rawCoverage < minCoverage)
         {
-            evalContext.TrackRule(EngineRules.GuardrailMinCoverage, 
-                _ruleJustificationProvider.GetJustification(EngineRules.GuardrailMinCoverage, minMult));
+            evalRecorder.TrackRule(_ruleJustificationProvider.Build(
+                EngineRuleId.RULE_GUARDRAIL_MIN_COVERAGE, 
+                new Dictionary<string, RuleArgValue> { { "multiplier", minMult } }));
             return minCoverage;
         }
 
         if (rawCoverage > maxCoverage)
         {
-            evalContext.TrackRule(EngineRules.GuardrailMaxCoverage, 
-                _ruleJustificationProvider.GetJustification(EngineRules.GuardrailMaxCoverage, maxMult));
+            evalRecorder.TrackRule(_ruleJustificationProvider.Build(
+                EngineRuleId.RULE_GUARDRAIL_MAX_COVERAGE, 
+                new Dictionary<string, RuleArgValue> { { "multiplier", maxMult } }));
             return maxCoverage;
         }
 
@@ -177,13 +221,13 @@ public class LifeInsuranceCalculator : ILifeInsuranceCalculator
         LifeInsuranceAssessmentResult partialResult, 
         LifeInsuranceAssessmentRequest request, 
         decimal annualIncome,
-        EvaluationContext evalContext)
+        EvaluationRecorder evalRecorder)
     {
         RecommendedAction action = DetermineRawAction(partialResult.ProtectionGapPercentage);
-        action = ApplyActionOverrides(action, request.OperationalData, evalContext);
+        action = ApplyActionOverrides(action, request.OperationalData, evalRecorder);
 
         int rawScore = CalculateRawScore(partialResult);
-        rawScore = AssessPenalties(rawScore, request, annualIncome, evalContext);
+        rawScore = AssessPenalties(rawScore, request, annualIncome, evalRecorder);
         
         // Defer Score Clamp to the absolute last arithmetic step
         int finalScore = Math.Clamp(rawScore, 0, 100);
@@ -200,7 +244,7 @@ public class LifeInsuranceCalculator : ILifeInsuranceCalculator
         return RecommendedAction.MANTER;
     }
 
-    private RecommendedAction ApplyActionOverrides(RecommendedAction currentAction, OperationalData operational, EvaluationContext evalContext)
+    private RecommendedAction ApplyActionOverrides(RecommendedAction currentAction, OperationalData operational, EvaluationRecorder evalRecorder)
     {
         bool needsReview = false;
         
@@ -208,17 +252,23 @@ public class LifeInsuranceCalculator : ILifeInsuranceCalculator
         if (operational.LastReviewDate.HasValue && operational.LastReviewDate.Value < _engineContext.CurrentTime.AddMonths(-12))
         {
             needsReview = true;
-            evalContext.TrackRule(EngineRules.ActionOverrideOldReview, _ruleJustificationProvider.GetJustification(EngineRules.ActionOverrideOldReview));
+            evalRecorder.TrackRule(_ruleJustificationProvider.Build(
+                EngineRuleId.RULE_ACTION_OVERRIDE_OLD_REVIEW, 
+                new Dictionary<string, RuleArgValue>()));
         }
         else if (operational.HasUnconfirmedData)
         {
             needsReview = true;
-            evalContext.TrackRule(EngineRules.ActionOverrideUnconfirmedData, _ruleJustificationProvider.GetJustification(EngineRules.ActionOverrideUnconfirmedData));
+            evalRecorder.TrackRule(_ruleJustificationProvider.Build(
+                EngineRuleId.RULE_ACTION_OVERRIDE_UNCONFIRMED_DATA, 
+                new Dictionary<string, RuleArgValue>()));
         }
         else if (operational.RecentLifeTrigger)
         {
             needsReview = true;
-            evalContext.TrackRule(EngineRules.ActionOverrideRecentTrigger, _ruleJustificationProvider.GetJustification(EngineRules.ActionOverrideRecentTrigger));
+            evalRecorder.TrackRule(_ruleJustificationProvider.Build(
+                EngineRuleId.RULE_ACTION_OVERRIDE_RECENT_TRIGGER, 
+                new Dictionary<string, RuleArgValue>()));
         }
 
         return needsReview ? RecommendedAction.REVISAR : currentAction;
@@ -233,29 +283,32 @@ public class LifeInsuranceCalculator : ILifeInsuranceCalculator
         return (int)Math.Round(baseScoreDecimal);
     }
 
-    private int AssessPenalties(int rawScore, LifeInsuranceAssessmentRequest request, decimal annualIncome, EvaluationContext evalContext)
+    private int AssessPenalties(int rawScore, LifeInsuranceAssessmentRequest request, decimal annualIncome, EvaluationRecorder evalRecorder)
     {
         int score = rawScore;
 
         if (request.FamilyContext.DependentsCount > 0 && score < 50)
         {
             score -= CalculationRules.ScorePenaltyLowCoverageWithDependents;
-            evalContext.TrackRule(EngineRules.PenaltyLowCoverageDependents, 
-                _ruleJustificationProvider.GetJustification(EngineRules.PenaltyLowCoverageDependents, CalculationRules.ScorePenaltyLowCoverageWithDependents));
+            evalRecorder.TrackRule(_ruleJustificationProvider.Build(
+                EngineRuleId.RULE_PENALTY_LOW_COVERAGE_DEPENDENTS, 
+                new Dictionary<string, RuleArgValue> { { "penaltyPoints", CalculationRules.ScorePenaltyLowCoverageWithDependents } }));
         }
 
         if (request.FinancialContext.Debts != null && request.FinancialContext.Debts.TotalAmount > (annualIncome / 2m))
         {
             score -= CalculationRules.ScorePenaltyHighDebt;
-            evalContext.TrackRule(EngineRules.PenaltyHighDebt, 
-                _ruleJustificationProvider.GetJustification(EngineRules.PenaltyHighDebt, CalculationRules.ScorePenaltyHighDebt));
+            evalRecorder.TrackRule(_ruleJustificationProvider.Build(
+                EngineRuleId.RULE_PENALTY_HIGH_DEBT, 
+                new Dictionary<string, RuleArgValue> { { "penaltyPoints", CalculationRules.ScorePenaltyHighDebt } }));
         }
 
         if (!request.FinancialContext.EmergencyFundMonths.HasValue || request.FinancialContext.EmergencyFundMonths.Value < 3)
         {
             score -= CalculationRules.ScorePenaltyNoEmergencyFund;
-            evalContext.TrackRule(EngineRules.PenaltyNoEmergencyFund, 
-                _ruleJustificationProvider.GetJustification(EngineRules.PenaltyNoEmergencyFund, CalculationRules.ScorePenaltyNoEmergencyFund));
+            evalRecorder.TrackRule(_ruleJustificationProvider.Build(
+                EngineRuleId.RULE_PENALTY_NO_EMERGENCY_FUND, 
+                new Dictionary<string, RuleArgValue> { { "penaltyPoints", CalculationRules.ScorePenaltyNoEmergencyFund } }));
         }
 
         return score;

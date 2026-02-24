@@ -25,19 +25,22 @@ public class EvaluationsController : ControllerBase
     private readonly IEvaluationRepository _repository;
     private readonly IAuditLoggerService _auditLogger;
     private readonly ITenantSettingsRepository _tenantSettingsRepository;
+    private readonly IRuleJustificationRenderer _justificationRenderer;
 
     public EvaluationsController(
         ILifeInsuranceCalculator calculator,
         IValidator<LifeInsuranceAssessmentRequest> validator,
         IEvaluationRepository repository,
         IAuditLoggerService auditLogger,
-        ITenantSettingsRepository tenantSettingsRepository)
+        ITenantSettingsRepository tenantSettingsRepository,
+        IRuleJustificationRenderer justificationRenderer)
     {
         _calculator = calculator;
         _validator = validator;
         _repository = repository;
         _auditLogger = auditLogger;
         _tenantSettingsRepository = tenantSettingsRepository;
+        _justificationRenderer = justificationRenderer;
     }
 
     /// <summary>
@@ -80,13 +83,21 @@ public class EvaluationsController : ControllerBase
             
         var result = _calculator.Calculate(request, tenantSettings);
         
+        var renderedResult = result with 
+        {
+            JustificationsRendered = result.JustificationsStructured
+                .Select(j => _justificationRenderer.Render(j))
+                .ToList()
+                .AsReadOnly()
+        };
+        
         var record = new EvaluationRecord(
             Id: Guid.NewGuid(),
             Timestamp: DateTimeOffset.UtcNow,
             EngineVersion: "1.0.0",
             RuleSetVersion: "2026.02",
             Request: request,
-            Result: result
+            Result: renderedResult
         );
 
         await _repository.SaveAsync(record);
@@ -97,7 +108,7 @@ public class EvaluationsController : ControllerBase
         // mas aqui mapeamos para simplificar no retorno final. (Na pŕatica o id poderia ser no DTO, vou retornar um Header)
         Response.Headers.Append("X-Evaluation-Id", record.Id.ToString());
 
-        return Ok(result);
+        return Ok(renderedResult);
     }
 
     /// <summary>

@@ -12,4 +12,13 @@ public class DefaultEngineContext : IEngineContext
     
     // Resolve em tempo real, porém permite ser mockado nos Testes acoplando outra implementação de IEngineContext
     public DateTimeOffset CurrentTime => DateTimeOffset.UtcNow;
+
+    public string RuleSetHash { get; private set; } = "UNKNOWN_HASH";
+    public string? ParametersSnapshotJson { get; private set; }
+
+    public void SetParametersSnapshot(string jsonSnapshot, string hash)
+    {
+        ParametersSnapshotJson = jsonSnapshot;
+        RuleSetHash = hash;
+    }
 }

@@ -21,6 +21,16 @@ public record LifeInsuranceAssessmentResult
     public RecommendedAction RecommendedAction { get; init; }
     
     public IReadOnlyCollection<string> RegrasAplicadas { get; init; } = Array.Empty<string>();
-    public IReadOnlyCollection<string> Justificativas { get; init; } = Array.Empty<string>();
+    
+    /// <summary>
+    /// Árvore Estruturada de Justificativas (TemplateId + Args Primitivos) desenhada para Golden Files e integrações B2B rígidas.
+    /// </summary>
+    public IReadOnlyCollection<RuleJustification> JustificationsStructured { get; init; } = Array.Empty<RuleJustification>();
+    
+    /// <summary>
+    /// Textos legíveis e traduzidos formatados pelo Renderer de Apresentação (ex: pt-BR).
+    /// </summary>
+    public IReadOnlyCollection<string> JustificationsRendered { get; init; } = Array.Empty<string>();
+    
     public AuditMetadata Audit { get; init; } = null!;
 }

@@ -141,7 +141,7 @@ public class LifeInsuranceCalculatorTests
         // Transição = 10k * 3 meses = 30k
         // Total = 270k
         result.RecommendedCoverageAmount.Should().Be(270000m);
-        result.Audit.AppliedRules.Should().Contain(EngineRules.TransitionReserveWithFund);
+        result.Audit.AppliedRules.Should().Contain(EngineRuleId.RULE_TRANSITION_RESERVE_WITH_FUND.ToString());
     }
 
     [Fact]
@@ -288,8 +288,8 @@ public class LifeInsuranceCalculatorTests
         // Pen Fund = -10
         // Expected = 80
         result.ProtectionScore.Should().Be(80);
-        result.Audit.AppliedRules.Should().Contain(EngineRules.PenaltyHighDebt);
-        result.Audit.AppliedRules.Should().Contain(EngineRules.PenaltyNoEmergencyFund);
+        result.Audit.AppliedRules.Should().Contain(EngineRuleId.RULE_PENALTY_HIGH_DEBT.ToString());
+        result.Audit.AppliedRules.Should().Contain(EngineRuleId.RULE_PENALTY_NO_EMERGENCY_FUND.ToString());
     }
 
 }

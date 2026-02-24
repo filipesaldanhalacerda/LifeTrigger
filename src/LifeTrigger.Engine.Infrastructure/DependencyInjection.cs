@@ -17,6 +17,7 @@ public static class DependencyInjection
 
         services.AddScoped<IEngineContext, Providers.DefaultEngineContext>();
         services.AddSingleton<IRuleJustificationProvider, Providers.DefaultRuleJustificationProvider>();
+        services.AddSingleton<IRuleJustificationRenderer, Providers.PtBrJustificationRenderer>();
 
         return services;
     }
