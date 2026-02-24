@@ -4,11 +4,15 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
+using System.Security.Claims;
+using System.Text;
 using FluentAssertions;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
 using Xunit;
 
 namespace LifeTrigger.Engine.Tests.Integration;
@@ -42,9 +46,31 @@ public class EvaluationsIntegrationTests : IClassFixture<WebApplicationFactory<P
 
         _client = factoryWithInMemory.CreateClient();
 
+        // Generate and inject a valid Mock JWT Token for all requests in this test class
+        var token = GenerateTestToken("A1A1A1A1-A1A1-A1A1-A1A1-A1A1A1A1A1A1");
+        _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
         using var scope = factoryWithInMemory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<LifeTrigger.Engine.Infrastructure.Data.AppDbContext>();
         db.Database.EnsureCreated();
+    }
+
+    private string GenerateTestToken(string tenantId)
+    {
+        // Must match the fallback in Program.cs since WebApplicationFactory reads it early
+        var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("SuperSecretKeyForLocalDevelopmentDoNotUseInProd1234!"));
+        var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+        var claims = new[] { new Claim("tenantId", tenantId) };
+
+        var token = new System.IdentityModel.Tokens.Jwt.JwtSecurityToken(
+            issuer: "LifeTrigger.LocalAuth",
+            audience: "LifeTrigger.Engine",
+            claims: claims,
+            expires: DateTime.Now.AddHours(1),
+            signingCredentials: credentials);
+
+        return new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler().WriteToken(token);
     }
 
     [Fact]

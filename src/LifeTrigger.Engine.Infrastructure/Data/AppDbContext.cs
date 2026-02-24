@@ -43,7 +43,7 @@ public class AppDbContext : DbContext
                     v => JsonSerializer.Serialize(v, jsonOptions),
                     v => JsonSerializer.Deserialize<LifeInsuranceAssessmentRequest>(v, jsonOptions)!
                 )
-                .HasColumnType("nvarchar(max)")
+                .HasColumnType("jsonb")
                 .IsRequired();
 
             entity.Property(e => e.Result)
@@ -51,7 +51,7 @@ public class AppDbContext : DbContext
                     v => JsonSerializer.Serialize(v, jsonOptions),
                     v => JsonSerializer.Deserialize<LifeInsuranceAssessmentResult>(v, jsonOptions)!
                 )
-                .HasColumnType("nvarchar(max)")
+                .HasColumnType("jsonb")
                 .IsRequired();
                 
             entity.Property(e => e.Timestamp)

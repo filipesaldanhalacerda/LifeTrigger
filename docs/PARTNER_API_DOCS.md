@@ -116,35 +116,59 @@ A API retornará os cálculos imutáveis. Sua aplicação fará o Puxar destas t
 
 ```json
 {
-  "recommendedCoverage": 900000.0,
-  "protectionGap": 800000.0,
-  "protectionGapPercentage": 88.88,
-  "healthScore": 40,
+  "recommendedCoverageAmount": 1340000,
+  "currentCoverageAmount": 100000,
+  "protectionGapAmount": 1240000,
+  "protectionGapPercentage": 92.53,
+  "protectionScore": 0,
   "riskClassification": "CRITICO",
   "recommendedAction": "AUMENTAR",
-  "justification": "O cliente possui grande parte da renda desprotegida considerando seus dependentes e passivos (dívidas)....",
-  "regras_aplicadas": [
-    "RULE_PENALTY_HIGH_DEBT",
-    "RULE_PENALTY_LOW_COVERAGE_DEPENDENTS"
-  ]
+  "regrasAplicadas": [
+    "RULE_INCOME_REPLACEMENT_WITH_DEPENDENTS",
+    "RULE_PENALTY_HIGH_DEBT"
+  ],
+  "justificationsStructured": [
+    {
+      "ruleId": "RULE_PENALTY_HIGH_DEBT",
+      "templateId": "RULE_PENALTY_HIGH_DEBT_V1",
+      "messageKey": "rules.penalty_high_debt",
+      "args": { "penaltyPoints": 10 }
+    }
+  ],
+  "justificationsRendered": [
+    "Penalidade de 10 pontos aplicada no score devido ao alto nível de endividamento (> 50% da renda anual)."
+  ],
+  "audit": {
+    "engineVersion": "1.0.0",
+    "ruleSetVersion": "2026.02",
+    "ruleSetHash": "UNKNOWN_HASH",
+    "appliedRules": [
+       "RULE_INCOME_REPLACEMENT_WITH_DEPENDENTS",
+       "RULE_PENALTY_HIGH_DEBT"
+    ],
+    "timestamp": "2026-02-24T23:18:28.637Z",
+    "consentId": "uuid-aceite-001"
+  }
 }
 ```
 
 #### Dicionário de Campos do Response:
 
-*   **`recommendedCoverage` (Decimal):** O montante matemático ideal apurado que a pessoa **deveria ter**. (Ex: Devia ter R$ 900.000).
-*   **`protectionGap` (Decimal):** O buraco exato (Valor Ideal - Valor Corrente - Dívidas - Reservas).
+*   **`recommendedCoverageAmount` (Decimal):** O montante matemático ideal apurado que a pessoa **deveria ter**. (Ex: R$ 1.340.000).
+*   **`protectionGapAmount` (Decimal):** O buraco exato financeiro descoberto da família.
 *   **`protectionGapPercentage` (Double):** Quantos % a família está desprotegida hoje (0 a 100%).
-*   **`riskClassification` (Enum):** A situação da Saúde.
-    *   `CRITICO`: Urgência Imediata de Proteção (Gaps altíssimos > 25%).
-    *   `ATENCAO`: Cliente tem excesso de Seguros (Gaps < -20%), pagando taxas altas mensais podendo sofrer downgrade ("REDUZIR") a favorções de outros produtos.
-    *   `ADEQUADO`: Exato liminar da necessidade do lar.
-*   **`recommendedAction` (Enum):** Ação OBRIGATÓRIA para o CRM do Corretor.
-    *   `AUMENTAR`: Mandar e-mail de venda nova.
-    *   `REDUZIR`: Cliente super-faturado (Risco moral ou venda predatória passada de outros bancos).
-    *   `MANTER`: Cliente blindado. Retenção ativa (Cross-sell de outros produtos financeiros permitida).
-    *   `REVISAR`: Houve um `recentLifeTrigger`. Uma ligação consultiva "Check-in" deve ocorrer imediatamente.
-*   **`regras_aplicadas` (Array de Strings):** As Tags internas que montaram o veredito matemático. A sua corretora pode cruzar e mostrar essas tags visualmente na plataforma, ex: Se contém `RULE_PENALTY_HIGH_DEBT`, mostramos o ícone "❌ Cuidado com seu Financiamento".
+*   **`protectionScore` (Integer):** A nota de saúde da proteção da família (0 a 100).
+*   **`riskClassification` (Enum):** A gravidade da situação. (`CRITICO`, `ATENCAO`, `ADEQUADO`).
+*   **`recommendedAction` (Enum):** Ação OBRIGATÓRIA recomendada ao CRM. (`AUMENTAR`, `REVISAR`, `MANTER`, `REDUZIR`).
+*   **`regrasAplicadas` (Array de Strings):** As Tags internas para o **Front-End/App**. Sua corretora deve usar este array raiz para mapear visualmente ícones na tela (Ex: Se tem `RULE_PENALTY_HIGH_DEBT`, mostrar um ícone "❌ Cuidado com seu Financiamento").
+*   **`justificationsStructured`:** Estrutura detalhada de argumentos matemáticos focada para B2B e tradução de robôs (i18n).
+*   **`justificationsRendered`:** Textos amigáveis e formataods (Ex: PT-BR) prontos para colar na tela do cliente explicando porque ele precisa contratar mais.
+
+> **Importante: A Duplicação das Regras e o Bloco `audit`**
+>
+> Você notará que o `regrasAplicadas` se repete no `audit.appliedRules`. Isso não é um erro:
+> 1. O **`regrasAplicadas` na raiz** serve para uso prático do UI/Front-End ler rapidamente e exibir na interface sem precisar quebrar objetos complexos.
+> 2. O **bloco `audit` completo** (que tem cópia das regras, timestamp, consentId, e versões) serve inteiramente para o **Back-End de Integração e Compliance**. Seu sistema deve pegar a tag `audit` inteira, converter para JSON string, e jogar num banco de auditoria fria para comprovar que o motor na `version 1.0.0` processou aquelas regras exatas com o LGPD `consentId` informado.
 
 > **Nota:** Um header `X-Evaluation-Id` (UUID) será enviado na resposta. Guarde-o no sistema de vocês em caso de eventuais necessidades de Auditoria.
 

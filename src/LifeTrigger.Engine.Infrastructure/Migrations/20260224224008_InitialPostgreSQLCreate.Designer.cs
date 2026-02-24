@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace LifeTrigger.Engine.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260224203523_InitialPostgreSQLCreate")]
+    [Migration("20260224224008_InitialPostgreSQLCreate")]
     partial class InitialPostgreSQLCreate
     {
         /// <inheritdoc />
@@ -38,11 +38,11 @@ namespace LifeTrigger.Engine.Infrastructure.Migrations
 
                     b.Property<string>("Request")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("jsonb");
 
                     b.Property<string>("Result")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("jsonb");
 
                     b.Property<string>("RuleSetVersion")
                         .IsRequired()

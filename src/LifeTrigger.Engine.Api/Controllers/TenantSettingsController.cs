@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using LifeTrigger.Engine.Application.Interfaces;
 using LifeTrigger.Engine.Domain.Entities;
 
@@ -11,6 +12,7 @@ namespace LifeTrigger.Engine.Api.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/v1/admin/tenants/{tenantId}/settings")]
+[Authorize]
 public class TenantSettingsController : ControllerBase
 {
     private readonly ITenantSettingsRepository _repository;

@@ -10,6 +10,7 @@ using LifeTrigger.Engine.Application.Services;
 using LifeTrigger.Engine.Domain.Entities;
 using LifeTrigger.Engine.Domain.Requests;
 using LifeTrigger.Engine.Api.Filters;
+using Microsoft.AspNetCore.Authorization;
 
 namespace LifeTrigger.Engine.Api.Controllers;
 
@@ -18,6 +19,7 @@ namespace LifeTrigger.Engine.Api.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/v1/[controller]")]
+[Authorize]
 public class EvaluationsController : ControllerBase
 {
     private readonly ILifeInsuranceCalculator _calculator;

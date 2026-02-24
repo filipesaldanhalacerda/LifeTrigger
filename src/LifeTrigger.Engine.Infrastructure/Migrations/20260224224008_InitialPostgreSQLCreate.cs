@@ -19,8 +19,8 @@ namespace LifeTrigger.Engine.Infrastructure.Migrations
                     Timestamp = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     EngineVersion = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
                     RuleSetVersion = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
-                    Request = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Result = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    Request = table.Column<string>(type: "jsonb", nullable: false),
+                    Result = table.Column<string>(type: "jsonb", nullable: false)
                 },
                 constraints: table =>
                 {
