@@ -24,6 +24,16 @@ Antes de listar os endpoints, é crucial entender os Enums e Blocos Lógicos exi
 
 ---
 
+## 🔄 Casos de Uso Suportados (Padrões de Integração)
+
+A API é estritamente *stateless* e não possui telas, o que permite que sua equipe de engenharia a integre em **3 fluxos de parceiros distintos**:
+
+1. **Venda Consultiva B2B Assistida (O Padrão)**: O corretor liga para o cliente, preenche os dados no CRM da corretora e o CRM consome a API para devolver o laudo matemático ao corretor.
+2. **Funil Digital B2C (Lead Generation Quiz)**: A corretora cria um formulário público no seu site ("Descubra seu Gap Financeiro"). Quando o cliente preenche, o front-end consome a API e mostra o Risco em tempo real na tela do cliente, capturando-o como um Lead Quente.
+3. **Enriquecimento de Base Legada (Batch Processing)**: A corretora varre sua base de dados antiga de clientes via script (Python/Node), disparando milhares de requisições sequenciais contra a API com os dados parciais que já possui para "pescar" quem está com Risco Crítico e distribuir para a equipe de vendas.
+
+---
+
 ## 🚀 Endpoint Principal: Avaliação de Vida (Engine Core)
 
 Este é o endpoint universal que suas aplicações devem chamar assim que o formulário do cliente final for preenchido com aceite da política de dados (LGPD).
@@ -93,6 +103,10 @@ Este é o endpoint universal que suas aplicações devem chamar assim que o form
 | **Operacional**| `consentId` | `string`| **Sim** | Referência física/URL ao PDF do termo assinado no momento da captura. |
 | **Operacional**| `tenantId` | `uuid` | **Sim** | O seu Token único B2B de ambiente do LifeTrigger. |
 | **Operacional**| `recentLifeTrigger` | `bool` | Não | Acionadores Vitais (Casou semana passada? Teve filho?). Se enviado `true`, engatilha overrides automáticos na matemática, transformando imediatamente a ação matemática lógica para `REVISAR`. |
+
+> **Nota Crítica sobre Consentimento (LGPD) em fluxos B2C e Batch:** 
+> - **No B2C (Quiz):** A sua tela web *deve* possuir uma checkbox "Aceito os Termos". O atributo `consentId` deve ser o IP do usuário ou um hash da sessão.
+> - **No Batch (Base Legada):** Ao rodar scripts na sua base antiga, envie `hasExplicitActiveConsent: true` e use no `consentId` o Número do Contrato Original assinado da corretora com o cliente, garantindo compliance jurídico para a re-análise dos dados dele.
 
 ---
 

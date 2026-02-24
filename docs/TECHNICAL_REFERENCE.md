@@ -11,6 +11,8 @@ O **LifeTrigger Engine** é um motor de recomendação analítica B2B2C, desenha
 **Público-Alvo:** 
 Corretoras de Seguros Enterprise, Assessorias de Investimento e Plataformas Financeiras que buscam embarcar vendas consultivas (As-a-Service) em suas jornadas via API.
 
+**Paradigma Operacional (Stateless):** O motor suporta nativamente fluxos **B2B** (Ferramenta interna de corretores), fluxes **B2C** (Integrações diretas em Portais Web / Quizzes de Leads) e Processamento **Batch** de Bases Legadas.
+
 **Princípios Arquiteturais Inegociáveis:**
 1. **API-First:** O motor não possui telas ou acoplamento visual. Todo o poder de fogo é exposto via contratos REST estritos (OpenAPI 3.0), permitindo que os Tenants (Corretoras) criem suas próprias jornadas nativas de UI/UX.
 2. **Determinismo Absoluto:** A matemática não "adivinha" e não usa redes neurais opacas. Para o mesmo payload de entrada (Input), sob a mesma versão de motor (`EngineVersion`), a saída (Output) será *idêntica* no primeiro ou no milésimo milissegundo.
