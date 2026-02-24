@@ -205,3 +205,27 @@ Esta via gera métricas matematicamente puras das vulnerabilidades da base da co
 }
 ```
 *Interpretando:* Em quase 100 propostas fechadas, o motor conseguiu embasar matematicamente 98 vendas reais de *Up-sell/Cross-Sell* (`AUMENTAR`), garantindo eficiência máxima ao departamento de Operações de Venda da corretora.
+
+---
+
+## ⚙️ Parametrização B2B (Tenant Settings)
+
+O Motor LifeTrigger possibilita que cada Empresa Parceira calibre o algoritmo para o seu próprio perfil de apetite de risco e modelo comercial, **sem precisar alterar o código-fonte raiz**.
+
+### `PUT /api/v1/admin/tenants/{tenantId}/settings`
+
+Rota restrita para o seu Back-Office injetar os seus "Pesos e Guardrails" que a API deve usar cada vez que calcular uma proposta para os seus usuários.
+
+**Payload de Configuração (JSON):**
+```json
+{
+  "tenantId": "A1A1A1A1-A1A1-A1A1-A1A1-A1A1A1A1A1A1",
+  "incomeReplacementYearsSingle": 2,          // Quantos anos de reposição para pessoas sem dependentes
+  "incomeReplacementYearsWithDependents": 5,  // Base de anos de reposição para clientes com dependentes
+  "emergencyFundBufferMonths": 6,             // Meses de reserva exigidos. Falta de caixa adiciona essa "gordura" na apólice recomendada.
+  "minCoverageAnnualIncomeMultiplier": 2.0,   // Guardrail Inferior: Seguros recomendados nunca terão menos cobertura que X multiplicador da renda anual.
+  "maxTotalCoverageMultiplier": 20.0          // Guardrail Superior (Over-insurance): Teto máximo que a Seguradora permite por apólice em relação à Renda.
+}
+```
+
+Se o seu sistema nunca invocar esta rota, não se preocupe: a sua conta (TenantId) operará utilizando a matemática global (Default) mantida pelo Arquiteto de Software responsável pela plataforma.

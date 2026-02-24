@@ -4,5 +4,5 @@ namespace LifeTrigger.Engine.Application.Interfaces;
 
 public interface ILifeInsuranceCalculator
 {
-    LifeInsuranceAssessmentResult Calculate(LifeInsuranceAssessmentRequest request);
+    LifeInsuranceAssessmentResult Calculate(LifeInsuranceAssessmentRequest request, TenantSettings? tenantSettings = null);
 }

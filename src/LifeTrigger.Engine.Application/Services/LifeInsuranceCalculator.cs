@@ -11,20 +11,20 @@ namespace LifeTrigger.Engine.Application.Services;
 
 public class LifeInsuranceCalculator : ILifeInsuranceCalculator
 {
-    public LifeInsuranceAssessmentResult Calculate(LifeInsuranceAssessmentRequest request)
+    public LifeInsuranceAssessmentResult Calculate(LifeInsuranceAssessmentRequest request, TenantSettings? tenantSettings = null)
     {
         var appliedRules = new List<string>();
         var justifications = new List<string>();
 
         decimal annualIncome = CalculateAnnualIncome(request.FinancialContext.MonthlyIncome);
 
-        decimal incomeReplacementAmount = CalculateIncomeReplacement(annualIncome, request.FamilyContext, appliedRules, justifications);
+        decimal incomeReplacementAmount = CalculateIncomeReplacement(annualIncome, request.FamilyContext, appliedRules, justifications, tenantSettings);
         decimal debtClearanceAmount = CalculateDebtClearance(request.FinancialContext.Debts, appliedRules, justifications);
-        decimal transitionReserveAmount = CalculateTransitionReserve(request.FinancialContext.MonthlyIncome, request.FinancialContext.EmergencyFundMonths, appliedRules, justifications);
+        decimal transitionReserveAmount = CalculateTransitionReserve(request.FinancialContext.MonthlyIncome, request.FinancialContext.EmergencyFundMonths, appliedRules, justifications, tenantSettings);
 
         decimal rawRecommendedCoverage = incomeReplacementAmount + debtClearanceAmount + transitionReserveAmount;
 
-        decimal finalRecommendedCoverage = ApplyGuardrails(rawRecommendedCoverage, annualIncome, appliedRules, justifications);
+        decimal finalRecommendedCoverage = ApplyGuardrails(rawRecommendedCoverage, annualIncome, appliedRules, justifications, tenantSettings);
 
         decimal currentCoverage = request.FinancialContext.CurrentLifeInsurance?.CoverageAmount ?? 0m;
         
@@ -61,25 +61,27 @@ public class LifeInsuranceCalculator : ILifeInsuranceCalculator
         return (monthlyIncome.ExactValue ?? 0m) * 12;
     }
 
-    private decimal CalculateIncomeReplacement(decimal annualIncome, FamilyContext familyContext, List<string> appliedRules, List<string> justifications)
+    private decimal CalculateIncomeReplacement(decimal annualIncome, FamilyContext familyContext, List<string> appliedRules, List<string> justifications, TenantSettings? settings)
     {
         int yearsToReplace = 0;
 
         if (familyContext.DependentsCount == 0)
         {
-            yearsToReplace = CalculationRules.BaseIncomeReplacementYearsNoDependents;
+            yearsToReplace = settings?.IncomeReplacementYearsSingle ?? CalculationRules.BaseIncomeReplacementYearsNoDependents;
             appliedRules.Add("RULE_INCOME_REPLACEMENT_NO_DEPENDENTS");
             justifications.Add($"Substituição de renda baseada em {yearsToReplace} anos devido à ausência de dependentes.");
         }
         else
         {
+            int baseYearsDep = settings?.IncomeReplacementYearsWithDependents ?? CalculationRules.BaseIncomeReplacementYearsWithDependents;
+            
             int extraYears = Math.Min(
                 familyContext.DependentsCount * CalculationRules.AdditionalYearsPerDependent,
                 CalculationRules.MaxAdditionalYearsForDependents
             );
             
             yearsToReplace = Math.Min(
-                CalculationRules.BaseIncomeReplacementYearsWithDependents + extraYears,
+                baseYearsDep + extraYears,
                 CalculationRules.MaxTotalIncomeReplacementYears
             );
             
@@ -103,27 +105,29 @@ public class LifeInsuranceCalculator : ILifeInsuranceCalculator
         return debts.TotalAmount;
     }
 
-    private decimal CalculateTransitionReserve(IncomeData monthlyIncome, int? emergencyFundMonths, List<string> appliedRules, List<string> justifications)
+    private decimal CalculateTransitionReserve(IncomeData monthlyIncome, int? emergencyFundMonths, List<string> appliedRules, List<string> justifications, TenantSettings? settings)
     {
         decimal income = monthlyIncome.ExactValue ?? 0m;
         int bufferMonths;
+
+        int defaultBuffer = settings?.EmergencyFundBufferMonths ?? CalculationRules.DefaultTransitionReserveMonths;
+        int maxBuffer = Math.Max(defaultBuffer, CalculationRules.MaxTransitionReserveBufferMonths); // Safe upper bound
 
         if (emergencyFundMonths.HasValue)
         {
             bufferMonths = Math.Max(
                 CalculationRules.MinTransitionReserveBufferMonths, 
-                CalculationRules.MaxTransitionReserveBufferMonths - emergencyFundMonths.Value
+                maxBuffer - emergencyFundMonths.Value
             );
             
-            // Limit the buffer to the max defined (9)
-            bufferMonths = Math.Min(bufferMonths, CalculationRules.MaxTransitionReserveBufferMonths);
+            bufferMonths = Math.Min(bufferMonths, maxBuffer);
             
             appliedRules.Add("RULE_TRANSITION_RESERVE_WITH_FUND");
             justifications.Add($"Reserva de transição calculada em {bufferMonths} meses considerando a reserva de emergência atual de {emergencyFundMonths.Value} meses.");
         }
         else
         {
-            bufferMonths = CalculationRules.DefaultTransitionReserveMonths;
+            bufferMonths = defaultBuffer;
             appliedRules.Add("RULE_TRANSITION_RESERVE_DEFAULT_NO_FUND");
             justifications.Add($"Reserva de transição padrão aplicada ({bufferMonths} meses) devido à não informação de reserva de emergência.");
         }
@@ -131,22 +135,25 @@ public class LifeInsuranceCalculator : ILifeInsuranceCalculator
         return income * bufferMonths;
     }
 
-    private decimal ApplyGuardrails(decimal rawCoverage, decimal annualIncome, List<string> appliedRules, List<string> justifications)
+    private decimal ApplyGuardrails(decimal rawCoverage, decimal annualIncome, List<string> appliedRules, List<string> justifications, TenantSettings? settings)
     {
-        decimal minCoverage = annualIncome * CalculationRules.MinCoverageAnnualIncomeMultiplier;
-        decimal maxCoverage = annualIncome * CalculationRules.MaxCoverageAnnualIncomeMultiplier;
+        decimal minMult = settings?.MinCoverageAnnualIncomeMultiplier ?? CalculationRules.MinCoverageAnnualIncomeMultiplier;
+        decimal maxMult = settings?.MaxTotalCoverageMultiplier ?? CalculationRules.MaxCoverageAnnualIncomeMultiplier;
+        
+        decimal minCoverage = annualIncome * minMult;
+        decimal maxCoverage = annualIncome * maxMult;
 
         if (rawCoverage < minCoverage)
         {
             appliedRules.Add("RULE_GUARDRAIL_MIN_COVERAGE");
-            justifications.Add($"A cobertura calculada foi ajustada para o limite mínimo de proteção vital ({CalculationRules.MinCoverageAnnualIncomeMultiplier}x a renda anual).");
+            justifications.Add($"A cobertura calculada foi ajustada para o limite mínimo de proteção vital ({minMult}x a renda anual).");
             return minCoverage;
         }
 
         if (rawCoverage > maxCoverage)
         {
             appliedRules.Add("RULE_GUARDRAIL_MAX_COVERAGE");
-            justifications.Add($"A cobertura calculada foi limitada ao teto de proteção ({CalculationRules.MaxCoverageAnnualIncomeMultiplier}x a renda anual) para evitar sobreseguro.");
+            justifications.Add($"A cobertura calculada foi limitada ao teto de proteção ({maxMult}x a renda anual) para evitar sobreseguro.");
             return maxCoverage;
         }
 

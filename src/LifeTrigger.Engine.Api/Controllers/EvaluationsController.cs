@@ -24,17 +24,20 @@ public class EvaluationsController : ControllerBase
     private readonly IValidator<LifeInsuranceAssessmentRequest> _validator;
     private readonly IEvaluationRepository _repository;
     private readonly IAuditLoggerService _auditLogger;
+    private readonly ITenantSettingsRepository _tenantSettingsRepository;
 
     public EvaluationsController(
         ILifeInsuranceCalculator calculator,
         IValidator<LifeInsuranceAssessmentRequest> validator,
         IEvaluationRepository repository,
-        IAuditLoggerService auditLogger)
+        IAuditLoggerService auditLogger,
+        ITenantSettingsRepository tenantSettingsRepository)
     {
         _calculator = calculator;
         _validator = validator;
         _repository = repository;
         _auditLogger = auditLogger;
+        _tenantSettingsRepository = tenantSettingsRepository;
     }
 
     /// <summary>
@@ -71,7 +74,11 @@ public class EvaluationsController : ControllerBase
             return BadRequest(new { Message = "Validation Failed", Errors = errors });
         }
 
-        var result = _calculator.Calculate(request);
+        var tenantSettings = request.OperationalData.TenantId.HasValue 
+            ? await _tenantSettingsRepository.GetByTenantIdAsync(request.OperationalData.TenantId.Value)
+            : null;
+            
+        var result = _calculator.Calculate(request, tenantSettings);
         
         var record = new EvaluationRecord(
             Id: Guid.NewGuid(),
