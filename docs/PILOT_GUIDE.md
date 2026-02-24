@@ -31,6 +31,23 @@ O Piloto não visa substituir sistemas legados de imediato, mas provar o valor d
 1. **Análise de Portfólio**: O corretor entra na área logada do sistema da corretora e visualiza o Lead gerado: *"Cliente João, Risco CRÍTICO, Ação Recomendada: AUMENTAR (Faltam R$ 300.000 em cobertura por conta do Financiamento)."*
 2. **Oferta Comercial**: Apenas neste estágio o corretor mapeia produtos reais das seguradoras parceiras (Prudential, MAG, Icatu) e envia a cotação ao cliente. Como a necessidade matemática já foi extraída pelo LifeTrigger, a objeção de vendas do cliente cai substancialmente.
 
+## Estratégia de Enriquecimento de Base Legada (Progressive Profiling)
+
+É muito comum que a corretora já possua uma base de dados (planilhas, CRM legado), mas que faltem dados profundos como **Dívidas** ou **Reserva de Emergência**. O LifeTrigger Engine foi desenhado para **Resiliência de Dados** (falhas graciosas).
+
+### Como o Motor Lida com Dados Faltantes (Opcionais)
+Se a corretora injetar um perfil apenas com (Idade, Renda, Dependentes e Profissão):
+- **Sem Dívidas (`debts: null`)**: O motor assume R$ 0,00. O risco não é penalizado, e o Gap foca puramente na substituição de renda.
+- **Sem Reserva (`emergencyFundMonths: null`)**: O motor adota postura protetiva. Adiciona 6 meses integrais de renda na cobertura como "gordura de segurança" (Transition Reserve Buffer).
+- **Sem Seguro Atual (`currentLifeInsurance: null`)**: Assume que o cliente está 100% descoberto, elevando o Status para `CRÍTICO` e `AUMENTAR`.
+
+### O Fluxo Comercial de Enriquecimento
+Em vez de travar a operação exigindo dados perfeitos, utilize este fluxo:
+1. **Alarme Silencioso (Back-office)**: A corretora roda a base legada incompleta na API. O motor devolve os Gaps estimados. Identifica-se, por exemplo, que o Cliente João tem um alerta de necessidade.
+2. **O Chamado Consultivo**: O corretor entra em contato: *"João, atualizei seu perfil e notei uma janela de risco na proteção da sua família. Para eu desenhar a correção exata, me atualize: Você fez algum financiamento recente? Zerou sua reserva?"*.
+3. **Recálculo Direcionado**: O cliente responde. O corretor insere os dados faltantes (agora ele tem `debts` e `emergencyFundMonths`). O motor recalcula o Gap preciso e o corretor envia a proposta da seguradora justificada por matemática pura.
+> **Atenção LGPD:** Mesmo que a base seja legada, o disparo da API exigirá `hasExplicitActiveConsent: true`. A corretora deve garantir que possui o aceite pregresso dos Termos de Uso do cliente, podendo injetar o ID do contrato antigo no campo `consentId`.
+
 ## Mensuração de Sucesso (KPIs)
 
 Ao final do Piloto, a corretora deve avaliar a eficácia extraindo os relatórios agregados no endpoint `/api/v1/admin/reports/pilot`.
