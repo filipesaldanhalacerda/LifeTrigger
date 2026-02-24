@@ -153,22 +153,26 @@ O Compliance foi introduzido via Arquitetura, não como complemento posterior:
 
 ## 10. Startando e Executando o Back-end Localmente
 
-O modelo foi construído livre do *Development-Hell*. Para iniciar:
+O modelo foi construído livre do *Development-Hell*. A aplicação inteira (incluindo o Banco de Dados) auto-provisiona sua própria infraestrutura no primeiro boot.
 
-**Requisitos**: Microsoft .NET 9.0 SDK instalado localmente no SO (Linux/Windows/MacOSX).
+**Requisitos**: 
+- Microsoft .NET 9.0 SDK
+- Servidor SQL Local (O padrão no Windows é o `(localdb)\\mssqllocaldb` nativo do Visual Studio). Se rodar em Linux/Docker, altere a string `DefaultConnection` no `appsettings.json` para o seu contêiner SQL Server/PostgreSQL.
 
 ```bash
-# 1. Navegue para o root do arquivo Solução (.sln) ou Projeto
+# 1. Navegue para a pasta da API
 cd src/LifeTrigger.Engine.Api
 
-# 2. Restaure Pacotes Nuget
+# 2. Restaure os Pacotes Nuget
 dotnet restore
 
-# 3. Monte e Excute 
-# O comando de Development habilitará a documentação auto-gerada via SwaggerUI e injetará os Tenants Demo
+# 3. Monte e Execute 
+# O comando inicializará a Aplicação. O Entity Framework Core vai automaticamente
+# detectar a string de conexão, gerar o Banco de Dados físico "LifeTriggerDb" 
+# e aplicar as tabelas (Migrations) antes de abrir as portas web.
 dotnet run --environment Development
 ```
-* O Servidor responderá em `http://localhost:<porta>`.
+* O Servidor responderá em `http://localhost:5086` (ou similar).
 * Ao iniciar, o `DemoDataSeeder.cs` injeta silenciosamente nos Tenants Virtuais `DEMO_CORRETORA_ALPHA` e `DEMO_EMPRESA_BETA` relatórios simulados estritos que fecham nos espectros matemáticos de REVISAR e AUMENTAR, prontos pro uso do front sem base real.
 * Documentação Viva / Tester no navegador via Swagger na rota base principal `http://localhost:<porta>/swagger`.
 

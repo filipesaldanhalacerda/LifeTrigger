@@ -15,9 +15,10 @@ O Piloto não visa substituir sistemas legados de imediato, mas provar o valor d
 ## Roteiro de Piloto Recomendado
 
 ### Semana 1: Setup e Configuração
-1. **Provisionamento do Tenant**: A corretora recebe um `TenantId` e chaves JWT únicas para o ambiente em nuvem ou provisiona a imagem Docker on-premises.
-2. **Integração Front-end**: O time técnico da corretora consome o OpenAPI e cria uma tela web fluida coletando: Estado Civil, Dependentes, Renda de Gatilho, Reserva e Dívidas.
-3. **Testes no Ambiente Demo**: A corretora treina seus corretores-foco em como ler as saídas do Tenant `DEMO_CORRETORA_ALPHA` utilizando os Leads Fictícios previamente populados pelo nosso Data Seeder.
+1. **Provisionamento de Infraestrutura (Entity Framework / SQL)**: O time de TI da corretora aponta a connection string no arquivo `appsettings.json` para o seu Banco de Dados (SQL Server). Ao rodar a API (`dotnet run`), o sistema cria magicamente todas as tabelas via Migrations automáticas. Sem arquivos `.sql` complexos.
+2. **Setup do Tenant**: A corretora recebe um `TenantId` e chaves JWT únicas.
+3. **Integração Front-end**: O time técnico da corretora consome o contrato OpenAPI (Swagger) e cria a tela web nativa da corretora coletando: Idade, Dependentes, Renda e Dívidas.
+4. **Testes no Ambiente Demo**: A corretora treina seus corretores-foco visualizando os alertas do Tenant `DEMO_CORRETORA_ALPHA`, injetados pelo nosso Data Seeder residente no SQL.
 
 ### Semana 2 e 3: Disparo e Coleta
 1. **Seleção de Clientes Pivotais**: Os corretores selecionam de 20 a 50 clientes que:
