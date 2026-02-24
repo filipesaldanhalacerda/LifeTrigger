@@ -29,7 +29,7 @@ O sistema adota os princípios de *Clean Architecture* e *Domain-Driven Design (
 * **Engine API (`LifeTrigger.Engine.Api`)**: Camada de roteamento, serialização (JSON), parse de `Idempotency-Key` e manipulação dos Códigos HTTP (400, 422, 200). Recepciona e protege as franjas do sistema.
 * **Application / Services (`LifeTrigger.Engine.Application`)**: Orquestra as validações via FluentValidation (e LGPD) e faz bind do Domain com o Repositório de Auditoria. Redige a regra PII (Masking).
 * **Deterministic Core (`LifeTrigger.Engine.Domain`)**: O cérebro do sistema. Sem referências a Banco de Dados ou Frameworks Web. Contém os objetos puros C#, guardrails (`MaxTotalIncomeReplacementYears`), matriz de pontos e inferência matemática pura do `LifeInsuranceCalculator`.
-* **Infrastructure (`LifeTrigger.Engine.Infrastructure`)**: Resolução de dependências externas. Atualmente abriga o `InMemoryEvaluationRepository` para velocidade e escalada inicial plug-and-play, preparado inteiramente para injetar contextos SQL/Entity Framework via interfaces padrão no futuro, além do `DemoDataSeeder`.
+* **Infrastructure (`LifeTrigger.Engine.Infrastructure`)**: Resolução de dependências externas. Preparado inteiramente para injetar contextos **PostgreSQL** via Entity Framework Core (`Npgsql`), extraindo máxima performance da constraint `jsonb` para persistência dos Value Objects complexos e logs de auditoria, além de abrigar o `DemoDataSeeder`.
 
 ### Fluxo de Componentes
 1. Solicitação de Frontend parceiro chega no ASP.NET.
@@ -51,7 +51,7 @@ A base tecnológica foi cuidadosamente selecionada para performar em micro-latê
 * **Autenticação e Edge:** **JWT (JSON Web Token RS256) - A implementar na malha Edge API Gateway externa**. A aplicação suporta introspecção por Header. 
 * **Validação de Payloads:** **FluentValidation**. A lógica de rejeição fica apartada do Controller. Impede injeção de Dívidas Negativas ou Idades irreais (<18).
 * **Idempotência e Caching:** Extensão padrão `Microsoft.Extensions.Caching.Memory` controlando requisições duplicadas (Double Submit) garantindo proteção do pipeline analítico.
-* **Banco de Dados:** Interfaces Repository Pattern. Setup inicial via **Dictionary Concorrente Na-Memória** (Plug-And-Play B2B).
+* **Banco de Dados:** Interfaces Repository Pattern implementadas via **Entity Framework Core com provedor PostgreSQL (`Npgsql`)**. A escolha pelo Postgres garante alta performance em ambientes Cloud/Linux e suporte nativo inigualável para serialização e indexação das avaliações estruturadas no formato `jsonb`.
 * **Testes e Qualidade:** Arquitetura massiva via **xUnit**, validando retornos semânticos limpos (**FluentAssertions**). Garantia do motor através do paradigma agressivo de **Golden Files** (File-system snapshot assertion byte a byte).
 
 ---
@@ -151,7 +151,7 @@ A fronteira ataca problemas complexos em três defesas de Hardening:
 O Compliance foi introduzido via Arquitetura, não como complemento posterior:
 1. **Consentimento Restrito**: Se `consentimento_ativo` no Payload JSON é False ou ausente, as engrenagens não processam o motor, o dado não chega sequer à variável de Application Layers (422 Abort).
 2. **PII Masking Automático**: Valores monetários sensíveis geridos nos Logs em Console que alimentam Kibana ou Syslogs são trucados, preservados apenas seus ponteiros dimensionais. O Trace exibirá algo como: *"Triggering Engine Evaluation to MaskedIncome ****5000"*.
-3. **Audit Hash (Unquebrável)**: O `CalculateAuditHash` cria um SHA-256 usando Variáveis Canônicas + Respostas Exatas + Versões (`Engine` e `RuleSet`) e Carimbo Unix. A mera alteração da taxa financeira por fora do API Gateway nos bancos físicos causará ruptura permanente de Hash no endpoint `/verify`. Corretoras possuem a prova irrefutável (Trustless Audit).
+3. **Audit Hash (Unquebrável)**: O `CalculateAuditHash` cria um SHA-256 usando Variáveis Canônicas + Respostas Exatas + Versões (`Engine` e `RuleSet`) e Carimbo Unix. O payload e as `regras_aplicadas` são persistidos atrelados nativamente na camada `jsonb` ultra-rápida do PostgreSQL. A mera alteração da taxa financeira por fora do API Gateway nos bancos físicos causará ruptura permanente de Hash no endpoint `/verify`. Corretoras possuem a prova irrefutável (Trustless Audit).
 4. **Versionamento Imutável Engine**: Avaliações do passado rodadas na engine `1.0.0` e regra `2026.02` permanecem com estes marcadores de base, portanto uma retentativa de renderização em painel do corretor anos depois interpretará exatamente o gap gerado na época, ignorando novas métricas de 2029 que possamos evoluir na matriz de código original.
 
 ---
@@ -162,7 +162,7 @@ O modelo foi construído livre do *Development-Hell*. A aplicação inteira (inc
 
 **Requisitos**: 
 - Microsoft .NET 9.0 SDK
-- Servidor SQL Local (O padrão no Windows é o `(localdb)\\mssqllocaldb` nativo do Visual Studio). Se rodar em Linux/Docker, altere a string `DefaultConnection` no `appsettings.json` para o seu contêiner SQL Server/PostgreSQL.
+- Servidor **PostgreSQL** Local (Recomendado via Docker: `docker run --name lifetrigger-postgres -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres`). A predefinição da connection string no `appsettings.json` já espera o padrão local (`Host=localhost;Database=LifeTriggerDb;Username=postgres;Password=postgres`).
 
 ```bash
 # 1. Navegue para a pasta da API
@@ -173,8 +173,8 @@ dotnet restore
 
 # 3. Monte e Execute 
 # O comando inicializará a Aplicação. O Entity Framework Core vai automaticamente
-# detectar a string de conexão, gerar o Banco de Dados físico "LifeTriggerDb" 
-# e aplicar as tabelas (Migrations) antes de abrir as portas web.
+# conectar ao seu PostgreSQL local, gerar o Banco de Dados físico "LifeTriggerDb" 
+# e aplicar as tabelas (Migrations Npgsql) antes de abrir as portas web.
 dotnet run --environment Development
 ```
 * O Servidor responderá em `http://localhost:5086` (ou similar).

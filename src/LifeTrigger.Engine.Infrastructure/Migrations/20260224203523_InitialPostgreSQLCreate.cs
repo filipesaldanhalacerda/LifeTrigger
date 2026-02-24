@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace LifeTrigger.Engine.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class InitialPostgreSQLCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -15,10 +15,10 @@ namespace LifeTrigger.Engine.Infrastructure.Migrations
                 name: "Evaluations",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Timestamp = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
-                    EngineVersion = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    RuleSetVersion = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Timestamp = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    EngineVersion = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    RuleSetVersion = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
                     Request = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Result = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
@@ -31,12 +31,12 @@ namespace LifeTrigger.Engine.Infrastructure.Migrations
                 name: "TenantSettings",
                 columns: table => new
                 {
-                    TenantId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    IncomeReplacementYearsSingle = table.Column<int>(type: "int", nullable: false),
-                    IncomeReplacementYearsWithDependents = table.Column<int>(type: "int", nullable: false),
-                    EmergencyFundBufferMonths = table.Column<int>(type: "int", nullable: false),
-                    MaxTotalCoverageMultiplier = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    MinCoverageAnnualIncomeMultiplier = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false)
+                    TenantId = table.Column<Guid>(type: "uuid", nullable: false),
+                    IncomeReplacementYearsSingle = table.Column<int>(type: "integer", nullable: false),
+                    IncomeReplacementYearsWithDependents = table.Column<int>(type: "integer", nullable: false),
+                    EmergencyFundBufferMonths = table.Column<int>(type: "integer", nullable: false),
+                    MaxTotalCoverageMultiplier = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
+                    MinCoverageAnnualIncomeMultiplier = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false)
                 },
                 constraints: table =>
                 {

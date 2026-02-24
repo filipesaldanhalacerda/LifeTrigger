@@ -57,7 +57,8 @@ var app = builder.Build();
 
 app.UseCustomExceptionHandler();
 
-// Apply EF Core Migrations automatically
+// Apply EF Core Migrations automatically, but skip during Integration Tests
+if (app.Environment.EnvironmentName != "Testing")
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;

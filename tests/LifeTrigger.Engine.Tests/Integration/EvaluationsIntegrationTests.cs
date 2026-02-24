@@ -1,11 +1,14 @@
 using System;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
-using System.Text.Json;
 using System.Threading.Tasks;
 using FluentAssertions;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace LifeTrigger.Engine.Tests.Integration;
@@ -16,7 +19,32 @@ public class EvaluationsIntegrationTests : IClassFixture<WebApplicationFactory<P
 
     public EvaluationsIntegrationTests(WebApplicationFactory<Program> factory)
     {
-        _client = factory.CreateClient();
+        var factoryWithInMemory = factory.WithWebHostBuilder(builder =>
+        {
+            builder.UseEnvironment("Testing");
+            builder.ConfigureServices(services =>
+            {
+                var descriptors = services.Where(d => 
+                    d.ServiceType.Name.Contains("DbContextOptions") || 
+                    d.ServiceType.Name.Contains("DbConnection") ||
+                    d.ServiceType == typeof(LifeTrigger.Engine.Infrastructure.Data.AppDbContext)
+                ).ToList();
+                
+                foreach (var descriptor in descriptors)
+                {
+                    services.Remove(descriptor);
+                }
+
+                services.AddDbContext<LifeTrigger.Engine.Infrastructure.Data.AppDbContext>(options => 
+                    options.UseInMemoryDatabase("IntegrationTestDb"));
+            });
+        });
+
+        _client = factoryWithInMemory.CreateClient();
+
+        using var scope = factoryWithInMemory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<LifeTrigger.Engine.Infrastructure.Data.AppDbContext>();
+        db.Database.EnsureCreated();
     }
 
     [Fact]
