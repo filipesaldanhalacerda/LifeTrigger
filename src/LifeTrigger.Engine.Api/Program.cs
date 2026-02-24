@@ -1,3 +1,5 @@
+using System.IO;
+using System.Reflection;
 using System.Text.Json.Serialization;
 using LifeTrigger.Engine.Application;
 using LifeTrigger.Engine.Infrastructure;
@@ -24,7 +26,29 @@ builder.Services.AddInfrastructure();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new() { Title = "LifeTrigger.Engine.Api", Version = "v1" });
+    c.SwaggerDoc("v1", new() 
+    { 
+        Title = "LifeTrigger.Engine.Api", 
+        Version = "v1",
+        Description = "API de Inteligência para o Motor LifeTrigger. Avaliação de Vida, Proteção e Gaps.",
+        Contact = new Microsoft.OpenApi.Models.OpenApiContact
+        {
+            Name = "LifeTrigger API Suporte",
+            Email = "suporte@lifetrigger.example.com"
+        }
+    });
+
+    // Injetar comentários XML da API
+    var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    c.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
+
+    // Injetar comentários XML do Domain (onde estão os Requests/Responses)
+    var domainXmlFilename = "LifeTrigger.Engine.Domain.xml";
+    var domainXmlPath = Path.Combine(AppContext.BaseDirectory, domainXmlFilename);
+    if (File.Exists(domainXmlPath))
+    {
+        c.IncludeXmlComments(domainXmlPath);
+    }
 });
 
 var app = builder.Build();

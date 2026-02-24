@@ -1,0 +1,193 @@
+# Documentação da API de Parceiros - LifeTrigger Engine
+
+Bem-vindo à documentação oficial de integração B2B do **LifeTrigger Engine**. 
+Esta API foi projetada para ser consumida diretamente pelo back-end ou front-end de corretoras, plataformas de investimento e bancos parceiros, oferecendo um motor determinístico de análise de risco financeiro e necessidades de seguro de vida.
+
+## Visão Geral técnica
+
+*   **Arquitetura:** RESTful (JSON)
+*   **Versionamento:** A API atual opera na versão `v1`. O Base URL de todos os endpoints é o host fornecido seguidos de `/api/v1`.
+*   **Multilocação (Multi-Tenant):** As requisições são estritamente isoladas pelos IDs das corretoras parceiras (`tenantId`).
+*   **Autenticação:** Baseada em tokens JWT (`Authorization: Bearer <seu_token>`).
+
+---
+
+## Estruturas Fundamentais
+
+Antes de listar os endpoints, é crucial entender os Enums e Blocos Lógicos exigidos pela plataforma.
+
+### Enums Base
+*   **Estado Civil (`maritalStatus`)**: `SOLTEIRO`, `CASADO`, `UNIAO_ESTAVEL`, `DIVORCIADO`, `VIUVO`
+*   **Risco da Profissão (`professionRiskLevel`)**: `BAIXO`, `MEDIO`, `ALTO`, `EXTREMO`
+*   **Tipo de Seguro Atual (`policyType`)**: `TEMPORARIO`, `VITALICIO`
+*   **Canal de Origem (`originChannel`)**: Qualquer string que identifique a fonte do Lead para relatórios internos da corretora. Ex: `"LANDING_PAGE_VIP"`, `"WHATSAPP_BOT"`, `"APP_CORRETORA"`.
+
+---
+
+## 🚀 Endpoint Principal: Avaliação de Vida (Engine Core)
+
+Este é o endpoint universal que suas aplicações devem chamar assim que o formulário do cliente final for preenchido com aceite da política de dados (LGPD).
+
+### `POST /api/v1/evaluations`
+
+**Cabeçalhos Exigidos (Headers):**
+*   `Auterization: Bearer <TOKEN>` (Fornecido no contrato B2B)
+*   `Idempotency-Key: <UUID>` **[OBRIGATÓRIO]** 
+    *   *Propósito:* Previne ataques de duplo clique ou reenvios por falha de 3G/4G no mobile. Se o seu sistema enviar a mesma chave `Idempotency-Key` com o mesmo body em menos de 24 horas, o motor **não executará o cálculo novamente nem duplicará no banco**. Ele devolverá imediatamente a resposta `200 OK` gerada da primeira vez (alta performance e economia de custos).
+
+### O Payload de Envio (Request Body)
+
+```json
+{
+  "personalContext": {
+    "age": 35,
+    "maritalStatus": "CASADO",
+    "professionRiskLevel": "MEDIO",
+    "isSmoker": false
+  },
+  "financialContext": {
+    "monthlyIncome": {
+      "exactValue": 15000,
+      "bracket": null
+    },
+    "emergencyFundMonths": 2,
+    "debts": {
+      "totalAmount": 200000,
+      "remainingTermMonths": 60
+    },
+    "currentLifeInsurance": {
+      "coverageAmount": 100000,
+      "policyType": "TEMPORARIO"
+    }
+  },
+  "familyContext": {
+    "dependentsCount": 1,
+    "dependentsAges": [2]
+  },
+  "operationalData": {
+    "originChannel": "LANDING_PAGE",
+    "hasExplicitActiveConsent": true,
+    "consentId": "uuid-aceite-001",
+    "tenantId": "SEU_TENANT_UUID_FORNECIDO",
+    "recentLifeTrigger": false
+  }
+}
+```
+
+#### Dicionário de Campos do Request:
+
+| Bloco | Campo | Tipo | Obrigatório | Descrição / Comportamento |
+| :--- | :--- | :--- | :---: | :--- |
+| **Personal** | `age` | `int` | **Sim** | Idade do proponente. Se < 18, retorna erro 400. |
+| **Personal** | `maritalStatus` | `enum` | Não | Caso omitido, assumimos `SOLTEIRO`. |
+| **Personal** | `professionRiskLevel`| `enum` | **Sim** | Risco Ocupacional. Impacta Gaps de invalidez futura. |
+| **Personal** | `isSmoker` | `bool` | Não | Fator adverso (Default `false`). |
+| **Financial**| `monthlyIncome.exactValue`| `decimal` | **Sim** | Salário bruto/líquido. Se for negativo, retorna erro 400. Se o cliente tiver vergonha de dizer, o Front-end deve anular o valor exato e enviar a Renda por Faixa, ou seja: `monthlyIncome.bracket: "10k_15k"`. A Engine interpola o Gap pelo teto da faixa. |
+| **Financial**| `emergencyFundMonths` | `int` | Não | Falta desse valor significa "Zero Reserva". Aciona no motor as **Penalidades de Reserva Transicional** aumentando o Gap (Sugerindo apólice maior). |
+| **Financial**| `debts.totalAmount` | `decimal` | Não | Falta assinala "Zero Dívidas". Valores altos são herdados pela família na falta do cliente, forçando ações de `AUMENTAR` a cobertura na saída. |
+| **Financial**| `currentLifeInsurance`| `object` | Não | Omitir indica 100% de Falta de Proteção Morte. Resulta sempre num score de Risco extremo (Crítico/Aumentar). |
+| **Family** | `dependentsCount` | `int` | **Sim** | Base Teto do motor. Cada dependente adiciona um extra anual no fundo de reposição de renda da família projetado pelo Motor. |
+| **Family** | `dependentsAges` | `int[]`| Não | Array. Usado se o motor necessitar abater Gaps de cobertura baseadas na longevidade das crianças ate os 18-24 anos. |
+| **Operacional**| `originChannel` | `string`| **Sim** | Marcador de leads de Marketing pra Corretora. |
+| **Operacional**| `hasExplicitActiveConsent`| `bool` | **Sim** | **BARREIRA LGPD**. Se for enviado `false` ou omitido, todas as operações somem e o motor quebra propositalmente devolvendo um `{ "errorCode": "CONSENT_REQUIRED" }`. Protege sua empresa de processar dados acidentais. |
+| **Operacional**| `consentId` | `string`| **Sim** | Referência física/URL ao PDF do termo assinado no momento da captura. |
+| **Operacional**| `tenantId` | `uuid` | **Sim** | O seu Token único B2B de ambiente do LifeTrigger. |
+| **Operacional**| `recentLifeTrigger` | `bool` | Não | Acionadores Vitais (Casou semana passada? Teve filho?). Se enviado `true`, engatilha overrides automáticos na matemática, transformando imediatamente a ação matemática lógica para `REVISAR`. |
+
+---
+
+### A Resposta Recebida (Response 200 OK)
+
+A API retornará os cálculos imutáveis. Sua aplicação fará o Puxar destas tags para engatilhar as filhas de ligação de Call Center dos Corretores ou emitir a cotação correta no app.
+
+```json
+{
+  "recommendedCoverage": 900000.0,
+  "protectionGap": 800000.0,
+  "protectionGapPercentage": 88.88,
+  "healthScore": 40,
+  "riskClassification": "CRITICO",
+  "recommendedAction": "AUMENTAR",
+  "justification": "O cliente possui grande parte da renda desprotegida considerando seus dependentes e passivos (dívidas)....",
+  "regras_aplicadas": [
+    "RULE_PENALTY_HIGH_DEBT",
+    "RULE_PENALTY_LOW_COVERAGE_DEPENDENTS"
+  ]
+}
+```
+
+#### Dicionário de Campos do Response:
+
+*   **`recommendedCoverage` (Decimal):** O montante matemático ideal apurado que a pessoa **deveria ter**. (Ex: Devia ter R$ 900.000).
+*   **`protectionGap` (Decimal):** O buraco exato (Valor Ideal - Valor Corrente - Dívidas - Reservas).
+*   **`protectionGapPercentage` (Double):** Quantos % a família está desprotegida hoje (0 a 100%).
+*   **`riskClassification` (Enum):** A situação da Saúde.
+    *   `CRITICO`: Urgência Imediata de Proteção (Gaps altíssimos > 25%).
+    *   `ATENCAO`: Cliente tem excesso de Seguros (Gaps < -20%), pagando taxas altas mensais podendo sofrer downgrade ("REDUZIR") a favorções de outros produtos.
+    *   `ADEQUADO`: Exato liminar da necessidade do lar.
+*   **`recommendedAction` (Enum):** Ação OBRIGATÓRIA para o CRM do Corretor.
+    *   `AUMENTAR`: Mandar e-mail de venda nova.
+    *   `REDUZIR`: Cliente super-faturado (Risco moral ou venda predatória passada de outros bancos).
+    *   `MANTER`: Cliente blindado. Retenção ativa (Cross-sell de outros produtos financeiros permitida).
+    *   `REVISAR`: Houve um `recentLifeTrigger`. Uma ligação consultiva "Check-in" deve ocorrer imediatamente.
+*   **`regras_aplicadas` (Array de Strings):** As Tags internas que montaram o veredito matemático. A sua corretora pode cruzar e mostrar essas tags visualmente na plataforma, ex: Se contém `RULE_PENALTY_HIGH_DEBT`, mostramos o ícone "❌ Cuidado com seu Financiamento".
+
+> **Nota:** Um header `X-Evaluation-Id` (UUID) será enviado na resposta. Guarde-o no sistema de vocês em caso de eventuais necessidades de Auditoria.
+
+---
+
+## 🔍 Recuperando a Avaliação do Cliente (Detalhe)
+
+Caso o sistema do seu parceiro/corretor precise detalhar o histórico completo de uma Avaliação para exibi-la.
+
+### `GET /api/v1/evaluations/{id}`
+
+*O `id` é o `X-Evaluation-Id` resgatado no Header do Request POST.*
+
+**Exemplo de Resposta (Status 200):**
+Retorna o encapsulamento Universal da transação. Inclui a data-hora e quais pacotes o cliente enviou e qual a inteligência deduziu (Result).
+
+```json
+{
+  "id": "ae5b3762-b9e3-4d40-b6f7-418e28581e23",
+  "timestamp": "2026-02-24T12:00:00Z",
+  "engineVersion": "1.0.0",
+  "ruleSetVersion": "2026.02",
+  "request": { /* Cópia do Input original Pessoal, Financeiro e Familiar */ },
+  "result": { /* Cópia exata do Output de RiskClassification e RecommendedAction gerado na época */ }
+}
+```
+
+---
+
+## 📊 Extraindo Métricas Globais (Pilot / C-Level Dashboards)
+
+Extremamente poderoso em fases experimentais, sua liderança pode auditar o sucesso dos engajamentos gerados via motor chamando:
+
+### `GET /api/v1/admin/reports/pilot?tenantId={SEU_TENANT_ID}&startDate={2026-01-01}&endDate={2026-02-28}`
+
+Esta via gera métricas matematicamente puras das vulnerabilidades da base da corretora testada **Sem quebrar nenhuma lei PII (LGPD)** (não devolve nomes, nem os valores literais de salário dos requerentes, blindando 100% vazamentos de banco).
+
+**Exemplo de Resposta:**
+```json
+{
+  "tenantId": "A1A1A1A1-...",
+  "period": { "start": "2026-01-01T00:00:00Z", "end": "2026-02-28T00:00:00Z" },
+  "totalEvaluations": 134,
+  "metrics": {
+    "riskDistribution": {
+      "CRITICO": 98,
+      "ADEQUADO": 12,
+      "ATENCAO": 24
+    },
+    "actionDistribution": {
+      "AUMENTAR": 98,
+      "MANTER": 12,
+      "REDUZIR": 10,
+      "REVISAR": 14
+    },
+    "evaluationsWithRecentLifeTrigger": 4
+  }
+}
+```
+*Interpretando:* Em quase 100 propostas fechadas, o motor conseguiu embasar matematicamente 98 vendas reais de *Up-sell/Cross-Sell* (`AUMENTAR`), garantindo eficiência máxima ao departamento de Operações de Venda da corretora.

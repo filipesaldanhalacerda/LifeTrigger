@@ -13,6 +13,9 @@ using LifeTrigger.Engine.Api.Filters;
 
 namespace LifeTrigger.Engine.Api.Controllers;
 
+/// <summary>
+/// Trata das rotas universais de submissão do Core de Gatilhos e Motor Matemático.
+/// </summary>
 [ApiController]
 [Route("api/v1/[controller]")]
 public class EvaluationsController : ControllerBase
@@ -34,6 +37,15 @@ public class EvaluationsController : ControllerBase
         _auditLogger = auditLogger;
     }
 
+    /// <summary>
+    /// Calcula o Gap de Proteção e Recomendações de Ação.
+    /// </summary>
+    /// <remarks>
+    /// O motor usa Renda, Dívidas e Dependentes para gerar matematicamente um diagnóstico inquestionável e imutável.
+    /// Exige um Cabeçalho (Header) Idempotency-Key para prevenir ataques ou reenvios duplos.
+    /// </remarks>
+    /// <param name="request">Payload contendo os dados Pessoais, Financeiros e Familiares.</param>
+    /// <returns>Resultado analítico detalhado do risco e ações a tomar.</returns>
     [HttpPost]
     [TypeFilter(typeof(IdempotencyFilterAttribute))]
     [ProducesResponseType(typeof(LifeInsuranceAssessmentResult), 200)]
@@ -81,6 +93,11 @@ public class EvaluationsController : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>
+    /// Resgata o histórico detalhado de uma Avaliação gerada no passado.
+    /// </summary>
+    /// <param name="id">ID (X-Evaluation-Id) da avaliação recebido no POST original.</param>
+    /// <returns>Objeto contendo o Ponto no Tempo (Input original e Result gerado).</returns>
     [HttpGet("{id}")]
     [ProducesResponseType(typeof(EvaluationRecord), 200)]
     [ProducesResponseType(404)]
@@ -94,6 +111,14 @@ public class EvaluationsController : ControllerBase
         return Ok(record);
     }
 
+    /// <summary>
+    /// Endpoint Administrativo: Verifica a Integridade Criptográfica (Auditoria).
+    /// </summary>
+    /// <remarks>
+    /// Recalcula dinamicamente a cadeia de input e regra, confrontando Hash256 para prevenir edição forçada em Banco de Dados.
+    /// </remarks>
+    /// <param name="id">O ID da avaliação a ser periciada.</param>
+    /// <returns>PASS ou FAIL denotando integridade inquebrável.</returns>
     [HttpGet("/api/v1/admin/audit/evaluations/{id}/verify")]
     [ProducesResponseType(typeof(object), 200)]
     [ProducesResponseType(404)]
@@ -121,6 +146,14 @@ public class EvaluationsController : ControllerBase
         });
     }
 
+    /// <summary>
+    /// Endpoint Administrativo: Limpa os Locatários Demonstrativos (Demo).
+    /// </summary>
+    /// <remarks>
+    /// Protegido estritamente para não apagar Tenants reais de produção.
+    /// </remarks>
+    /// <param name="tenantId">UUID do ambiente Demo a ser deletado.</param>
+    /// <returns>Quantidade de registros apagados.</returns>
     [HttpDelete("/api/v1/admin/demo-environments/tenants/{tenantId}")]
     [ProducesResponseType(typeof(object), 200)]
     public async Task<IActionResult> CleanDemoTenant(Guid tenantId)
@@ -143,6 +176,16 @@ public class EvaluationsController : ControllerBase
         });
     }
 
+    /// <summary>
+    /// Endpoint de Telemetria: Retorna Análise Agregada do Piloto (Dashboard C-Level).
+    /// </summary>
+    /// <remarks>
+    /// Gera distribuições de Risco (CRITICO/ADEQUADO) isoladas por Tenant, sem expor PII.
+    /// </remarks>
+    /// <param name="tenantId">ID do Tenant de Isolamento Comercial.</param>
+    /// <param name="startDate">Data Inicial Opcional</param>
+    /// <param name="endDate">Data Final Opcional</param>
+    /// <returns>Grupos Agregados de Venda (AUMENTAR/MANTER)</returns>
     [HttpGet("/api/v1/admin/reports/pilot")]
     [ProducesResponseType(typeof(object), 200)]
     public async Task<IActionResult> GetPilotReport([FromQuery] Guid tenantId, [FromQuery] DateTimeOffset? startDate, [FromQuery] DateTimeOffset? endDate)
