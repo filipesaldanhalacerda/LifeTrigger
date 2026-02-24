@@ -55,9 +55,11 @@ components:
               example: 30
             maritalStatus:
               type: string
-              example: "SOLTEIRO"
+              enum: [SOLTEIRO, CASADO, DIVORCIADO, VIUVO]
+              example: "CASADO"
             professionRiskLevel:
               type: string
+              enum: [BAIXO, MEDIO, ALTO, MUITO_ALTO]
               example: "BAIXO"
             isSmoker:
               type: boolean
@@ -147,9 +149,11 @@ components:
           example: 0
         riskClassification:
           type: string
+          enum: [CRITICO, MODERADO, ADEQUADO]
           example: "CRITICO"
         recommendedAction:
           type: string
+          enum: [AUMENTAR, MANTER, REDUZIR, REVISAR]
           example: "AUMENTAR"
         regrasAplicadas:
           type: array

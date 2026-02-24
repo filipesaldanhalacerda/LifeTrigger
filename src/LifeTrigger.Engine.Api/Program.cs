@@ -1,5 +1,7 @@
 using System.IO;
 using System.Reflection;
+using System.Linq;
+using Microsoft.AspNetCore.Mvc;
 using System.Text.Json.Serialization;
 using LifeTrigger.Engine.Application;
 using LifeTrigger.Engine.Infrastructure;
@@ -21,6 +23,31 @@ builder.Services.AddControllers()
         // Serialize enums as string
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
+
+// Substituir o retorno padrão 400 (RFC 9110) do ASP.NET Core pela tipagem oficial da nossa API
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.InvalidModelStateResponseFactory = context =>
+    {
+        var errors = context.ModelState
+            .Where(e => e.Value != null && e.Value.Errors.Count > 0)
+            .Select(e => new 
+            {
+                field = e.Key,
+                message = e.Value!.Errors.First().ErrorMessage
+            })
+            .ToArray();
+
+        var result = new
+        {
+            error_code = "VALIDATION_ERROR",
+            message = "Os dados fornecidos (tipos, enums ou formatos) não são válidos e foram rejeitados pela validação de entrada.",
+            details = errors
+        };
+
+        return new BadRequestObjectResult(result);
+    };
+});
     
 builder.Services.AddMemoryCache();
 

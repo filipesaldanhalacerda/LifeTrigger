@@ -16,11 +16,15 @@ Esta API foi projetada para ser consumida diretamente pelo back-end ou front-end
 
 Antes de listar os endpoints, é crucial entender os Enums e Blocos Lógicos exigidos pela plataforma.
 
-### Enums Base
-*   **Estado Civil (`maritalStatus`)**: `SOLTEIRO`, `CASADO`, `UNIAO_ESTAVEL`, `DIVORCIADO`, `VIUVO`
-*   **Risco da Profissão (`professionRiskLevel`)**: `BAIXO`, `MEDIO`, `ALTO`, `EXTREMO`
+### Dicionário de Enums (Valores literais exatos)
+Os fluxos rejeitarão (HTTP 400 Validation Error) qualquer valor fora dos mapeamentos abaixo, exigindo exatamente o formato listado:
+
+*   **Estado Civil (`maritalStatus`)**: `SOLTEIRO`, `CASADO`, `DIVORCIADO`, `VIUVO`
+*   **Risco da Profissão (`professionRiskLevel`)**: `BAIXO`, `MEDIO`, `ALTO`, `MUITO_ALTO` (Atenção: A falta de mapeamento correto trava a requisição).
 *   **Tipo de Seguro Atual (`policyType`)**: `TEMPORARIO`, `VIDA_INTEIRA`, `ACIDENTES_PESSOAIS`, `DESCONHECIDO`
-*   **Canal de Origem (`originChannel`)**: Qualquer string que identifique a fonte do Lead para relatórios internos da corretora. Ex: `"LANDING_PAGE_VIP"`, `"WHATSAPP_BOT"`, `"APP_CORRETORA"`.
+*   **Ação Recomendada (`recommendedAction`) (Retorno Principal)**: `AUMENTAR`, `MANTER`, `REDUZIR`, `REVISAR`
+*   **Classificação de Risco (`riskClassification`) (Retorno de Score)**: `CRITICO`, `MODERADO`, `ADEQUADO`
+*   **Canal de Origem (`originChannel`)**: Qualquer string livre que identifique a fonte do Lead para relatórios internos da corretora. Ex: `"ASSESSOR"`, `"WHATSAPP_BOT"`, `"APP_CORRETORA"`.
 
 ---
 
