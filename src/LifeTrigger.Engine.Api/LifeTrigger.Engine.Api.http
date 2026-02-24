@@ -1,0 +1,99 @@
+@EngineApi_HostAddress = http://localhost:5086
+@DemoTenantAlpha = A1A1A1A1-A1A1-A1A1-A1A1-A1A1A1A1A1A1
+@DemoTenantBeta = B2B2B2B2-B2B2-B2B2-B2B2-B2B2B2B2B2B2
+
+// A variável abaixo captura o ID da avaliação gerada no POST automaticamente
+@EvaluationId = {{createNewEvaluation.response.headers.X-Evaluation-Id}}
+
+### 1. Criar uma nova Avaliação (Exemplo: Precisa AUMENTAR cobertura)
+# @name createNewEvaluation
+POST {{EngineApi_HostAddress}}/api/v1/evaluations
+Content-Type: application/json
+Idempotency-Key: test-demo-idempotency-key-001
+
+{
+  "personalContext": {
+    "age": 35,
+    "maritalStatus": "CASADO",
+    "professionRiskLevel": "MEDIO",
+    "isSmoker": false
+  },
+  "financialContext": {
+    "monthlyIncome": {
+      "exactValue": 12000
+    },
+    "emergencyFundMonths": 1,
+    "debts": {
+      "totalAmount": 150000,
+      "remainingTermMonths": 48
+    },
+    "currentLifeInsurance": {
+      "coverageAmount": 50000,
+      "policyType": "TEMPORARIO"
+    }
+  },
+  "familyContext": {
+    "dependentsCount": 2,
+    "dependentsAges": [5, 8]
+  },
+  "operationalData": {
+    "originChannel": "SITE_CORRETORA",
+    "hasExplicitActiveConsent": true,
+    "consentId": "lgpd-term-12345",
+    "tenantId": "{{DemoTenantAlpha}}"
+  }
+}
+
+### 2. Testar Idempotência (Execute esta chamada logo em seguida)
+# Você verá que ela retorna a mesma resposta sem recalcular ou duplicar no banco.
+POST {{EngineApi_HostAddress}}/api/v1/evaluations
+Content-Type: application/json
+Idempotency-Key: test-demo-idempotency-key-001
+
+{
+  "personalContext": { "age": 35, "maritalStatus": "CASADO", "professionRiskLevel": "MEDIO", "isSmoker": false },
+  "financialContext": { "monthlyIncome": { "exactValue": 12000 }, "emergencyFundMonths": 1, "debts": { "totalAmount": 150000 }, "currentLifeInsurance": { "coverageAmount": 50000 } },
+  "familyContext": { "dependentsCount": 2 },
+  "operationalData": { "originChannel": "SITE_CORRETORA", "hasExplicitActiveConsent": true, "consentId": "lgpd-term-12345", "tenantId": "{{DemoTenantAlpha}}" }
+}
+
+### 3. Testar erro de LGPD (Consentimento Falso = Error 422)
+POST {{EngineApi_HostAddress}}/api/v1/evaluations
+Content-Type: application/json
+Idempotency-Key: erro-lgpd-test-01
+
+{
+  "personalContext": { "age": 30, "maritalStatus": "SOLTEIRO", "professionRiskLevel": "BAIXO", "isSmoker": false },
+  "financialContext": { "monthlyIncome": { "exactValue": 5000 } },
+  "familyContext": { "dependentsCount": 0 },
+  "operationalData": {
+    "originChannel": "APP",
+    "hasExplicitActiveConsent": false,
+    "consentId": "nao-aceitou",
+    "tenantId": "{{DemoTenantAlpha}}"
+  }
+}
+
+### 4. Consultar Avaliação Criada (Puxando o ID gerado no passo 1)
+GET {{EngineApi_HostAddress}}/api/v1/evaluations/{{EvaluationId}}
+Accept: application/json
+
+
+### 5. Verificar Integridade Criptográfica (Auditoria Admin)
+GET {{EngineApi_HostAddress}}/api/v1/admin/audit/evaluations/{{EvaluationId}}/verify
+Accept: application/json
+
+
+### 6. Consultar Relatório do Piloto (DemoTenantAlpha)
+GET {{EngineApi_HostAddress}}/api/v1/admin/reports/pilot?tenantId={{DemoTenantAlpha}}
+Accept: application/json
+
+
+### 7. Verões do Motor Ativas
+GET {{EngineApi_HostAddress}}/api/v1/engine/versions
+Accept: application/json
+
+
+### 8. Limpar o Ambiente Demo (Deletar dados do DemoTenantAlpha)
+DELETE {{EngineApi_HostAddress}}/api/v1/admin/demo-environments/tenants/{{DemoTenantAlpha}}
+Accept: application/json

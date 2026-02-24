@@ -1,0 +1,27 @@
+{
+  "recommendedCoverageAmount": 540000,
+  "currentCoverageAmount": 5000000,
+  "protectionGapAmount": -4460000,
+  "protectionGapPercentage": -825.9259259259259259259259259,
+  "protectionScore": 100,
+  "riskClassification": "ADEQUADO",
+  "recommendedAction": "REDUZIR",
+  "regrasAplicadas": [
+    "RULE_INCOME_REPLACEMENT_NO_DEPENDENTS",
+    "RULE_TRANSITION_RESERVE_WITH_FUND"
+  ],
+  "justificativas": [
+    "Substitui\u00E7\u00E3o de renda baseada em 2 anos devido \u00E0 aus\u00EAncia de dependentes.",
+    "Reserva de transi\u00E7\u00E3o calculada em 3 meses considerando a reserva de emerg\u00EAncia atual de 12 meses."
+  ],
+  "audit": {
+    "engineVersion": "1.0.0",
+    "ruleSetVersion": "2026.02",
+    "appliedRules": [
+      "RULE_INCOME_REPLACEMENT_NO_DEPENDENTS",
+      "RULE_TRANSITION_RESERVE_WITH_FUND"
+    ],
+    "timestamp": "0001-01-01T00:00:00+00:00",
+    "consentId": "consent-128"
+  }
+}

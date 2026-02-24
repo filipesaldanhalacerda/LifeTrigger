@@ -1,0 +1,39 @@
+{
+  "recommendedCoverageAmount": 836000,
+  "currentCoverageAmount": 50000,
+  "protectionGapAmount": 786000,
+  "protectionGapPercentage": 94.01913875598086124401913876,
+  "protectionScore": 0,
+  "riskClassification": "CRITICO",
+  "recommendedAction": "AUMENTAR",
+  "regrasAplicadas": [
+    "RULE_INCOME_REPLACEMENT_WITH_DEPENDENTS",
+    "RULE_DEBT_CLEARANCE_FULL",
+    "RULE_TRANSITION_RESERVE_WITH_FUND",
+    "RULE_PENALTY_LOW_COVERAGE_DEPENDENTS",
+    "RULE_PENALTY_HIGH_DEBT",
+    "RULE_PENALTY_NO_EMERGENCY_FUND"
+  ],
+  "justificativas": [
+    "Substitui\u00E7\u00E3o de renda baseada em 7 anos para suprir necessidades de 2 dependente(s).",
+    "Quita\u00E7\u00E3o integral de d\u00EDvidas no valor de R$ 100.000,00.",
+    "Reserva de transi\u00E7\u00E3o calculada em 8 meses considerando a reserva de emerg\u00EAncia atual de 1 meses.",
+    "Penalidade de 10 pontos aplicada no score devido \u00E0 baixa cobertura com dependentes.",
+    "Penalidade de 10 pontos aplicada no score devido ao alto n\u00EDvel de endividamento (\u003E 50% da renda anual).",
+    "Penalidade de 10 pontos aplicada no score devido \u00E0 aus\u00EAncia de reserva de emerg\u00EAncia m\u00EDnima (3 meses)."
+  ],
+  "audit": {
+    "engineVersion": "1.0.0",
+    "ruleSetVersion": "2026.02",
+    "appliedRules": [
+      "RULE_INCOME_REPLACEMENT_WITH_DEPENDENTS",
+      "RULE_DEBT_CLEARANCE_FULL",
+      "RULE_TRANSITION_RESERVE_WITH_FUND",
+      "RULE_PENALTY_LOW_COVERAGE_DEPENDENTS",
+      "RULE_PENALTY_HIGH_DEBT",
+      "RULE_PENALTY_NO_EMERGENCY_FUND"
+    ],
+    "timestamp": "0001-01-01T00:00:00+00:00",
+    "consentId": "consent-125"
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "recommendedCoverageAmount": 270000,
+  "currentCoverageAmount": 250000,
+  "protectionGapAmount": 20000,
+  "protectionGapPercentage": 7.4074074074074074074074074100,
+  "protectionScore": 93,
+  "riskClassification": "ADEQUADO",
+  "recommendedAction": "REVISAR",
+  "regrasAplicadas": [
+    "RULE_INCOME_REPLACEMENT_NO_DEPENDENTS",
+    "RULE_TRANSITION_RESERVE_WITH_FUND",
+    "RULE_ACTION_OVERRIDE_OLD_REVIEW"
+  ],
+  "justificativas": [
+    "Substitui\u00E7\u00E3o de renda baseada em 2 anos devido \u00E0 aus\u00EAncia de dependentes.",
+    "Reserva de transi\u00E7\u00E3o calculada em 3 meses considerando a reserva de emerg\u00EAncia atual de 6 meses.",
+    "A\u00E7\u00E3o alterada para REVISAR devido \u00E0 \u00FAltima revis\u00E3o ter ocorrido h\u00E1 mais de 12 meses."
+  ],
+  "audit": {
+    "engineVersion": "1.0.0",
+    "ruleSetVersion": "2026.02",
+    "appliedRules": [
+      "RULE_INCOME_REPLACEMENT_NO_DEPENDENTS",
+      "RULE_TRANSITION_RESERVE_WITH_FUND",
+      "RULE_ACTION_OVERRIDE_OLD_REVIEW"
+    ],
+    "timestamp": "0001-01-01T00:00:00+00:00",
+    "consentId": "consent-130"
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "recommendedCoverageAmount": 750000,
+  "currentCoverageAmount": 0,
+  "protectionGapAmount": 750000,
+  "protectionGapPercentage": 100,
+  "protectionScore": 0,
+  "riskClassification": "CRITICO",
+  "recommendedAction": "REVISAR",
+  "regrasAplicadas": [
+    "RULE_INCOME_REPLACEMENT_WITH_DEPENDENTS",
+    "RULE_TRANSITION_RESERVE_WITH_FUND",
+    "RULE_ACTION_OVERRIDE_RECENT_TRIGGER",
+    "RULE_PENALTY_LOW_COVERAGE_DEPENDENTS"
+  ],
+  "justificativas": [
+    "Substitui\u00E7\u00E3o de renda baseada em 6 anos para suprir necessidades de 1 dependente(s).",
+    "Reserva de transi\u00E7\u00E3o calculada em 3 meses considerando a reserva de emerg\u00EAncia atual de 6 meses.",
+    "A\u00E7\u00E3o alterada para REVISAR devido \u00E0 ocorr\u00EAncia de um gatilho de vida recente.",
+    "Penalidade de 10 pontos aplicada no score devido \u00E0 baixa cobertura com dependentes."
+  ],
+  "audit": {
+    "engineVersion": "1.0.0",
+    "ruleSetVersion": "2026.02",
+    "appliedRules": [
+      "RULE_INCOME_REPLACEMENT_WITH_DEPENDENTS",
+      "RULE_TRANSITION_RESERVE_WITH_FUND",
+      "RULE_ACTION_OVERRIDE_RECENT_TRIGGER",
+      "RULE_PENALTY_LOW_COVERAGE_DEPENDENTS"
+    ],
+    "timestamp": "0001-01-01T00:00:00+00:00",
+    "consentId": "consent-131"
+  }
+}

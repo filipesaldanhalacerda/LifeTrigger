@@ -1,0 +1,363 @@
+openapi: 3.0.3
+info:
+  title: LifeTrigger Engine API
+  version: 1.0.0
+  description: >
+    API determinística para cálculo de necessidade de Seguro de Vida, Score de Proteção e Gap.
+    Não utiliza Inteligência Artificial nas regras centrais.
+    Totalmente stateless, auditável e segura.
+servers:
+  - url: https://api.lifetrigger.example.com/api/v1
+    description: Production Server
+  - url: http://localhost:3000/api/v1
+    description: Local Development
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Token JWT para autenticação.
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error_code:
+          type: string
+          example: "VALIDATION_ERROR"
+        message:
+          type: string
+          example: "Os dados fornecidos não são válidos."
+        details:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+                example: "renda_mensal"
+              message:
+                type: string
+                example: "A renda mensal é obrigatória e deve ser maior que zero."
+    EvaluationRequest:
+      type: object
+      required:
+        - idade
+        - renda_mensal
+        - dependentes_qtd
+        - dependentes_idades
+        - dividas_total
+        - cobertura_atual
+        - canal_origem
+        - consentimento_ativo
+      properties:
+        idade:
+          type: integer
+          example: 30
+        renda_mensal:
+          type: number
+          format: float
+          example: 10000.00
+        dependentes_qtd:
+          type: integer
+          example: 2
+        dependentes_idades:
+          type: array
+          items:
+            type: integer
+          example: [3, 5]
+        estado_civil:
+          type: string
+          enum: [SOLTEIRO, CASADO, DIVORCIADO, VIUVO]
+          example: "CASADO"
+        profissao_risco:
+          type: string
+          enum: [BAIXO, MEDIO, ALTO]
+          example: "BAIXO"
+        fumante:
+          type: boolean
+          example: false
+        dividas_total:
+          type: number
+          format: float
+          example: 50000.00
+        prazo_dividas:
+          type: integer
+          description: "Prazo médio das dívidas em meses"
+          example: 36
+        reserva_emergencia_meses:
+          type: integer
+          example: 6
+        cobertura_atual:
+          type: number
+          format: float
+          example: 250000.00
+        ultima_revisao_em:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:00:00Z"
+        canal_origem:
+          type: string
+          example: "APP_MOBILE"
+        consentimento_ativo:
+          type: boolean
+          example: true
+    EvaluationResponse:
+      type: object
+      properties:
+        evaluation_id:
+          type: string
+          format: uuid
+          example: "d290f1ee-6c54-4b01-90e6-d701748f0851"
+        cobertura_recomendada:
+          type: number
+          format: float
+          example: 870000.00
+        gap_valor:
+          type: number
+          format: float
+          example: 620000.00
+        gap_percentual:
+          type: number
+          format: float
+          example: 71.26
+        score_protecao:
+          type: integer
+          example: 28
+        classificacao_risco:
+          type: string
+          enum: [CRITICO, MODERADO, ADEQUADO]
+          example: "CRITICO"
+        acao_recomendada:
+          type: string
+          enum: [AUMENTAR, MANTER, REDUZIR, REVISAR]
+          example: "AUMENTAR"
+        regras_aplicadas:
+          type: array
+          description: "Lista rigorosa dos identificadores das regras matemáticas disparadas nesta avaliação (ex: MAX_CAP_20X, NO_EMERGENCY_FUND)."
+          items:
+            type: string
+          example:
+            - "RULE_INCOME_REP_7Y"
+            - "RULE_PENALTY_NO_DEPENDENTS_COVERAGE"
+        justificativas:
+          type: array
+          items:
+            type: string
+          example: 
+            - "Substituição de renda baseada em 7 anos para suprir necessidades de 2 dependente(s)."
+            - "Penalidade de 10 pontos aplicada no score devido à baixa cobertura com dependentes."
+        engine_version:
+          type: string
+          example: "1.0.0"
+        ruleset_version:
+          type: string
+          example: "2026.02"
+        executed_at:
+          type: string
+          format: date-time
+          example: "2026-02-24T06:55:00Z"
+        audit_reference_id:
+          type: string
+          example: "audit-evt-9908123"
+    TriggerEventRequest:
+      type: object
+      required:
+        - trigger_type
+        - base_request
+      properties:
+        trigger_type:
+          type: string
+          enum: 
+            - RENDA_SUBIU
+            - NASCEU_FILHO
+            - CASOU
+            - DIVORCIO
+            - FINANCIAMENTO_NOVO
+            - MUDOU_EMPRESA
+            - REVISAO_ANUAL
+          example: "NASCEU_FILHO"
+        description:
+          type: string
+          example: "Nascimento do segundo filho."
+        event_date:
+          type: string
+          format: date-time
+          example: "2026-02-20T00:00:00Z"
+        base_request:
+          $ref: '#/components/schemas/EvaluationRequest'
+    EngineVersionResponse:
+      type: object
+      properties:
+        engine_version:
+          type: string
+          example: "1.0.0"
+        ruleset_version:
+          type: string
+          example: "2026.02"
+        description:
+          type: string
+          example: "LifeTrigger Engine Deterministic Rules"
+
+security:
+  - BearerAuth: []
+
+paths:
+  /evaluations:
+    post:
+      summary: Executar avaliação completa
+      description: Processa os dados de contexto do cliente e retorna a recomendação determinística do Seguro de Vida.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EvaluationRequest'
+      responses:
+        '200':
+          description: "Avaliação executada com sucesso"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvaluationResponse'
+        '400':
+          description: "Erro de validação nos dados fornecidos"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: "Não autorizado (Token JWT inválido ou ausente)"
+        '422':
+          description: "Entidade não processável (Ex: consentimento_ativo falso)"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error_code: "CONSENT_REQUIRED"
+                message: "O consentimento ativo é obrigatório para realizar a avaliação."
+                details: []
+        '500':
+          description: "Erro interno do servidor"
+
+  /evaluations/{evaluationId}:
+    get:
+      summary: Recuperar avaliação passada
+      description: Recupera o registro imutável de uma avaliação garantindo total reprodutibilidade.
+      parameters:
+        - name: evaluationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: "Avaliação recuperada com sucesso"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  original_request:
+                    $ref: '#/components/schemas/EvaluationRequest'
+                  result:
+                    $ref: '#/components/schemas/EvaluationResponse'
+        '401':
+          description: "Não autorizado"
+        '404':
+          description: "Avaliação não encontrada"
+
+  /admin/audit/evaluations/{evaluationId}/verify:
+    get:
+      summary: Verificação Criptográfica da Avaliação
+      description: Rota restrita para auditores recálcular e comparar o Hash SHA-256 de uma requisição salva, garantindo que o algoritmo e o estado financeiro do cliente não sofreram adulterações no log.
+      parameters:
+        - name: evaluationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: "Verificação de integridade concluída"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  status:
+                    type: string
+                    enum: [PASS, FAIL]
+                  expected_hash:
+                    type: string
+                    example: "a8b7c9..."
+                  actual_hash:
+                    type: string
+                    example: "a8b7c9..."
+        '401':
+          description: "Não autorizado (Não é admin)"
+        '404':
+          description: "Avaliação não encontrada"
+
+  /triggers:
+    post:
+      summary: Registrar gatilho de vida
+      description: Registra um evento de vida (Life Trigger) e retorna uma nova avaliação atualizada, forçando o status de REVISAR e incorporando no histórico.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TriggerEventRequest'
+      responses:
+        '200':
+          description: "Gatilho processado e avaliação secundária gerada"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvaluationResponse'
+        '400':
+          description: "Erro de validação"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: "Não autorizado"
+        '422':
+          description: "Regra de negócio impediu o processamento do gatilho (Ex: consentimento revogado)"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error_code: "CONSENT_REQUIRED"
+                message: "O consentimento ativo é obrigatório para registrar gatilhos."
+                details: []
+        '500':
+          description: "Erro interno do servidor"
+
+  /engine/versions:
+    get:
+      summary: "Listar versões do motor"
+      description: "Retorna a versão do motor de regras e configurações vigentes associadas à avaliação."
+      responses:
+        '200':
+          description: "Versões retornadas com sucesso"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EngineVersionResponse'
+        '401':
+          description: "Não autorizado"
+        '500':
+          description: "Erro interno do servidor"
