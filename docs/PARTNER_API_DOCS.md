@@ -19,7 +19,7 @@ Antes de listar os endpoints, é crucial entender os Enums e Blocos Lógicos exi
 ### Enums Base
 *   **Estado Civil (`maritalStatus`)**: `SOLTEIRO`, `CASADO`, `UNIAO_ESTAVEL`, `DIVORCIADO`, `VIUVO`
 *   **Risco da Profissão (`professionRiskLevel`)**: `BAIXO`, `MEDIO`, `ALTO`, `EXTREMO`
-*   **Tipo de Seguro Atual (`policyType`)**: `TEMPORARIO`, `VITALICIO`
+*   **Tipo de Seguro Atual (`policyType`)**: `TEMPORARIO`, `VIDA_INTEIRA`, `ACIDENTES_PESSOAIS`, `DESCONHECIDO`
 *   **Canal de Origem (`originChannel`)**: Qualquer string que identifique a fonte do Lead para relatórios internos da corretora. Ex: `"LANDING_PAGE_VIP"`, `"WHATSAPP_BOT"`, `"APP_CORRETORA"`.
 
 ---
