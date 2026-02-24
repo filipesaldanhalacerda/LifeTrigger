@@ -8,6 +8,8 @@ using LifeTrigger.Engine.Domain.Enums;
 using LifeTrigger.Engine.Domain.Requests;
 using Xunit;
 
+using LifeTrigger.Engine.Infrastructure.Providers;
+
 namespace LifeTrigger.Engine.Tests;
 
 public class LifeInsuranceCalculatorTests
@@ -16,7 +18,7 @@ public class LifeInsuranceCalculatorTests
 
     public LifeInsuranceCalculatorTests()
     {
-        _sut = new LifeInsuranceCalculator();
+        _sut = new LifeInsuranceCalculator(new DefaultEngineContext(), new DefaultRuleJustificationProvider());
     }
 
     private LifeInsuranceAssessmentRequest CreateBaseRequest(
@@ -128,7 +130,7 @@ public class LifeInsuranceCalculatorTests
     [Fact]
     public void Calculate_TransitionReserve_WithEmergencyFund_CalculatesBufferCorrectly()
     {
-        // Assemble - 4 months of fund -> buffer = 9 - 4 = 5 months.
+        // Assemble - 4 months of fund -> clampedDefaultBuffer = 6. buffer = Math.Max(3, 6 - 4) = 3 months.
         var request = CreateBaseRequest(monthlyIncome: 10000m, emergencyFundMonths: 4);
 
         // Act
@@ -136,10 +138,10 @@ public class LifeInsuranceCalculatorTests
 
         // Assert
         // Renda Anual = 120k * 2 (no deps) = 240k
-        // Transição = 10k * 5 meses = 50k
-        // Total = 290k
-        result.RecommendedCoverageAmount.Should().Be(290000m);
-        result.Audit.AppliedRules.Should().Contain("RULE_TRANSITION_RESERVE_WITH_FUND");
+        // Transição = 10k * 3 meses = 30k
+        // Total = 270k
+        result.RecommendedCoverageAmount.Should().Be(270000m);
+        result.Audit.AppliedRules.Should().Contain(EngineRules.TransitionReserveWithFund);
     }
 
     [Fact]
@@ -259,11 +261,26 @@ public class LifeInsuranceCalculatorTests
     [Fact]
     public void Calculate_Score_Penalties_HighDebtAndNoFund()
     {
-        // Assemble (Rec: x, Cur: x) Base Score = 100%. Debt > 50% income. Fund = 2 months. Expected penalities = -20
-        var request = CreateRequestWithOverrides(debtAmount: 80000m /* > 60k (half annual 120k) */, emergencyFundMonths: 2, currentCoverage: 10000000m); // overinsured to get base 100
+        // Assemble 
+        // We want a base score of 100. If we overinsure, the deferred score clamp 
+        // will absorb the penalty. So we must have exactly current == recommended.
+        // Debt > 50% income. Fund = 2 months. Expected penalities = -20
+        var request = CreateRequestWithOverrides(debtAmount: 80000m, emergencyFundMonths: 2, currentCoverage: 0m); 
+        
+        // Rec: 
+        // Income = 120k * 2 = 240k
+        // Trans = 10k * (6 - 2 = 4) = 40k
+        // Debt = 80k
+        // Total Rec = 360k
+        // Set current coverage to exactly 360k to yield gross score of 100 before penalties.
+        var finalRequest = request with { 
+            FinancialContext = request.FinancialContext with { 
+                CurrentLifeInsurance = new CurrentInsuranceData(360000m, PolicyType.TEMPORARIO) 
+            } 
+        };
         
         // Act
-        var result = _sut.Calculate(request);
+        var result = _sut.Calculate(finalRequest);
 
         // Assert
         // Base = 100
@@ -271,8 +288,8 @@ public class LifeInsuranceCalculatorTests
         // Pen Fund = -10
         // Expected = 80
         result.ProtectionScore.Should().Be(80);
-        result.Audit.AppliedRules.Should().Contain("RULE_PENALTY_HIGH_DEBT");
-        result.Audit.AppliedRules.Should().Contain("RULE_PENALTY_NO_EMERGENCY_FUND");
+        result.Audit.AppliedRules.Should().Contain(EngineRules.PenaltyHighDebt);
+        result.Audit.AppliedRules.Should().Contain(EngineRules.PenaltyNoEmergencyFund);
     }
 
 }

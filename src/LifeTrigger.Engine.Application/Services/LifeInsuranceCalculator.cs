@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using LifeTrigger.Engine.Application.Interfaces;
 using LifeTrigger.Engine.Domain.Constants;
 using LifeTrigger.Engine.Domain.Entities;
@@ -11,20 +10,24 @@ namespace LifeTrigger.Engine.Application.Services;
 
 public class LifeInsuranceCalculator : ILifeInsuranceCalculator
 {
+    private readonly IEngineContext _engineContext;
+    private readonly IRuleJustificationProvider _ruleJustificationProvider;
+
+    public LifeInsuranceCalculator(IEngineContext engineContext, IRuleJustificationProvider ruleJustificationProvider)
+    {
+        _engineContext = engineContext;
+        _ruleJustificationProvider = ruleJustificationProvider;
+    }
+
     public LifeInsuranceAssessmentResult Calculate(LifeInsuranceAssessmentRequest request, TenantSettings? tenantSettings = null)
     {
-        var appliedRules = new List<string>();
-        var justifications = new List<string>();
+        var evalContext = new EvaluationContext();
 
         decimal annualIncome = CalculateAnnualIncome(request.FinancialContext.MonthlyIncome);
 
-        decimal incomeReplacementAmount = CalculateIncomeReplacement(annualIncome, request.FamilyContext, appliedRules, justifications, tenantSettings);
-        decimal debtClearanceAmount = CalculateDebtClearance(request.FinancialContext.Debts, appliedRules, justifications);
-        decimal transitionReserveAmount = CalculateTransitionReserve(request.FinancialContext.MonthlyIncome, request.FinancialContext.EmergencyFundMonths, appliedRules, justifications, tenantSettings);
-
-        decimal rawRecommendedCoverage = incomeReplacementAmount + debtClearanceAmount + transitionReserveAmount;
-
-        decimal finalRecommendedCoverage = ApplyGuardrails(rawRecommendedCoverage, annualIncome, appliedRules, justifications, tenantSettings);
+        decimal rawRecommendedCoverage = CalculateCoverage(request, annualIncome, evalContext, tenantSettings);
+        
+        decimal finalRecommendedCoverage = ApplyGuardrails(rawRecommendedCoverage, annualIncome, evalContext, tenantSettings);
 
         decimal currentCoverage = request.FinancialContext.CurrentLifeInsurance?.CoverageAmount ?? 0m;
         
@@ -34,20 +37,20 @@ public class LifeInsuranceCalculator : ILifeInsuranceCalculator
             CurrentCoverageAmount = currentCoverage,
         };
 
-        var scoreAndClassification = CalculateScoreAndAction(partialResult, request, appliedRules, justifications);
+        var scoreAndClassification = DetermineScoreAndAction(partialResult, request, annualIncome, evalContext);
         
         return partialResult with 
         {
             ProtectionScore = scoreAndClassification.Score,
             RiskClassification = scoreAndClassification.Classification,
             RecommendedAction = scoreAndClassification.Action,
-            RegrasAplicadas = appliedRules,
-            Justificativas = justifications,
+            RegrasAplicadas = [.. evalContext.AppliedRules],
+            Justificativas = [.. evalContext.Justifications],
             Audit = new AuditMetadata(
-                EngineVersion: "1.0.0",
-                RuleSetVersion: "2026.02",
-                AppliedRules: appliedRules,
-                Timestamp: DateTimeOffset.UtcNow,
+                EngineVersion: _engineContext.EngineVersion,
+                RuleSetVersion: _engineContext.RuleSetVersion,
+                AppliedRules: [.. evalContext.AppliedRules],
+                Timestamp: _engineContext.CurrentTime,
                 ConsentId: request.OperationalData.ConsentId
             )
         };
@@ -55,21 +58,27 @@ public class LifeInsuranceCalculator : ILifeInsuranceCalculator
 
     private decimal CalculateAnnualIncome(IncomeData monthlyIncome)
     {
-        // For deterministic calculation, if exact value is null, a fallback strategy should be defined.
-        // For now, if null, we assume 0 or throw an exception if required.
-        // Assuming the exact value is provided based on the rules.
         return (monthlyIncome.ExactValue ?? 0m) * 12;
     }
 
-    private decimal CalculateIncomeReplacement(decimal annualIncome, FamilyContext familyContext, List<string> appliedRules, List<string> justifications, TenantSettings? settings)
+    private decimal CalculateCoverage(LifeInsuranceAssessmentRequest request, decimal annualIncome, EvaluationContext evalContext, TenantSettings? settings)
+    {
+        decimal incomeReplacementAmount = CalculateIncomeReplacement(annualIncome, request.FamilyContext, evalContext, settings);
+        decimal debtClearanceAmount = CalculateDebtClearance(request.FinancialContext.Debts, evalContext);
+        decimal transitionReserveAmount = CalculateTransitionReserve(request.FinancialContext.MonthlyIncome, request.FinancialContext.EmergencyFundMonths, evalContext, settings);
+
+        return incomeReplacementAmount + debtClearanceAmount + transitionReserveAmount;
+    }
+
+    private decimal CalculateIncomeReplacement(decimal annualIncome, FamilyContext familyContext, EvaluationContext evalContext, TenantSettings? settings)
     {
         int yearsToReplace = 0;
 
         if (familyContext.DependentsCount == 0)
         {
             yearsToReplace = settings?.IncomeReplacementYearsSingle ?? CalculationRules.BaseIncomeReplacementYearsNoDependents;
-            appliedRules.Add("RULE_INCOME_REPLACEMENT_NO_DEPENDENTS");
-            justifications.Add($"Substituição de renda baseada em {yearsToReplace} anos devido à ausência de dependentes.");
+            evalContext.TrackRule(EngineRules.IncomeReplacementNoDependents, 
+                _ruleJustificationProvider.GetJustification(EngineRules.IncomeReplacementNoDependents, yearsToReplace));
         }
         else
         {
@@ -85,57 +94,61 @@ public class LifeInsuranceCalculator : ILifeInsuranceCalculator
                 CalculationRules.MaxTotalIncomeReplacementYears
             );
             
-            appliedRules.Add("RULE_INCOME_REPLACEMENT_WITH_DEPENDENTS");
-            justifications.Add($"Substituição de renda baseada em {yearsToReplace} anos para suprir necessidades de {familyContext.DependentsCount} dependente(s).");
+            evalContext.TrackRule(EngineRules.IncomeReplacementWithDependents, 
+                _ruleJustificationProvider.GetJustification(EngineRules.IncomeReplacementWithDependents, yearsToReplace, familyContext.DependentsCount));
         }
 
         return annualIncome * yearsToReplace;
     }
 
-    private decimal CalculateDebtClearance(DebtData? debts, List<string> appliedRules, List<string> justifications)
+    private decimal CalculateDebtClearance(DebtData? debts, EvaluationContext evalContext)
     {
         if (debts == null || debts.TotalAmount <= 0)
         {
             return 0m;
         }
 
-        appliedRules.Add("RULE_DEBT_CLEARANCE_FULL");
-        justifications.Add($"Quitação integral de dívidas no valor de {debts.TotalAmount:C}.");
+        evalContext.TrackRule(EngineRules.DebtClearanceFull, 
+            _ruleJustificationProvider.GetJustification(EngineRules.DebtClearanceFull, debts.TotalAmount));
         
         return debts.TotalAmount;
     }
 
-    private decimal CalculateTransitionReserve(IncomeData monthlyIncome, int? emergencyFundMonths, List<string> appliedRules, List<string> justifications, TenantSettings? settings)
+    private decimal CalculateTransitionReserve(IncomeData monthlyIncome, int? emergencyFundMonths, EvaluationContext evalContext, TenantSettings? settings)
     {
         decimal income = monthlyIncome.ExactValue ?? 0m;
         int bufferMonths;
 
         int defaultBuffer = settings?.EmergencyFundBufferMonths ?? CalculationRules.DefaultTransitionReserveMonths;
-        int maxBuffer = Math.Max(defaultBuffer, CalculationRules.MaxTransitionReserveBufferMonths); // Safe upper bound
+        // Vulnerability Fix: Strict Clamping. Max buffer cannot exceed matrix Max, Min cannot exceed matrix Min.
+        int clampedDefaultBuffer = Math.Clamp(defaultBuffer, CalculationRules.MinTransitionReserveBufferMonths, CalculationRules.MaxTransitionReserveBufferMonths);
 
         if (emergencyFundMonths.HasValue)
         {
+            // Transition Gap = Target Buffer - Current Reserve. Min floor is MinTransitionReserveBufferMonths. 
+            // Max is clampedDefaultBuffer. 
             bufferMonths = Math.Max(
                 CalculationRules.MinTransitionReserveBufferMonths, 
-                maxBuffer - emergencyFundMonths.Value
+                clampedDefaultBuffer - emergencyFundMonths.Value
             );
             
-            bufferMonths = Math.Min(bufferMonths, maxBuffer);
+            // Restores the rigid ceiling:
+            bufferMonths = Math.Min(bufferMonths, clampedDefaultBuffer);
             
-            appliedRules.Add("RULE_TRANSITION_RESERVE_WITH_FUND");
-            justifications.Add($"Reserva de transição calculada em {bufferMonths} meses considerando a reserva de emergência atual de {emergencyFundMonths.Value} meses.");
+            evalContext.TrackRule(EngineRules.TransitionReserveWithFund, 
+                _ruleJustificationProvider.GetJustification(EngineRules.TransitionReserveWithFund, bufferMonths, emergencyFundMonths.Value));
         }
         else
         {
-            bufferMonths = defaultBuffer;
-            appliedRules.Add("RULE_TRANSITION_RESERVE_DEFAULT_NO_FUND");
-            justifications.Add($"Reserva de transição padrão aplicada ({bufferMonths} meses) devido à não informação de reserva de emergência.");
+            bufferMonths = clampedDefaultBuffer;
+            evalContext.TrackRule(EngineRules.TransitionReserveDefaultNoFund, 
+                _ruleJustificationProvider.GetJustification(EngineRules.TransitionReserveDefaultNoFund, bufferMonths));
         }
 
         return income * bufferMonths;
     }
 
-    private decimal ApplyGuardrails(decimal rawCoverage, decimal annualIncome, List<string> appliedRules, List<string> justifications, TenantSettings? settings)
+    private decimal ApplyGuardrails(decimal rawCoverage, decimal annualIncome, EvaluationContext evalContext, TenantSettings? settings)
     {
         decimal minMult = settings?.MinCoverageAnnualIncomeMultiplier ?? CalculationRules.MinCoverageAnnualIncomeMultiplier;
         decimal maxMult = settings?.MaxTotalCoverageMultiplier ?? CalculationRules.MaxCoverageAnnualIncomeMultiplier;
@@ -145,115 +158,113 @@ public class LifeInsuranceCalculator : ILifeInsuranceCalculator
 
         if (rawCoverage < minCoverage)
         {
-            appliedRules.Add("RULE_GUARDRAIL_MIN_COVERAGE");
-            justifications.Add($"A cobertura calculada foi ajustada para o limite mínimo de proteção vital ({minMult}x a renda anual).");
+            evalContext.TrackRule(EngineRules.GuardrailMinCoverage, 
+                _ruleJustificationProvider.GetJustification(EngineRules.GuardrailMinCoverage, minMult));
             return minCoverage;
         }
 
         if (rawCoverage > maxCoverage)
         {
-            appliedRules.Add("RULE_GUARDRAIL_MAX_COVERAGE");
-            justifications.Add($"A cobertura calculada foi limitada ao teto de proteção ({maxMult}x a renda anual) para evitar sobreseguro.");
+            evalContext.TrackRule(EngineRules.GuardrailMaxCoverage, 
+                _ruleJustificationProvider.GetJustification(EngineRules.GuardrailMaxCoverage, maxMult));
             return maxCoverage;
         }
 
         return rawCoverage;
     }
 
-    private (int Score, RiskClassification Classification, RecommendedAction Action) CalculateScoreAndAction(
+    private (int Score, RiskClassification Classification, RecommendedAction Action) DetermineScoreAndAction(
         LifeInsuranceAssessmentResult partialResult, 
         LifeInsuranceAssessmentRequest request, 
-        List<string> appliedRules, 
-        List<string> justifications)
+        decimal annualIncome,
+        EvaluationContext evalContext)
     {
-        // 1. Recommended Action Logic
-        RecommendedAction action;
-        if (partialResult.ProtectionGapPercentage > 25m)
-        {
-            action = RecommendedAction.AUMENTAR;
-        }
-        else if (partialResult.ProtectionGapPercentage < -20m)
-        {
-            action = RecommendedAction.REDUZIR;
-        }
-        else
-        {
-            action = RecommendedAction.MANTER;
-        }
+        RecommendedAction action = DetermineRawAction(partialResult.ProtectionGapPercentage);
+        action = ApplyActionOverrides(action, request.OperationalData, evalContext);
 
-        // Action Override: REVISAR
+        int rawScore = CalculateRawScore(partialResult);
+        rawScore = AssessPenalties(rawScore, request, annualIncome, evalContext);
+        
+        // Defer Score Clamp to the absolute last arithmetic step
+        int finalScore = Math.Clamp(rawScore, 0, 100);
+
+        RiskClassification classification = DetermineRiskClassification(finalScore);
+
+        return (finalScore, classification, action);
+    }
+
+    private RecommendedAction DetermineRawAction(decimal protectionGapPercentage)
+    {
+        if (protectionGapPercentage > 25m) return RecommendedAction.AUMENTAR;
+        if (protectionGapPercentage < -20m) return RecommendedAction.REDUZIR;
+        return RecommendedAction.MANTER;
+    }
+
+    private RecommendedAction ApplyActionOverrides(RecommendedAction currentAction, OperationalData operational, EvaluationContext evalContext)
+    {
         bool needsReview = false;
-        if (request.OperationalData.LastReviewDate.HasValue && request.OperationalData.LastReviewDate.Value < DateTimeOffset.UtcNow.AddMonths(-12))
+        
+        // Use injected CurrentTime instead of hardcoded DateTimeOffset.UtcNow
+        if (operational.LastReviewDate.HasValue && operational.LastReviewDate.Value < _engineContext.CurrentTime.AddMonths(-12))
         {
             needsReview = true;
-            justifications.Add("Ação alterada para REVISAR devido à última revisão ter ocorrido há mais de 12 meses.");
-            appliedRules.Add("RULE_ACTION_OVERRIDE_OLD_REVIEW");
+            evalContext.TrackRule(EngineRules.ActionOverrideOldReview, _ruleJustificationProvider.GetJustification(EngineRules.ActionOverrideOldReview));
         }
-        else if (request.OperationalData.HasUnconfirmedData)
+        else if (operational.HasUnconfirmedData)
         {
             needsReview = true;
-            justifications.Add("Ação alterada para REVISAR devido à existência de dados essenciais não confirmados.");
-            appliedRules.Add("RULE_ACTION_OVERRIDE_UNCONFIRMED_DATA");
+            evalContext.TrackRule(EngineRules.ActionOverrideUnconfirmedData, _ruleJustificationProvider.GetJustification(EngineRules.ActionOverrideUnconfirmedData));
         }
-        else if (request.OperationalData.RecentLifeTrigger)
+        else if (operational.RecentLifeTrigger)
         {
             needsReview = true;
-            justifications.Add("Ação alterada para REVISAR devido à ocorrência de um gatilho de vida recente.");
-            appliedRules.Add("RULE_ACTION_OVERRIDE_RECENT_TRIGGER");
+            evalContext.TrackRule(EngineRules.ActionOverrideRecentTrigger, _ruleJustificationProvider.GetJustification(EngineRules.ActionOverrideRecentTrigger));
         }
 
-        if (needsReview)
-        {
-            action = RecommendedAction.REVISAR;
-        }
+        return needsReview ? RecommendedAction.REVISAR : currentAction;
+    }
 
-        // 2. Score Logic
+    private int CalculateRawScore(LifeInsuranceAssessmentResult partialResult)
+    {
         decimal baseScoreDecimal = partialResult.RecommendedCoverageAmount > 0 
             ? (partialResult.CurrentCoverageAmount / partialResult.RecommendedCoverageAmount) * 100m 
             : 100m;
             
-        int score = (int)Math.Min(100, Math.Max(0, Math.Round(baseScoreDecimal)));
-        
-        // Apply penalties
+        return (int)Math.Round(baseScoreDecimal);
+    }
+
+    private int AssessPenalties(int rawScore, LifeInsuranceAssessmentRequest request, decimal annualIncome, EvaluationContext evalContext)
+    {
+        int score = rawScore;
+
         if (request.FamilyContext.DependentsCount > 0 && score < 50)
         {
             score -= CalculationRules.ScorePenaltyLowCoverageWithDependents;
-            appliedRules.Add("RULE_PENALTY_LOW_COVERAGE_DEPENDENTS");
-            justifications.Add($"Penalidade de {CalculationRules.ScorePenaltyLowCoverageWithDependents} pontos aplicada no score devido à baixa cobertura com dependentes.");
+            evalContext.TrackRule(EngineRules.PenaltyLowCoverageDependents, 
+                _ruleJustificationProvider.GetJustification(EngineRules.PenaltyLowCoverageDependents, CalculationRules.ScorePenaltyLowCoverageWithDependents));
         }
 
-        decimal annualIncome = CalculateAnnualIncome(request.FinancialContext.MonthlyIncome);
         if (request.FinancialContext.Debts != null && request.FinancialContext.Debts.TotalAmount > (annualIncome / 2m))
         {
             score -= CalculationRules.ScorePenaltyHighDebt;
-            appliedRules.Add("RULE_PENALTY_HIGH_DEBT");
-            justifications.Add($"Penalidade de {CalculationRules.ScorePenaltyHighDebt} pontos aplicada no score devido ao alto nível de endividamento (> 50% da renda anual).");
+            evalContext.TrackRule(EngineRules.PenaltyHighDebt, 
+                _ruleJustificationProvider.GetJustification(EngineRules.PenaltyHighDebt, CalculationRules.ScorePenaltyHighDebt));
         }
 
         if (!request.FinancialContext.EmergencyFundMonths.HasValue || request.FinancialContext.EmergencyFundMonths.Value < 3)
         {
             score -= CalculationRules.ScorePenaltyNoEmergencyFund;
-            appliedRules.Add("RULE_PENALTY_NO_EMERGENCY_FUND");
-            justifications.Add($"Penalidade de {CalculationRules.ScorePenaltyNoEmergencyFund} pontos aplicada no score devido à ausência de reserva de emergência mínima (3 meses).");
+            evalContext.TrackRule(EngineRules.PenaltyNoEmergencyFund, 
+                _ruleJustificationProvider.GetJustification(EngineRules.PenaltyNoEmergencyFund, CalculationRules.ScorePenaltyNoEmergencyFund));
         }
 
-        score = Math.Max(0, score); // cap min at 0
+        return score;
+    }
 
-        // 3. Risk Classification
-        RiskClassification classification;
-        if (score < 30)
-        {
-            classification = RiskClassification.CRITICO;
-        }
-        else if (score < 70)
-        {
-            classification = RiskClassification.MODERADO;
-        }
-        else
-        {
-            classification = RiskClassification.ADEQUADO;
-        }
-
-        return (score, classification, action);
+    private RiskClassification DetermineRiskClassification(int finalScore)
+    {
+        if (finalScore < 30) return RiskClassification.CRITICO;
+        if (finalScore < 70) return RiskClassification.MODERADO;
+        return RiskClassification.ADEQUADO;
     }
 }

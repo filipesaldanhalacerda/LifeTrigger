@@ -23,6 +23,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\LifeTrigger.Engine.Application\LifeTrigger.Engine.Application.csproj" />
     <ProjectReference Include="..\..\src\LifeTrigger.Engine.Domain\LifeTrigger.Engine.Domain.csproj" />
+    <ProjectReference Include="..\..\src\LifeTrigger.Engine.Infrastructure\LifeTrigger.Engine.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\LifeTrigger.Engine.Api\LifeTrigger.Engine.Api.csproj" />
   </ItemGroup>
 

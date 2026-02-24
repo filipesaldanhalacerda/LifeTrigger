@@ -14,6 +14,10 @@ public static class DependencyInjection
 
         services.AddScoped<IEvaluationRepository, EfEvaluationRepository>();
         services.AddScoped<ITenantSettingsRepository, EfTenantSettingsRepository>();
+
+        services.AddScoped<IEngineContext, Providers.DefaultEngineContext>();
+        services.AddSingleton<IRuleJustificationProvider, Providers.DefaultRuleJustificationProvider>();
+
         return services;
     }
 }

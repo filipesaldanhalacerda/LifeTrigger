@@ -26,7 +26,10 @@ public class GoldenFilesRegressionTests
 
     public GoldenFilesRegressionTests(ITestOutputHelper output)
     {
-        _calculator = new LifeInsuranceCalculator();
+        _calculator = new LifeInsuranceCalculator(
+            new LifeTrigger.Engine.Infrastructure.Providers.DefaultEngineContext(),
+            new LifeTrigger.Engine.Infrastructure.Providers.DefaultRuleJustificationProvider()
+        );
         _output = output;
         
         // Ensure ExpectedOutputs folder exists
