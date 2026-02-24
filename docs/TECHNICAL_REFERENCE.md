@@ -76,6 +76,11 @@ O sistema não transaciona "vendas financeiras". Ele manipula insights de risco 
 
 O `LifeInsuranceCalculator.cs` ignora flutuações de mercado e comissões. Ele obedece a um fluxograma de cálculo algorítmico rigoroso com a versão em tempo de execução: `2026.02`.
 
+### Por que a matemática é "Simples"? (O Paradoxo da Complexidade)
+Pode parecer contraintuitivo que um motor financeiro "Enterprise" utilize álgebras básicas (multiplicações, somas e subtrações) em vez de algoritmos probabilísticos hiper-complexos ou Redes Neurais (Machine Learning). Essa decisão arquitetural foi enraizada em dois pilares:
+1. **Compliance e Regulamentação Evitadora de Caixas-Pretas:** Órgãos como a SUSEP e o BACEN exigem modelos explicáveis. Um auditor ou corretor precisa replicar o cálculo com um pedaço de papel. A matemática atuarial pura em B2B Institucional não pode ter viés invisível.
+2. **A Máquina de Estado Determinística:** A verdadeira complexidade do LifeTrigger Engine está na *Árvore de Decisões*, não na fórmula. O triunfo da engenharia aqui consiste em aplicar dezenas de IFs concorrentes rigorosamente perfeitos, no momento exato, processando os pesos corretos de `TenantSettings` sem variação de milissegundos. A matemática é simples, mas garantir que essas equações jamais divirjam na infraestrutura (via Golden Files, RuleArgValue e Hashes Criptográficos) é o real triunfo de escalabilidade.
+
 ### Passo A: Substituição de Renda (Income Replacement)
 Base = Garantir a subsistência do proponente e família.
 * **Sem Dependentes:** Base Teto = 2 Anos de Renda Anualizada.
