@@ -17,7 +17,14 @@ public record LifeInsuranceAssessmentResult
         : 0;
         
     public int ProtectionScore { get; init; } // 0 - 100
+    
+    /// <summary>
+    /// Mede a eficiência espacial da alocação de capital (o quão perto o seguro atual está da necessidade real, punindo capital ocioso no sobreseguro).
+    /// </summary>
+    public int CoverageEfficiencyScore { get; init; } // 0 - 100
+    
     public RiskClassification RiskClassification { get; init; }
+    public CoverageStatus CoverageStatus { get; init; }
     public RecommendedAction RecommendedAction { get; init; }
     
     public IReadOnlyCollection<string> RegrasAplicadas { get; init; } = Array.Empty<string>();

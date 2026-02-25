@@ -24,6 +24,7 @@ Os fluxos rejeitarão (HTTP 400 Validation Error) qualquer valor fora dos mapeam
 *   **Tipo de Seguro Atual (`policyType`)**: `TEMPORARIO`, `VIDA_INTEIRA`, `ACIDENTES_PESSOAIS`, `DESCONHECIDO`
 *   **Ação Recomendada (`recommendedAction`) (Retorno Principal)**: `AUMENTAR`, `MANTER`, `REDUZIR`, `REVISAR`
 *   **Classificação de Risco (`riskClassification`) (Retorno de Score)**: `CRITICO`, `MODERADO`, `ADEQUADO`
+*   **Status da Cobertura (`coverageStatus`)**: `SUBPROTEGIDO`, `ADEQUADO`, `SOBRESEGURADO`
 *   **Canal de Origem (`originChannel`)**: Qualquer string livre que identifique a fonte do Lead para relatórios internos da corretora. Ex: `"ASSESSOR"`, `"WHATSAPP_BOT"`, `"APP_CORRETORA"`.
 
 ---
@@ -125,7 +126,9 @@ A API retornará os cálculos imutáveis. Sua aplicação fará o Puxar destas t
   "protectionGapAmount": 1240000,
   "protectionGapPercentage": 92.53,
   "protectionScore": 0,
+  "coverageEfficiencyScore": 100,
   "riskClassification": "CRITICO",
+  "coverageStatus": "SUBPROTEGIDO",
   "recommendedAction": "AUMENTAR",
   "regrasAplicadas": [
     "RULE_INCOME_REPLACEMENT_WITH_DEPENDENTS",
@@ -161,12 +164,20 @@ A API retornará os cálculos imutáveis. Sua aplicação fará o Puxar destas t
 *   **`recommendedCoverageAmount` (Decimal):** O montante matemático ideal apurado que a pessoa **deveria ter**. (Ex: R$ 1.340.000).
 *   **`protectionGapAmount` (Decimal):** O buraco exato financeiro descoberto da família.
 *   **`protectionGapPercentage` (Double):** Quantos % a família está desprotegida hoje (0 a 100%).
-*   **`protectionScore` (Integer):** A nota de saúde da proteção da família (0 a 100).
-*   **`riskClassification` (Enum):** A gravidade da situação. (`CRITICO`, `ATENCAO`, `ADEQUADO`).
+*   **`protectionScore` (Integer):** A nota de adequação mínima da proteção da família (0 a 100). Baseada apenas na prevenção de fome e dívidas. Scores altos indicam proteção garantida.
+*   **`coverageEfficiencyScore` (Integer):** A nota de **Eficiência de Capital** (0 a 100). Mede capital ocioso. Se a pessoa tem R$ 2M mas só precisava de R$ 1M, a eficiência cai por desperdício monetário em prêmios.
+*   **`riskClassification` (Enum):** A gravidade da situação de *falta* de fundos. (`CRITICO`, `MODERADO`, `ADEQUADO`). Estritamente ligado ao `protectionScore`.
+*   **`coverageStatus` (Enum):** A situação volumétrica dos fundos. (`SUBPROTEGIDO`, `ADEQUADO`, `SOBRESEGURADO`).
 *   **`recommendedAction` (Enum):** Ação OBRIGATÓRIA recomendada ao CRM. (`AUMENTAR`, `REVISAR`, `MANTER`, `REDUZIR`).
 *   **`regrasAplicadas` (Array de Strings):** As Tags internas para o **Front-End/App**. Sua corretora deve usar este array raiz para mapear visualmente ícones na tela (Ex: Se tem `RULE_PENALTY_HIGH_DEBT`, mostrar um ícone "❌ Cuidado com seu Financiamento").
 *   **`justificationsStructured`:** Estrutura detalhada de argumentos matemáticos focada para B2B e tradução de robôs (i18n).
 *   **`justificationsRendered`:** Textos amigáveis e formataods (Ex: PT-BR) prontos para colar na tela do cliente explicando porque ele precisa contratar mais.
+
+> **Motor Bi-dimensional (Adequação vs Eficiência)**
+> O motor calcula notas usando dois eixos matemáticos cruzados:
+> * **Cenário A (Subproteção Severa):** `current: 0`. `ProtectionScore: 0` (Crítico). `EfficiencyScore: 100` (Eficiência não se aplica a quem não tem nada). Ação: `AUMENTAR`. Status: `SUBPROTEGIDO`.
+> * **Cenário B (Alocação Ideal):** `current: 950k`, `recommended: 1M`. `ProtectionScore: 95` (Adequado). `Efficiency: 100` (Capital 100% útil). Ação: `MANTER`. Status: `ADEQUADO`.
+> * **Cenário C (Sobreseguro Extremo):** `current: 12M`, `recommended: 1M`. O cliente *não passará fome* (Portanto, `ProtectionScore: 100` e Classificação: `ADEQUADO`). Contudo, o dinheiro foi pessimamente investido num seguro brutal (Portanto, `EfficiencyScore: 0`). Ação corretiva gerada: `REDUZIR`. Status: `SOBRESEGURADO`.
 
 > **Importante: A Duplicação das Regras e o Bloco `audit`**
 >

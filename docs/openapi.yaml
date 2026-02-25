@@ -147,10 +147,17 @@ components:
         protectionScore:
           type: integer
           example: 0
+        coverageEfficiencyScore:
+          type: integer
+          example: 100
         riskClassification:
           type: string
           enum: [CRITICO, MODERADO, ADEQUADO]
           example: "CRITICO"
+        coverageStatus:
+          type: string
+          enum: [SUBPROTEGIDO, ADEQUADO, SOBRESEGURADO]
+          example: "SUBPROTEGIDO"
         recommendedAction:
           type: string
           enum: [AUMENTAR, MANTER, REDUZIR, REVISAR]

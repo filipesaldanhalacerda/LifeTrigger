@@ -36,7 +36,9 @@ public class LifeInsuranceCalculator : ILifeInsuranceCalculator
                 RecommendedCoverageAmount = 0m,
                 CurrentCoverageAmount = request.FinancialContext.CurrentLifeInsurance?.CoverageAmount ?? 0m,
                 ProtectionScore = 0,
+                CoverageEfficiencyScore = 0,
                 RiskClassification = RiskClassification.CRITICO,
+                CoverageStatus = CoverageStatus.SUBPROTEGIDO,
                 RecommendedAction = RecommendedAction.REVISAR,
                 RegrasAplicadas = earlySnapshot.AppliedRuleIds,
                 JustificationsStructured = earlySnapshot.Justifications,
@@ -71,8 +73,10 @@ public class LifeInsuranceCalculator : ILifeInsuranceCalculator
         
         return partialResult with 
         {
-            ProtectionScore = scoreAndClassification.Score,
+            ProtectionScore = scoreAndClassification.ProtectionScore,
+            CoverageEfficiencyScore = scoreAndClassification.EfficiencyScore,
             RiskClassification = scoreAndClassification.Classification,
+            CoverageStatus = scoreAndClassification.Status,
             RecommendedAction = scoreAndClassification.Action,
             RegrasAplicadas = finalSnapshot.AppliedRuleIds,
             JustificationsStructured = finalSnapshot.Justifications,
@@ -217,24 +221,33 @@ public class LifeInsuranceCalculator : ILifeInsuranceCalculator
         return rawCoverage;
     }
 
-    private (int Score, RiskClassification Classification, RecommendedAction Action) DetermineScoreAndAction(
+    private (int ProtectionScore, int EfficiencyScore, RiskClassification Classification, CoverageStatus Status, RecommendedAction Action) DetermineScoreAndAction(
         LifeInsuranceAssessmentResult partialResult, 
         LifeInsuranceAssessmentRequest request, 
         decimal annualIncome,
         EvaluationRecorder evalRecorder)
     {
+        CoverageStatus status = DetermineCoverageStatus(partialResult.ProtectionGapPercentage);
         RecommendedAction action = DetermineRawAction(partialResult.ProtectionGapPercentage);
         action = ApplyActionOverrides(action, request.OperationalData, evalRecorder);
 
-        int rawScore = CalculateRawScore(partialResult);
-        rawScore = AssessPenalties(rawScore, request, annualIncome, evalRecorder);
-        
-        // Defer Score Clamp to the absolute last arithmetic step
-        int finalScore = Math.Clamp(rawScore, 0, 100);
+        int rawProtectionScore = CalculateRawProtectionScore(partialResult);
+        rawProtectionScore = AssessPenalties(rawProtectionScore, request, annualIncome, evalRecorder);
+        int finalProtectionScore = Math.Clamp(rawProtectionScore, 0, 100);
 
-        RiskClassification classification = DetermineRiskClassification(finalScore);
+        int rawEfficiencyScore = CalculateRawEfficiencyScore(partialResult);
+        int finalEfficiencyScore = Math.Clamp(rawEfficiencyScore, 0, 100);
 
-        return (finalScore, classification, action);
+        RiskClassification classification = DetermineRiskClassification(finalProtectionScore);
+
+        return (finalProtectionScore, finalEfficiencyScore, classification, status, action);
+    }
+
+    private CoverageStatus DetermineCoverageStatus(decimal protectionGapPercentage)
+    {
+        if (protectionGapPercentage > 25m) return CoverageStatus.SUBPROTEGIDO;
+        if (protectionGapPercentage < -20m) return CoverageStatus.SOBRESEGURADO;
+        return CoverageStatus.ADEQUADO;
     }
 
     private RecommendedAction DetermineRawAction(decimal protectionGapPercentage)
@@ -274,13 +287,30 @@ public class LifeInsuranceCalculator : ILifeInsuranceCalculator
         return needsReview ? RecommendedAction.REVISAR : currentAction;
     }
 
-    private int CalculateRawScore(LifeInsuranceAssessmentResult partialResult)
+    private int CalculateRawProtectionScore(LifeInsuranceAssessmentResult partialResult)
     {
         decimal baseScoreDecimal = partialResult.RecommendedCoverageAmount > 0 
             ? (partialResult.CurrentCoverageAmount / partialResult.RecommendedCoverageAmount) * 100m 
             : 100m;
             
         return (int)Math.Round(baseScoreDecimal);
+    }
+
+    private int CalculateRawEfficiencyScore(LifeInsuranceAssessmentResult partialResult)
+    {
+        if (partialResult.RecommendedCoverageAmount <= 0) return 0;
+        
+        if (partialResult.CurrentCoverageAmount <= partialResult.RecommendedCoverageAmount)
+        {
+            return 100;
+        }
+
+        // Efficiency = 100 - (((Current / Recommended) - 1) * 100)
+        decimal overInsuranceRatio = (partialResult.CurrentCoverageAmount / partialResult.RecommendedCoverageAmount) - 1m;
+        decimal penalty = overInsuranceRatio * 100m;
+        decimal efficiency = 100m - penalty;
+
+        return (int)Math.Round(efficiency);
     }
 
     private int AssessPenalties(int rawScore, LifeInsuranceAssessmentRequest request, decimal annualIncome, EvaluationRecorder evalRecorder)
