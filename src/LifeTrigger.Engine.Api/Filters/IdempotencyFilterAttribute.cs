@@ -1,53 +1,54 @@
 using System;
-using System.Security.Cryptography;
-using System.Text;
+using System.Text.Json;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Options;
+using LifeTrigger.Engine.Application.Interfaces;
 
 namespace LifeTrigger.Engine.Api.Filters;
 
-public class IdempotencyFilterAttribute : ActionFilterAttribute
+public class IdempotencyFilterAttribute : IAsyncActionFilter
 {
-    private readonly IMemoryCache _cache;
+    private readonly IIdempotencyService _idempotencyService;
+    private readonly JsonSerializerOptions _jsonOptions;
 
-    public IdempotencyFilterAttribute(IMemoryCache cache)
+    private static readonly TimeSpan DefaultTtl = TimeSpan.FromHours(24);
+
+    public IdempotencyFilterAttribute(IIdempotencyService idempotencyService, IOptions<JsonOptions> jsonOptions)
     {
-        _cache = cache;
+        _idempotencyService = idempotencyService;
+        _jsonOptions = jsonOptions.Value.JsonSerializerOptions;
     }
 
-    public override void OnActionExecuting(ActionExecutingContext context)
+    public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
     {
-        if (context.HttpContext.Request.Headers.TryGetValue("Idempotency-Key", out var headerValue))
+        if (!context.HttpContext.Request.Headers.TryGetValue("Idempotency-Key", out var headerValue))
         {
-            var keyStr = headerValue.ToString();
-            
-            // Generate a CacheKey using the context path to isolate idempotency keys between /evaluations and /triggers
-            var cacheKey = $"Idempotency:{context.HttpContext.Request.Path}:{keyStr}";
-
-            if (_cache.TryGetValue(cacheKey, out ObjectResult cachedResult))
-            {
-                context.Result = cachedResult;
-                return;
-            }
-
-            // Bind the cache key to HttpContext so OnActionExecuted can store the resultant output
-            context.HttpContext.Items["IdempotencyCacheKey"] = cacheKey;
+            await next();
+            return;
         }
 
-        base.OnActionExecuting(context);
-    }
+        var keyStr = headerValue.ToString();
+        // Isola chaves por path para evitar colisão entre /evaluations e /triggers
+        var cacheKey = $"Idempotency:{context.HttpContext.Request.Path}:{keyStr}";
 
-    public override void OnActionExecuted(ActionExecutedContext context)
-    {
-        if (context.HttpContext.Items.TryGetValue("IdempotencyCacheKey", out var cacheKeyObj) && cacheKeyObj is string cacheKey)
+        var (found, statusCode, body) = await _idempotencyService.GetAsync(cacheKey);
+        if (found)
         {
-            if (context.Result is ObjectResult objectResult && (objectResult.StatusCode == 200 || objectResult.StatusCode == 201))
-            {
-                _cache.Set(cacheKey, objectResult, TimeSpan.FromHours(24)); // Storing Idempotency keys for 24 hours
-            }
+            var cachedValue = JsonSerializer.Deserialize<object>(body, _jsonOptions);
+            context.Result = new ObjectResult(cachedValue) { StatusCode = statusCode };
+            return;
         }
 
-        base.OnActionExecuted(context);
+        var executed = await next();
+
+        if (executed.Result is ObjectResult objectResult
+            && (objectResult.StatusCode == 200 || objectResult.StatusCode == 201)
+            && objectResult.Value != null)
+        {
+            var serialized = JsonSerializer.Serialize(objectResult.Value, _jsonOptions);
+            await _idempotencyService.StoreAsync(cacheKey, objectResult.StatusCode ?? 200, serialized, DefaultTtl);
+        }
     }
 }

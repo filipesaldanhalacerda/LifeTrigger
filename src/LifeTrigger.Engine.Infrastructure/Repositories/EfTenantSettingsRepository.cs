@@ -3,37 +3,56 @@ using System.Threading.Tasks;
 using LifeTrigger.Engine.Application.Interfaces;
 using LifeTrigger.Engine.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace LifeTrigger.Engine.Infrastructure.Repositories;
 
 public class EfTenantSettingsRepository : ITenantSettingsRepository
 {
     private readonly Data.AppDbContext _context;
+    private readonly IMemoryCache _cache;
 
-    public EfTenantSettingsRepository(Data.AppDbContext context)
+    private static readonly TimeSpan CacheTtl = TimeSpan.FromHours(1);
+
+    public EfTenantSettingsRepository(Data.AppDbContext context, IMemoryCache cache)
     {
         _context = context;
+        _cache = cache;
     }
 
     public async Task<TenantSettings?> GetByTenantIdAsync(Guid tenantId)
     {
-        return await _context.TenantSettings.FirstOrDefaultAsync(t => t.TenantId == tenantId);
+        var cacheKey = CacheKey(tenantId);
+
+        if (_cache.TryGetValue(cacheKey, out TenantSettings? cached))
+            return cached;
+
+        var settings = await _context.TenantSettings.FirstOrDefaultAsync(t => t.TenantId == tenantId);
+
+        if (settings != null)
+            _cache.Set(cacheKey, settings, CacheTtl);
+
+        return settings;
     }
 
     public async Task UpsertAsync(TenantSettings settings)
     {
         var existing = await _context.TenantSettings.FindAsync(settings.TenantId);
-        
+
         if (existing == null)
         {
             _context.TenantSettings.Add(settings);
         }
         else
         {
-            // Update values avoiding object tracking collision
             _context.Entry(existing).CurrentValues.SetValues(settings);
         }
 
         await _context.SaveChangesAsync();
+
+        // Invalidar cache após atualização
+        _cache.Remove(CacheKey(settings.TenantId));
     }
+
+    private static string CacheKey(Guid tenantId) => $"TenantSettings:{tenantId}";
 }

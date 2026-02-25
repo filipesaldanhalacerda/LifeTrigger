@@ -26,6 +26,7 @@ public class EvaluationsIntegrationTests : IClassFixture<WebApplicationFactory<P
         var factoryWithInMemory = factory.WithWebHostBuilder(builder =>
         {
             builder.UseEnvironment("Testing");
+            builder.UseContentRoot(AppContext.BaseDirectory);
             builder.ConfigureServices(services =>
             {
                 var descriptors = services.Where(d => 

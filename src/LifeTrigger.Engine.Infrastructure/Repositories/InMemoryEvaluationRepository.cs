@@ -40,16 +40,18 @@ public class InMemoryEvaluationRepository : IEvaluationRepository
         return Task.FromResult(count);
     }
 
-    public Task<IEnumerable<EvaluationRecord>> GetByFilterAsync(Guid tenantId, DateTimeOffset? startDate = null, DateTimeOffset? endDate = null)
+    public Task<IEnumerable<EvaluationRecord>> GetByFilterAsync(Guid tenantId, DateTimeOffset? startDate = null, DateTimeOffset? endDate = null, int limit = 500, int offset = 0)
     {
         var result = _store.Values.Where(v => v.Request?.OperationalData?.TenantId == tenantId);
-        
+
         if (startDate.HasValue)
             result = result.Where(v => v.Timestamp >= startDate.Value);
-            
+
         if (endDate.HasValue)
             result = result.Where(v => v.Timestamp <= endDate.Value);
-            
+
+        result = result.OrderByDescending(v => v.Timestamp).Skip(offset).Take(limit);
+
         return Task.FromResult<IEnumerable<EvaluationRecord>>(result.ToList());
     }
 }

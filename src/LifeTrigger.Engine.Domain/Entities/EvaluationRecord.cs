@@ -9,5 +9,6 @@ public record EvaluationRecord(
     string EngineVersion,
     string RuleSetVersion,
     LifeInsuranceAssessmentRequest Request,
-    LifeInsuranceAssessmentResult Result
+    LifeInsuranceAssessmentResult Result,
+    string? AuditHash = null
 );

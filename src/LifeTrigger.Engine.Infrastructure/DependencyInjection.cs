@@ -1,5 +1,6 @@
 using LifeTrigger.Engine.Application.Interfaces;
 using LifeTrigger.Engine.Infrastructure.Repositories;
+using LifeTrigger.Engine.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -14,6 +15,7 @@ public static class DependencyInjection
 
         services.AddScoped<IEvaluationRepository, EfEvaluationRepository>();
         services.AddScoped<ITenantSettingsRepository, EfTenantSettingsRepository>();
+        services.AddScoped<IIdempotencyService, PostgresIdempotencyService>();
 
         services.AddScoped<IEngineContext, Providers.DefaultEngineContext>();
         services.AddSingleton<IRuleJustificationProvider, Providers.DefaultRuleJustificationProvider>();

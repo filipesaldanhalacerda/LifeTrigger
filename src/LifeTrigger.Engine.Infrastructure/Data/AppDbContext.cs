@@ -1,5 +1,6 @@
 using LifeTrigger.Engine.Domain.Entities;
 using LifeTrigger.Engine.Domain.Requests;
+using LifeTrigger.Engine.Infrastructure.Entities;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 
@@ -13,6 +14,7 @@ public class AppDbContext : DbContext
 
     public DbSet<EvaluationRecord> Evaluations { get; set; }
     public DbSet<TenantSettings> TenantSettings { get; set; }
+    public DbSet<IdempotencyKey> IdempotencyKeys { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -28,15 +30,12 @@ public class AppDbContext : DbContext
         });
 
         // Map EvaluationRecord
+        var jsonOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+
         modelBuilder.Entity<EvaluationRecord>(entity =>
         {
             entity.HasKey(e => e.Id);
             entity.ToTable("Evaluations");
-
-            // We serialize complex domain request/responses into JSON strings inside specific SQL Columns
-            // Doing this saves us from creating 20 child tables for "PersonalContext", "FamilyContext", "Debts", etc.
-            
-            var jsonOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 
             entity.Property(e => e.Request)
                 .HasConversion(
@@ -53,15 +52,31 @@ public class AppDbContext : DbContext
                 )
                 .HasColumnType("jsonb")
                 .IsRequired();
-                
-            entity.Property(e => e.Timestamp)
-                .IsRequired();
-                
-            entity.Property(e => e.EngineVersion)
-                .HasMaxLength(20);
-                
-            entity.Property(e => e.RuleSetVersion)
-                .HasMaxLength(20);
+
+            entity.Property(e => e.Timestamp).IsRequired();
+            entity.Property(e => e.EngineVersion).HasMaxLength(20);
+            entity.Property(e => e.RuleSetVersion).HasMaxLength(20);
+            entity.Property(e => e.AuditHash).HasMaxLength(64).IsRequired(false);
+
+            // Coluna desnormalizada para filtragem eficiente por tenant (evita full-scan no JSONB)
+            entity.Property<Guid?>("TenantId")
+                .HasColumnName("TenantId")
+                .IsRequired(false);
+
+            entity.HasIndex("TenantId").HasDatabaseName("IX_Evaluations_TenantId");
+            entity.HasIndex(e => e.Timestamp).HasDatabaseName("IX_Evaluations_Timestamp");
+        });
+
+        // Map IdempotencyKey
+        modelBuilder.Entity<IdempotencyKey>(entity =>
+        {
+            entity.HasKey(k => k.Key);
+            entity.ToTable("IdempotencyKeys");
+            entity.Property(k => k.Key).HasMaxLength(512).IsRequired();
+            entity.Property(k => k.StatusCode).IsRequired();
+            entity.Property(k => k.ResponseBody).IsRequired();
+            entity.Property(k => k.ExpiresAt).IsRequired();
+            entity.HasIndex(k => k.ExpiresAt).HasDatabaseName("IX_IdempotencyKeys_ExpiresAt");
         });
     }
 }

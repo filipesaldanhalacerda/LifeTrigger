@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.Json;
 using System.Threading.Tasks;
 using LifeTrigger.Engine.Application.Interfaces;
 using LifeTrigger.Engine.Domain.Entities;
@@ -21,6 +20,11 @@ public class EfEvaluationRepository : IEvaluationRepository
     public async Task SaveAsync(EvaluationRecord evaluation)
     {
         _context.Evaluations.Add(evaluation);
+
+        // Popula a coluna desnormalizada TenantId para filtragem eficiente no banco
+        _context.Entry(evaluation)
+            .Property<Guid?>("TenantId").CurrentValue = evaluation.Request.OperationalData.TenantId;
+
         await _context.SaveChangesAsync();
     }
 
@@ -31,33 +35,21 @@ public class EfEvaluationRepository : IEvaluationRepository
 
     public async Task<int> CleanTenantAsync(Guid tenantId)
     {
-        // EF Core 7+ ExecuteDeleteAsync strategy. Needs EF serialization bypass for inner objects
-        // However, because we mapped TenantId deeply inside a JSON string via value conversion, 
-        // querying it via LINQ translation in EF might break depending on the provider.
-        // As a workaround for this "JSON string column" approach, we query client-side natively.
-        
-        var allRecords = await _context.Evaluations.ToListAsync();
-        
-        var toDelete = allRecords
-            .Where(e => e.Request.OperationalData.TenantId == tenantId)
-            .ToList();
-
-        if (!toDelete.Any())
-        {
-            return 0;
-        }
-
-        _context.Evaluations.RemoveRange(toDelete);
-        await _context.SaveChangesAsync();
-
-        return toDelete.Count;
+        // ExecuteDeleteAsync: deleta no banco sem carregar registros em memória (zero N+1)
+        return await _context.Evaluations
+            .Where(e => EF.Property<Guid?>(e, "TenantId") == tenantId)
+            .ExecuteDeleteAsync();
     }
 
-    public async Task<IEnumerable<EvaluationRecord>> GetByFilterAsync(Guid tenantId, DateTimeOffset? startDate, DateTimeOffset? endDate)
+    public async Task<IEnumerable<EvaluationRecord>> GetByFilterAsync(
+        Guid tenantId,
+        DateTimeOffset? startDate = null,
+        DateTimeOffset? endDate = null,
+        int limit = 500,
+        int offset = 0)
     {
-        var allRecords = await _context.Evaluations.ToListAsync();
-        
-        var query = allRecords.Where(e => e.Request.OperationalData.TenantId == tenantId);
+        var query = _context.Evaluations
+            .Where(e => EF.Property<Guid?>(e, "TenantId") == tenantId);
 
         if (startDate.HasValue)
             query = query.Where(e => e.Timestamp >= startDate.Value);
@@ -65,6 +57,10 @@ public class EfEvaluationRepository : IEvaluationRepository
         if (endDate.HasValue)
             query = query.Where(e => e.Timestamp <= endDate.Value);
 
-        return query.ToList();
+        return await query
+            .OrderByDescending(e => e.Timestamp)
+            .Skip(offset)
+            .Take(limit)
+            .ToListAsync();
     }
 }

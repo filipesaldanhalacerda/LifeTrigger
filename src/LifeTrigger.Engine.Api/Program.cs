@@ -50,6 +50,7 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
 });
     
 builder.Services.AddMemoryCache();
+builder.Services.AddHealthChecks();
 
 // Custom Application Services
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -162,7 +163,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "LifeTrigger.Engine.Api v1"));
     
     // Auto-seed Demo tenants upon boot
-    DemoDataSeeder.SeedDemoTenants(app.Services);
+    await DemoDataSeeder.SeedDemoTenantsAsync(app.Services);
 }
 
 app.UseHttpsRedirection();
@@ -171,6 +172,7 @@ app.UseAuthentication(); // Must be explicitly called before Authorization
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHealthChecks("/health");
 
 app.Run();
 

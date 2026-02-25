@@ -5,8 +5,6 @@ using Microsoft.AspNetCore.Mvc;
 using FluentValidation;
 using FluentValidation.Results;
 using LifeTrigger.Engine.Application.Interfaces;
-using LifeTrigger.Engine.Application.Services;
-using LifeTrigger.Engine.Application.Services;
 using LifeTrigger.Engine.Domain.Entities;
 using LifeTrigger.Engine.Domain.Requests;
 using LifeTrigger.Engine.Api.Filters;
@@ -28,6 +26,7 @@ public class EvaluationsController : ControllerBase
     private readonly IAuditLoggerService _auditLogger;
     private readonly ITenantSettingsRepository _tenantSettingsRepository;
     private readonly IRuleJustificationRenderer _justificationRenderer;
+    private readonly IEngineContext _engineContext;
 
     public EvaluationsController(
         ILifeInsuranceCalculator calculator,
@@ -35,7 +34,8 @@ public class EvaluationsController : ControllerBase
         IEvaluationRepository repository,
         IAuditLoggerService auditLogger,
         ITenantSettingsRepository tenantSettingsRepository,
-        IRuleJustificationRenderer justificationRenderer)
+        IRuleJustificationRenderer justificationRenderer,
+        IEngineContext engineContext)
     {
         _calculator = calculator;
         _validator = validator;
@@ -43,6 +43,7 @@ public class EvaluationsController : ControllerBase
         _auditLogger = auditLogger;
         _tenantSettingsRepository = tenantSettingsRepository;
         _justificationRenderer = justificationRenderer;
+        _engineContext = engineContext;
     }
 
     /// <summary>
@@ -61,17 +62,17 @@ public class EvaluationsController : ControllerBase
     public async Task<IActionResult> Evaluate([FromBody] LifeInsuranceAssessmentRequest request)
     {
         ValidationResult validationResult = await _validator.ValidateAsync(request);
-        
+
         if (!validationResult.IsValid)
         {
             var consentError = validationResult.Errors.FirstOrDefault(e => e.PropertyName.Contains("HasExplicitActiveConsent") || e.PropertyName.Contains("ConsentId"));
             if (consentError != null)
             {
-                return UnprocessableEntity(new 
-                { 
-                    ErrorCode = "CONSENT_REQUIRED", 
-                    Message = consentError.ErrorMessage, 
-                    Details = Array.Empty<object>() 
+                return UnprocessableEntity(new
+                {
+                    ErrorCode = "CONSENT_REQUIRED",
+                    Message = consentError.ErrorMessage,
+                    Details = Array.Empty<object>()
                 });
             }
 
@@ -79,35 +80,33 @@ public class EvaluationsController : ControllerBase
             return BadRequest(new { Message = "Validation Failed", Errors = errors });
         }
 
-        var tenantSettings = request.OperationalData.TenantId.HasValue 
+        var tenantSettings = request.OperationalData.TenantId.HasValue
             ? await _tenantSettingsRepository.GetByTenantIdAsync(request.OperationalData.TenantId.Value)
             : null;
-            
+
         var result = _calculator.Calculate(request, tenantSettings);
-        
-        var renderedResult = result with 
+
+        var renderedResult = result with
         {
             JustificationsRendered = result.JustificationsStructured
                 .Select(j => _justificationRenderer.Render(j))
                 .ToList()
                 .AsReadOnly()
         };
-        
+
         var record = new EvaluationRecord(
             Id: Guid.NewGuid(),
             Timestamp: DateTimeOffset.UtcNow,
-            EngineVersion: "1.0.0",
-            RuleSetVersion: "2026.02",
+            EngineVersion: _engineContext.EngineVersion,
+            RuleSetVersion: _engineContext.RuleSetVersion,
             Request: request,
             Result: renderedResult
         );
 
         await _repository.SaveAsync(record);
-        
+
         _auditLogger.LogEvaluationCompleted(record);
-        
-        // Retornamos o resultado acoplado com o ID da Evaluation na auditoria ou header,
-        // mas aqui mapeamos para simplificar no retorno final. (Na pŕatica o id poderia ser no DTO, vou retornar um Header)
+
         Response.Headers.Append("X-Evaluation-Id", record.Id.ToString());
 
         return Ok(renderedResult);
@@ -124,10 +123,10 @@ public class EvaluationsController : ControllerBase
     public async Task<IActionResult> GetEvaluation(Guid id)
     {
         var record = await _repository.GetByIdAsync(id);
-        
+
         if (record == null)
             return NotFound(new { Message = "Avaliação não encontrada." });
-            
+
         return Ok(record);
     }
 
@@ -145,19 +144,18 @@ public class EvaluationsController : ControllerBase
     public async Task<IActionResult> VerifyEvaluationIntegrity(Guid id)
     {
         var record = await _repository.GetByIdAsync(id);
-        
+
         if (record == null)
             return NotFound(new { Message = "Avaliação não encontrada para verificação de integridade." });
 
         var computedHash = _auditLogger.CalculateAuditHash(record);
-        
-        // Simulating the retrieval of what WOULD be the stored hash in the DB table "evaluation_audit" 
-        // In a real database, this hash is generated BEFORE save and inserted immutably alongside the record.
-        var expectedHash = computedHash; 
 
+        // Em produção, o hash esperado seria carregado de uma tabela imutável de auditoria.
+        // Aqui comparamos o hash recalculado consigo mesmo como prova de conceito determinístico.
+        var expectedHash = computedHash;
         var status = computedHash == expectedHash ? "PASS" : "FAIL";
 
-        return Ok(new 
+        return Ok(new
         {
             Id = record.Id,
             Status = status,
@@ -188,11 +186,11 @@ public class EvaluationsController : ControllerBase
 
         var deletedCount = await _repository.CleanTenantAsync(tenantId);
 
-        return Ok(new 
-        { 
-            Status = "SUCCESS", 
+        return Ok(new
+        {
+            Status = "SUCCESS",
             Message = $"Ambiente Demo {tenantId} limpo com sucesso.",
-            RecordsRemoved = deletedCount 
+            RecordsRemoved = deletedCount
         });
     }
 
@@ -203,15 +201,28 @@ public class EvaluationsController : ControllerBase
     /// Gera distribuições de Risco (CRITICO/ADEQUADO) isoladas por Tenant, sem expor PII.
     /// </remarks>
     /// <param name="tenantId">ID do Tenant de Isolamento Comercial.</param>
-    /// <param name="startDate">Data Inicial Opcional</param>
-    /// <param name="endDate">Data Final Opcional</param>
+    /// <param name="startDate">Data Inicial Opcional.</param>
+    /// <param name="endDate">Data Final Opcional.</param>
+    /// <param name="limit">Limite de registros por página (padrão: 500, máximo: 1000).</param>
+    /// <param name="offset">Deslocamento para paginação (padrão: 0).</param>
     /// <returns>Grupos Agregados de Venda (AUMENTAR/MANTER)</returns>
     [HttpGet("/api/v1/admin/reports/pilot")]
     [ProducesResponseType(typeof(object), 200)]
-    public async Task<IActionResult> GetPilotReport([FromQuery] Guid tenantId, [FromQuery] DateTimeOffset? startDate, [FromQuery] DateTimeOffset? endDate)
+    public async Task<IActionResult> GetPilotReport(
+        [FromQuery] Guid tenantId,
+        [FromQuery] DateTimeOffset? startDate,
+        [FromQuery] DateTimeOffset? endDate,
+        [FromQuery] int limit = 500,
+        [FromQuery] int offset = 0)
     {
-        var evaluations = await _repository.GetByFilterAsync(tenantId, startDate, endDate);
-        
+        if (limit < 1 || limit > 1000)
+            return BadRequest(new { Message = "O parâmetro 'limit' deve estar entre 1 e 1000." });
+
+        if (offset < 0)
+            return BadRequest(new { Message = "O parâmetro 'offset' deve ser maior ou igual a zero." });
+
+        var evaluations = await _repository.GetByFilterAsync(tenantId, startDate, endDate, limit, offset);
+
         var total = evaluations.Count();
         if (total == 0)
         {
@@ -225,15 +236,15 @@ public class EvaluationsController : ControllerBase
         var actionDistribution = evaluations
             .GroupBy(e => e.Result.RecommendedAction.ToString())
             .ToDictionary(g => g.Key, g => g.Count());
-            
+
         var triggerCount = evaluations.Count(e => e.Request.OperationalData.RecentLifeTrigger);
 
-        return Ok(new 
+        return Ok(new
         {
             TenantId = tenantId,
             Period = new { Start = startDate, End = endDate },
-            TotalEvaluations = total,
-            Metrics = new 
+            Pagination = new { Limit = limit, Offset = offset, ReturnedCount = total },
+            Metrics = new
             {
                 RiskDistribution = riskDistribution,
                 ActionDistribution = actionDistribution,
