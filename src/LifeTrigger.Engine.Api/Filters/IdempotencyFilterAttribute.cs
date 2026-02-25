@@ -33,7 +33,9 @@ public class IdempotencyFilterAttribute : IAsyncActionFilter
         // Isola chaves por path para evitar colisão entre /evaluations e /triggers
         var cacheKey = $"Idempotency:{context.HttpContext.Request.Path}:{keyStr}";
 
-        var (found, statusCode, body) = await _idempotencyService.GetAsync(cacheKey);
+        var ct = context.HttpContext.RequestAborted;
+
+        var (found, statusCode, body) = await _idempotencyService.GetAsync(cacheKey, ct);
         if (found)
         {
             var cachedValue = JsonSerializer.Deserialize<object>(body, _jsonOptions);
@@ -48,7 +50,7 @@ public class IdempotencyFilterAttribute : IAsyncActionFilter
             && objectResult.Value != null)
         {
             var serialized = JsonSerializer.Serialize(objectResult.Value, _jsonOptions);
-            await _idempotencyService.StoreAsync(cacheKey, objectResult.StatusCode ?? 200, serialized, DefaultTtl);
+            await _idempotencyService.StoreAsync(cacheKey, objectResult.StatusCode ?? 200, serialized, DefaultTtl, ct);
         }
     }
 }

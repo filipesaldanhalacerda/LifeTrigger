@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using LifeTrigger.Engine.Application.Interfaces;
 using LifeTrigger.Engine.Domain.Entities;
@@ -17,7 +18,7 @@ public class EfEvaluationRepository : IEvaluationRepository
         _context = context;
     }
 
-    public async Task SaveAsync(EvaluationRecord evaluation)
+    public async Task SaveAsync(EvaluationRecord evaluation, CancellationToken cancellationToken = default)
     {
         _context.Evaluations.Add(evaluation);
 
@@ -25,20 +26,20 @@ public class EfEvaluationRepository : IEvaluationRepository
         _context.Entry(evaluation)
             .Property<Guid?>("TenantId").CurrentValue = evaluation.Request.OperationalData.TenantId;
 
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<EvaluationRecord?> GetByIdAsync(Guid id)
+    public async Task<EvaluationRecord?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        return await _context.Evaluations.FirstOrDefaultAsync(e => e.Id == id);
+        return await _context.Evaluations.FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
     }
 
-    public async Task<int> CleanTenantAsync(Guid tenantId)
+    public async Task<int> CleanTenantAsync(Guid tenantId, CancellationToken cancellationToken = default)
     {
         // ExecuteDeleteAsync: deleta no banco sem carregar registros em memória (zero N+1)
         return await _context.Evaluations
             .Where(e => EF.Property<Guid?>(e, "TenantId") == tenantId)
-            .ExecuteDeleteAsync();
+            .ExecuteDeleteAsync(cancellationToken);
     }
 
     public async Task<IEnumerable<EvaluationRecord>> GetByFilterAsync(
@@ -46,7 +47,8 @@ public class EfEvaluationRepository : IEvaluationRepository
         DateTimeOffset? startDate = null,
         DateTimeOffset? endDate = null,
         int limit = 500,
-        int offset = 0)
+        int offset = 0,
+        CancellationToken cancellationToken = default)
     {
         var query = _context.Evaluations
             .Where(e => EF.Property<Guid?>(e, "TenantId") == tenantId);
@@ -61,6 +63,6 @@ public class EfEvaluationRepository : IEvaluationRepository
             .OrderByDescending(e => e.Timestamp)
             .Skip(offset)
             .Take(limit)
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
     }
 }

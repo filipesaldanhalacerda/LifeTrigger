@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using FluentValidation;
@@ -9,6 +10,7 @@ using LifeTrigger.Engine.Domain.Entities;
 using LifeTrigger.Engine.Domain.Requests;
 using LifeTrigger.Engine.Api.Filters;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace LifeTrigger.Engine.Api.Controllers;
 
@@ -18,6 +20,7 @@ namespace LifeTrigger.Engine.Api.Controllers;
 [ApiController]
 [Route("api/v1/[controller]")]
 [Authorize]
+[EnableRateLimiting("evaluation")]
 public class EvaluationsController : ControllerBase
 {
     private readonly ILifeInsuranceCalculator _calculator;
@@ -59,9 +62,9 @@ public class EvaluationsController : ControllerBase
     [TypeFilter(typeof(IdempotencyFilterAttribute))]
     [ProducesResponseType(typeof(LifeInsuranceAssessmentResult), 200)]
     [ProducesResponseType(typeof(object), 400)]
-    public async Task<IActionResult> Evaluate([FromBody] LifeInsuranceAssessmentRequest request)
+    public async Task<IActionResult> Evaluate([FromBody] LifeInsuranceAssessmentRequest request, CancellationToken cancellationToken)
     {
-        ValidationResult validationResult = await _validator.ValidateAsync(request);
+        ValidationResult validationResult = await _validator.ValidateAsync(request, cancellationToken);
 
         if (!validationResult.IsValid)
         {
@@ -81,7 +84,7 @@ public class EvaluationsController : ControllerBase
         }
 
         var tenantSettings = request.OperationalData.TenantId.HasValue
-            ? await _tenantSettingsRepository.GetByTenantIdAsync(request.OperationalData.TenantId.Value)
+            ? await _tenantSettingsRepository.GetByTenantIdAsync(request.OperationalData.TenantId.Value, cancellationToken)
             : null;
 
         var result = _calculator.Calculate(request, tenantSettings);
@@ -103,7 +106,9 @@ public class EvaluationsController : ControllerBase
             Result: renderedResult
         );
 
-        await _repository.SaveAsync(record);
+        record = record with { AuditHash = _auditLogger.CalculateAuditHash(record) };
+
+        await _repository.SaveAsync(record, cancellationToken);
 
         _auditLogger.LogEvaluationCompleted(record);
 
@@ -120,9 +125,9 @@ public class EvaluationsController : ControllerBase
     [HttpGet("{id}")]
     [ProducesResponseType(typeof(EvaluationRecord), 200)]
     [ProducesResponseType(404)]
-    public async Task<IActionResult> GetEvaluation(Guid id)
+    public async Task<IActionResult> GetEvaluation(Guid id, CancellationToken cancellationToken)
     {
-        var record = await _repository.GetByIdAsync(id);
+        var record = await _repository.GetByIdAsync(id, cancellationToken);
 
         if (record == null)
             return NotFound(new { Message = "Avaliação não encontrada." });
@@ -141,26 +146,27 @@ public class EvaluationsController : ControllerBase
     [HttpGet("/api/v1/admin/audit/evaluations/{id}/verify")]
     [ProducesResponseType(typeof(object), 200)]
     [ProducesResponseType(404)]
-    public async Task<IActionResult> VerifyEvaluationIntegrity(Guid id)
+    public async Task<IActionResult> VerifyEvaluationIntegrity(Guid id, CancellationToken cancellationToken)
     {
-        var record = await _repository.GetByIdAsync(id);
+        var record = await _repository.GetByIdAsync(id, cancellationToken);
 
         if (record == null)
             return NotFound(new { Message = "Avaliação não encontrada para verificação de integridade." });
 
-        var computedHash = _auditLogger.CalculateAuditHash(record);
+        var storedHash = record.AuditHash;
 
-        // Em produção, o hash esperado seria carregado de uma tabela imutável de auditoria.
-        // Aqui comparamos o hash recalculado consigo mesmo como prova de conceito determinístico.
-        var expectedHash = computedHash;
-        var status = computedHash == expectedHash ? "PASS" : "FAIL";
+        if (storedHash == null)
+            return Ok(new { Id = record.Id, Status = "UNAVAILABLE", Message = "Esta avaliação foi gerada antes da implementação do AuditHash." });
+
+        var computedHash = _auditLogger.CalculateAuditHash(record);
+        var status = computedHash == storedHash ? "PASS" : "FAIL";
 
         return Ok(new
         {
             Id = record.Id,
             Status = status,
-            ExpectedHash = expectedHash,
-            ActualHash = computedHash
+            StoredHash = storedHash,
+            ComputedHash = computedHash
         });
     }
 
@@ -174,7 +180,7 @@ public class EvaluationsController : ControllerBase
     /// <returns>Quantidade de registros apagados.</returns>
     [HttpDelete("/api/v1/admin/demo-environments/tenants/{tenantId}")]
     [ProducesResponseType(typeof(object), 200)]
-    public async Task<IActionResult> CleanDemoTenant(Guid tenantId)
+    public async Task<IActionResult> CleanDemoTenant(Guid tenantId, CancellationToken cancellationToken)
     {
         var alphaTenantId = Guid.Parse("A1A1A1A1-A1A1-A1A1-A1A1-A1A1A1A1A1A1");
         var betaTenantId = Guid.Parse("B2B2B2B2-B2B2-B2B2-B2B2-B2B2B2B2B2B2");
@@ -184,7 +190,7 @@ public class EvaluationsController : ControllerBase
             return BadRequest(new { Message = "Este tenant não está marcado como ambiente de demonstração e não pode ser limpo através desta rota." });
         }
 
-        var deletedCount = await _repository.CleanTenantAsync(tenantId);
+        var deletedCount = await _repository.CleanTenantAsync(tenantId, cancellationToken);
 
         return Ok(new
         {
@@ -213,7 +219,8 @@ public class EvaluationsController : ControllerBase
         [FromQuery] DateTimeOffset? startDate,
         [FromQuery] DateTimeOffset? endDate,
         [FromQuery] int limit = 500,
-        [FromQuery] int offset = 0)
+        [FromQuery] int offset = 0,
+        CancellationToken cancellationToken = default)
     {
         if (limit < 1 || limit > 1000)
             return BadRequest(new { Message = "O parâmetro 'limit' deve estar entre 1 e 1000." });
@@ -221,7 +228,7 @@ public class EvaluationsController : ControllerBase
         if (offset < 0)
             return BadRequest(new { Message = "O parâmetro 'offset' deve ser maior ou igual a zero." });
 
-        var evaluations = await _repository.GetByFilterAsync(tenantId, startDate, endDate, limit, offset);
+        var evaluations = await _repository.GetByFilterAsync(tenantId, startDate, endDate, limit, offset, cancellationToken);
 
         var total = evaluations.Count();
         if (total == 0)

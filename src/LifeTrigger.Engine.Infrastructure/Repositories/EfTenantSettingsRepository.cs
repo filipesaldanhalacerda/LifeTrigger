@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using LifeTrigger.Engine.Application.Interfaces;
 using LifeTrigger.Engine.Domain.Entities;
@@ -20,14 +21,15 @@ public class EfTenantSettingsRepository : ITenantSettingsRepository
         _cache = cache;
     }
 
-    public async Task<TenantSettings?> GetByTenantIdAsync(Guid tenantId)
+    public async Task<TenantSettings?> GetByTenantIdAsync(Guid tenantId, CancellationToken cancellationToken = default)
     {
         var cacheKey = CacheKey(tenantId);
 
         if (_cache.TryGetValue(cacheKey, out TenantSettings? cached))
             return cached;
 
-        var settings = await _context.TenantSettings.FirstOrDefaultAsync(t => t.TenantId == tenantId);
+        var settings = await _context.TenantSettings
+            .FirstOrDefaultAsync(t => t.TenantId == tenantId, cancellationToken);
 
         if (settings != null)
             _cache.Set(cacheKey, settings, CacheTtl);
@@ -35,9 +37,10 @@ public class EfTenantSettingsRepository : ITenantSettingsRepository
         return settings;
     }
 
-    public async Task UpsertAsync(TenantSettings settings)
+    public async Task UpsertAsync(TenantSettings settings, CancellationToken cancellationToken = default)
     {
-        var existing = await _context.TenantSettings.FindAsync(settings.TenantId);
+        var existing = await _context.TenantSettings.FindAsync(
+            new object[] { settings.TenantId }, cancellationToken);
 
         if (existing == null)
         {
@@ -48,7 +51,7 @@ public class EfTenantSettingsRepository : ITenantSettingsRepository
             _context.Entry(existing).CurrentValues.SetValues(settings);
         }
 
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(cancellationToken);
 
         // Invalidar cache após atualização
         _cache.Remove(CacheKey(settings.TenantId));

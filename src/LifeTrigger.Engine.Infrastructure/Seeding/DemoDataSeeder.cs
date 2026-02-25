@@ -26,6 +26,14 @@ public static class DemoDataSeeder
             var alphaTenantId = Guid.Parse("A1A1A1A1-A1A1-A1A1-A1A1-A1A1A1A1A1A1"); // DEMO_CORRETORA_ALPHA
             var betaTenantId = Guid.Parse("B2B2B2B2-B2B2-B2B2-B2B2-B2B2B2B2B2B2");   // DEMO_EMPRESA_BETA
 
+            // Guard: skip seeding if demo data already exists (prevents duplicate inserts on restart)
+            var existing = await repository.GetByFilterAsync(alphaTenantId, limit: 1, cancellationToken: CancellationToken.None);
+            if (existing.Any())
+            {
+                logger.LogInformation("Demo tenants already seeded, skipping.");
+                return;
+            }
+
             // Seed: 1. AUMENTAR (High gap, 2 dependents, low coverage)
             await SeedEvaluation(repository, calculator, engineContext,
                 CreateRequest(age: 35, income: 15000, dependents: 2, coverage: 50000, debt: 100000,
@@ -95,6 +103,6 @@ public static class DemoDataSeeder
             Request: request,
             Result: result
         );
-        await repository.SaveAsync(record);
+        await repository.SaveAsync(record, CancellationToken.None);
     }
 }

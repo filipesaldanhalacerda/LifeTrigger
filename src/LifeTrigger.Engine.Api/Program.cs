@@ -1,7 +1,10 @@
 using System.IO;
 using System.Reflection;
 using System.Linq;
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
 using System.Text.Json.Serialization;
 using LifeTrigger.Engine.Application;
 using LifeTrigger.Engine.Infrastructure;
@@ -31,7 +34,7 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
     {
         var errors = context.ModelState
             .Where(e => e.Value != null && e.Value.Errors.Count > 0)
-            .Select(e => new 
+            .Select(e => new
             {
                 field = e.Key,
                 message = e.Value!.Errors.First().ErrorMessage
@@ -48,9 +51,22 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
         return new BadRequestObjectResult(result);
     };
 });
-    
+
 builder.Services.AddMemoryCache();
 builder.Services.AddHealthChecks();
+
+// Rate Limiting: fixed window 60 req/min por IP nos endpoints de avaliação
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddFixedWindowLimiter("evaluation", o =>
+    {
+        o.Window = System.TimeSpan.FromMinutes(1);
+        o.PermitLimit = 60;
+        o.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        o.QueueLimit = 0;
+    });
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+});
 
 // Custom Application Services
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -74,7 +90,7 @@ builder.Services.AddAuthentication(x =>
     {
         ValidateIssuerSigningKey = true,
         IssuerSigningKey = new SymmetricSecurityKey(key),
-        ValidateIssuer = false, // Simplified for Local Dev 
+        ValidateIssuer = false, // Simplified for Local Dev
         ValidateAudience = false
     };
 });
@@ -83,9 +99,9 @@ builder.Services.AddAuthentication(x =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new() 
-    { 
-        Title = "LifeTrigger.Engine.Api", 
+    c.SwaggerDoc("v1", new()
+    {
+        Title = "LifeTrigger.Engine.Api",
         Version = "v1",
         Description = "API de Inteligência para o Motor LifeTrigger. Avaliação de Vida, Proteção e Gaps.",
         Contact = new Microsoft.OpenApi.Models.OpenApiContact
@@ -138,6 +154,7 @@ builder.Services.AddSwaggerGen(c =>
 var app = builder.Build();
 
 app.UseCustomExceptionHandler();
+app.UseCorrelationId();
 
 // Apply EF Core Migrations automatically, but skip during Integration Tests
 if (app.Environment.EnvironmentName != "Testing")
@@ -161,12 +178,13 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "LifeTrigger.Engine.Api v1"));
-    
+
     // Auto-seed Demo tenants upon boot
     await DemoDataSeeder.SeedDemoTenantsAsync(app.Services);
 }
 
 app.UseHttpsRedirection();
+app.UseRateLimiter();
 
 app.UseAuthentication(); // Must be explicitly called before Authorization
 app.UseAuthorization();

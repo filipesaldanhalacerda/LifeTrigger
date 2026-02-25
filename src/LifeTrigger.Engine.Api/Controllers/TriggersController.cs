@@ -1,8 +1,10 @@
 using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.RateLimiting;
 using FluentValidation;
 using FluentValidation.Results;
 using LifeTrigger.Engine.Application.Interfaces;
@@ -22,6 +24,7 @@ public record LifeTriggerEvent(
 [ApiController]
 [Route("api/v1/[controller]")]
 [Authorize]
+[EnableRateLimiting("evaluation")]
 public class TriggersController : ControllerBase
 {
     private readonly ILifeInsuranceCalculator _calculator;
@@ -48,7 +51,7 @@ public class TriggersController : ControllerBase
     [TypeFilter(typeof(IdempotencyFilterAttribute))]
     [ProducesResponseType(typeof(LifeInsuranceAssessmentResult), 200)]
     [ProducesResponseType(typeof(object), 400)]
-    public async Task<IActionResult> RegisterLifeTrigger([FromBody] LifeTriggerEvent triggerEvent)
+    public async Task<IActionResult> RegisterLifeTrigger([FromBody] LifeTriggerEvent triggerEvent, CancellationToken cancellationToken)
     {
         var revisedRequest = triggerEvent.BaseRequest with
         {
@@ -58,7 +61,7 @@ public class TriggersController : ControllerBase
             }
         };
 
-        ValidationResult validationResult = await _validator.ValidateAsync(revisedRequest);
+        ValidationResult validationResult = await _validator.ValidateAsync(revisedRequest, cancellationToken);
         if (!validationResult.IsValid)
         {
             var consentError = validationResult.Errors.FirstOrDefault(e => e.PropertyName.Contains("HasExplicitActiveConsent") || e.PropertyName.Contains("ConsentId"));
@@ -87,7 +90,9 @@ public class TriggersController : ControllerBase
             Result: result
         );
 
-        await _repository.SaveAsync(record);
+        record = record with { AuditHash = _auditLogger.CalculateAuditHash(record) };
+
+        await _repository.SaveAsync(record, cancellationToken);
 
         _auditLogger.LogEvaluationCompleted(record);
         Response.Headers.Append("X-Evaluation-Id", record.Id.ToString());

@@ -16,6 +16,7 @@ public static class DependencyInjection
         services.AddScoped<IEvaluationRepository, EfEvaluationRepository>();
         services.AddScoped<ITenantSettingsRepository, EfTenantSettingsRepository>();
         services.AddScoped<IIdempotencyService, PostgresIdempotencyService>();
+        services.AddHostedService<IdempotencyCleanupService>();
 
         services.AddScoped<IEngineContext, Providers.DefaultEngineContext>();
         services.AddSingleton<IRuleJustificationProvider, Providers.DefaultRuleJustificationProvider>();
