@@ -263,5 +263,6 @@ export async function putTenantSettings(settings: TenantSettings): Promise<Tenan
 export async function fetchHealth(): Promise<{ status: string }> {
   const res = await fetch('/health')
   if (!res.ok) return { status: 'Unhealthy' }
-  return res.json() as Promise<{ status: string }>
+  const text = await res.text()
+  return { status: text.trim() }
 }

@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Save, RotateCcw, Info } from 'lucide-react'
+import { Save, RotateCcw, Info, AlertTriangle } from 'lucide-react'
 import { TopBar } from '../components/layout/TopBar'
 import { getTenantSettings, putTenantSettings, getActiveTenantId } from '../lib/api'
+import { useAuth } from '../contexts/AuthContext'
 import type { TenantSettings as TSettings } from '../types/api'
 
 const DEFAULTS: Omit<TSettings, 'tenantId'> = {
@@ -13,20 +14,39 @@ const DEFAULTS: Omit<TSettings, 'tenantId'> = {
 }
 
 export default function TenantSettings() {
+  const { user } = useAuth()
+
+  // TenantAdmin usa o próprio tenantId; SuperAdmin usa o tenant ativo selecionado na TopBar
+  const activeTenantId = user?.role === 'SuperAdmin'
+    ? getActiveTenantId()
+    : (user?.tenantId ?? null)
+
   const [settings, setSettings] = useState<TSettings>({
-    tenantId: getActiveTenantId() ?? '',
+    tenantId: activeTenantId ?? '',
     ...DEFAULTS,
   })
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    getTenantSettings(getActiveTenantId() ?? '')
-      .then(setSettings)
-      .catch(() => {/* use defaults */})
+    if (!activeTenantId) {
+      setLoading(false)
+      return
+    }
+    setLoading(true)
+    getTenantSettings(activeTenantId)
+      .then((data) => {
+        // Garante que tenantId está sempre preenchido (backend pode omitir se vier do default)
+        setSettings({ ...data, tenantId: activeTenantId })
+      })
+      .catch(() => {
+        // Mantém os defaults com o tenantId correto
+        setSettings({ tenantId: activeTenantId, ...DEFAULTS })
+      })
       .finally(() => setLoading(false))
-  }, [])
+  }, [activeTenantId])
 
   function set<K extends keyof TSettings>(key: K, value: TSettings[K]) {
     setSettings((prev) => ({ ...prev, [key]: value }))
@@ -34,22 +54,40 @@ export default function TenantSettings() {
   }
 
   async function handleSave() {
+    if (!activeTenantId) return
     setSaving(true)
+    setError(null)
     try {
-      const updated = await putTenantSettings(settings)
-      setSettings(updated)
+      const updated = await putTenantSettings({ ...settings, tenantId: activeTenantId })
+      setSettings({ ...updated, tenantId: activeTenantId })
       setSaved(true)
       setTimeout(() => setSaved(false), 3000)
     } catch {
-      alert('Erro ao salvar configurações. Verifique se o backend está acessível.')
+      setError('Não foi possível salvar. Verifique se o backend está acessível.')
     } finally {
       setSaving(false)
     }
   }
 
   function handleReset() {
-    setSettings({ tenantId: getActiveTenantId() ?? '', ...DEFAULTS })
+    setSettings({ tenantId: activeTenantId ?? '', ...DEFAULTS })
     setSaved(false)
+    setError(null)
+  }
+
+  // SuperAdmin sem tenant selecionado
+  if (!activeTenantId) {
+    return (
+      <div>
+        <TopBar title="Configurações do Tenant" subtitle="Selecione um tenant" />
+        <div className="flex items-center justify-center py-20">
+          <div className="flex items-center gap-2 text-sm text-slate-500">
+            <AlertTriangle className="h-4 w-4 text-amber-500" />
+            Selecione um tenant na barra superior para ver as configurações.
+          </div>
+        </div>
+      </div>
+    )
   }
 
   if (loading) {
@@ -62,7 +100,7 @@ export default function TenantSettings() {
 
   return (
     <div>
-      <TopBar title="Configurações do Tenant" subtitle={`Tenant: ${settings.tenantId.slice(0, 8)}…`} />
+      <TopBar title="Configurações do Tenant" subtitle={`Tenant: ${activeTenantId.slice(0, 8)}…`} />
 
       <div className="p-6">
         <div className="mx-auto max-w-2xl space-y-5">
@@ -142,6 +180,14 @@ export default function TenantSettings() {
               <SumRow label="Rep. renda com dep." value={`R$ ${(settings.incomeReplacementYearsWithDependents * 120000).toLocaleString('pt-BR')} (base)`} />
             </div>
           </div>
+
+          {/* Save error */}
+          {error && (
+            <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              <AlertTriangle className="h-4 w-4 shrink-0" />
+              {error}
+            </div>
+          )}
 
           {/* Actions */}
           <div className="flex items-center justify-between">

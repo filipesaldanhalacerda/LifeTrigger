@@ -33,9 +33,10 @@ public class TenantSettingsController : ControllerBase
     {
         var settings = await _repository.GetByTenantIdAsync(tenantId);
         
+        // Tenant sem override → retorna os defaults do domínio para que o frontend possa exibi-los e salvar
         if (settings == null)
-            return Ok(new { Message = "Este tenant utiliza a Matemática Universal Padrão (Sem Overrides)." });
-            
+            return Ok(new TenantSettings { TenantId = tenantId });
+
         return Ok(settings);
     }
 

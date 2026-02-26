@@ -9,7 +9,6 @@ using System.Text.Json.Serialization;
 using LifeTrigger.Engine.Application;
 using LifeTrigger.Engine.Infrastructure;
 using LifeTrigger.Engine.Api.Middleware;
-using LifeTrigger.Engine.Infrastructure.Seeding;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -190,9 +189,6 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "LifeTrigger.Engine.Api v1"));
-
-    // Auto-seed Demo tenants upon boot
-    await DemoDataSeeder.SeedDemoTenantsAsync(app.Services);
 }
 
 app.UseHttpsRedirection();
