@@ -25,8 +25,8 @@ interface NavItemDef {
 const mainItems: NavItemDef[] = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
   { to: '/evaluations/new', label: 'Nova Avaliação', icon: FilePlus, minRole: 'Partner' },
-  { to: '/evaluations', label: 'Histórico', icon: History },
   { to: '/triggers/new', label: 'Gatilhos de Vida', icon: Zap, minRole: 'Partner' },
+  { to: '/evaluations', label: 'Histórico', icon: History },
 ]
 
 const adminItems: NavItemDef[] = [
