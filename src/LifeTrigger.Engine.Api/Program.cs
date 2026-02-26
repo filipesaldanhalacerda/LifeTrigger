@@ -55,6 +55,17 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
 builder.Services.AddMemoryCache();
 builder.Services.AddHealthChecks();
 
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.WithOrigins("http://localhost:5173", "https://localhost:5173")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .WithExposedHeaders("X-Evaluation-Id", "X-Correlation-ID");
+    });
+});
+
 // Rate Limiting: fixed window 60 req/min por IP nos endpoints de avaliação
 builder.Services.AddRateLimiter(options =>
 {
@@ -155,6 +166,7 @@ var app = builder.Build();
 
 app.UseCustomExceptionHandler();
 app.UseCorrelationId();
+app.UseCors();
 
 // Apply EF Core Migrations automatically, but skip during Integration Tests
 if (app.Environment.EnvironmentName != "Testing")

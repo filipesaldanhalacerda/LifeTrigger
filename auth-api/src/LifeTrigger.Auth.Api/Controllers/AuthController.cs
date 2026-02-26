@@ -1,0 +1,164 @@
+using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
+using LifeTrigger.Auth.Application.Interfaces;
+using LifeTrigger.Auth.Domain.Entities;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+
+namespace LifeTrigger.Auth.Api.Controllers;
+
+[ApiController]
+[Route("api/v1/auth")]
+public class AuthController : ControllerBase
+{
+    private readonly IUserRepository _users;
+    private readonly IRefreshTokenRepository _refreshTokens;
+    private readonly ITokenService _tokenService;
+
+    public AuthController(
+        IUserRepository users,
+        IRefreshTokenRepository refreshTokens,
+        ITokenService tokenService)
+    {
+        _users         = users;
+        _refreshTokens = refreshTokens;
+        _tokenService  = tokenService;
+    }
+
+    // POST /api/v1/auth/login
+    [HttpPost("login")]
+    [EnableRateLimiting("login")]
+    public async Task<IActionResult> Login(
+        [FromBody] LoginRequest request,
+        CancellationToken cancellationToken)
+    {
+        var user = await _users.GetByEmailAsync(request.Email, cancellationToken);
+        if (user is null || !user.IsActive || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+            return Unauthorized(new { code = "INVALID_CREDENTIALS", message = "E-mail ou senha inválidos." });
+
+        var accessToken = _tokenService.GenerateAccessToken(user);
+        var (rawRefresh, refreshHash) = _tokenService.GenerateRefreshToken();
+
+        var refreshToken = new RefreshToken
+        {
+            Id        = Guid.NewGuid(),
+            UserId    = user.Id,
+            TokenHash = refreshHash,
+            ExpiresAt = DateTimeOffset.UtcNow.AddDays(30),
+            IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
+        };
+
+        await _refreshTokens.AddAsync(refreshToken, cancellationToken);
+
+        user.LastLoginAt = DateTimeOffset.UtcNow;
+        await _users.UpdateAsync(user, cancellationToken);
+
+        return Ok(new
+        {
+            accessToken,
+            refreshToken = rawRefresh,
+            expiresIn    = 3600,
+            user         = MapUser(user),
+        });
+    }
+
+    // POST /api/v1/auth/refresh
+    [HttpPost("refresh")]
+    public async Task<IActionResult> Refresh(
+        [FromBody] RefreshRequest request,
+        CancellationToken cancellationToken)
+    {
+        var hash = ComputeHash(request.RefreshToken);
+        var stored = await _refreshTokens.GetByHashAsync(hash, cancellationToken);
+
+        if (stored is null || !stored.IsActive)
+            return Unauthorized(new { code = "INVALID_REFRESH_TOKEN", message = "Refresh token inválido ou expirado." });
+
+        // Rotation: revoke old, issue new
+        stored.RevokedAt = DateTimeOffset.UtcNow;
+        await _refreshTokens.UpdateAsync(stored, cancellationToken);
+
+        var user = stored.User;
+        if (!user.IsActive)
+            return Unauthorized(new { code = "USER_INACTIVE", message = "Usuário inativo." });
+
+        var newAccessToken = _tokenService.GenerateAccessToken(user);
+        var (newRawRefresh, newRefreshHash) = _tokenService.GenerateRefreshToken();
+
+        var newRefreshToken = new RefreshToken
+        {
+            Id        = Guid.NewGuid(),
+            UserId    = user.Id,
+            TokenHash = newRefreshHash,
+            ExpiresAt = DateTimeOffset.UtcNow.AddDays(30),
+            IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
+        };
+        await _refreshTokens.AddAsync(newRefreshToken, cancellationToken);
+
+        return Ok(new
+        {
+            accessToken  = newAccessToken,
+            refreshToken = newRawRefresh,
+            expiresIn    = 3600,
+        });
+    }
+
+    // POST /api/v1/auth/logout
+    [HttpPost("logout")]
+    [Authorize]
+    public async Task<IActionResult> Logout(
+        [FromBody] RefreshRequest request,
+        CancellationToken cancellationToken)
+    {
+        var hash   = ComputeHash(request.RefreshToken);
+        var stored = await _refreshTokens.GetByHashAsync(hash, cancellationToken);
+
+        if (stored is not null && stored.IsActive)
+        {
+            stored.RevokedAt = DateTimeOffset.UtcNow;
+            await _refreshTokens.UpdateAsync(stored, cancellationToken);
+        }
+
+        return NoContent();
+    }
+
+    // GET /api/v1/auth/me
+    [HttpGet("me")]
+    [Authorize]
+    public async Task<IActionResult> Me(CancellationToken cancellationToken)
+    {
+        var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier)
+            ?? User.FindFirstValue("sub");
+
+        if (!Guid.TryParse(userIdStr, out var userId))
+            return Unauthorized();
+
+        var user = await _users.GetByIdAsync(userId, cancellationToken);
+        if (user is null || !user.IsActive)
+            return Unauthorized();
+
+        return Ok(MapUser(user));
+    }
+
+    private static object MapUser(User u) => new
+    {
+        id          = u.Id,
+        email       = u.Email,
+        role        = u.Role.ToString(),
+        tenantId    = u.TenantId,
+        isActive    = u.IsActive,
+        lastLoginAt = u.LastLoginAt,
+        createdAt   = u.CreatedAt,
+    };
+
+    private static string ComputeHash(string input)
+    {
+        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(input));
+        return Convert.ToHexString(bytes).ToLowerInvariant();
+    }
+
+    public record LoginRequest(string Email, string Password);
+    public record RefreshRequest(string RefreshToken);
+}

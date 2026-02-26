@@ -135,3 +135,26 @@ export interface EngineVersionInfo {
   ruleSetVersion: string
   description: string
 }
+
+export interface EvaluationSummary {
+  id: string
+  timestamp: string
+  action: RecommendedAction
+  risk: RiskClassification
+  score: number
+  gapPct: number
+  channel: string
+}
+
+export interface EvaluationListResponse {
+  total: number
+  items: EvaluationSummary[]
+}
+
+export interface Tenant {
+  id: string
+  name: string
+  slug: string
+  isActive: boolean
+  createdAt: string
+}

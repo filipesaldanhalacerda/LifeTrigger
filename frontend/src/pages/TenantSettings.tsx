@@ -14,7 +14,7 @@ const DEFAULTS: Omit<TSettings, 'tenantId'> = {
 
 export default function TenantSettings() {
   const [settings, setSettings] = useState<TSettings>({
-    tenantId: getActiveTenantId(),
+    tenantId: getActiveTenantId() ?? '',
     ...DEFAULTS,
   })
   const [loading, setLoading] = useState(true)
@@ -22,7 +22,7 @@ export default function TenantSettings() {
   const [saved, setSaved] = useState(false)
 
   useEffect(() => {
-    getTenantSettings(getActiveTenantId())
+    getTenantSettings(getActiveTenantId() ?? '')
       .then(setSettings)
       .catch(() => {/* use defaults */})
       .finally(() => setLoading(false))
@@ -48,7 +48,7 @@ export default function TenantSettings() {
   }
 
   function handleReset() {
-    setSettings({ tenantId: getActiveTenantId(), ...DEFAULTS })
+    setSettings({ tenantId: getActiveTenantId() ?? '', ...DEFAULTS })
     setSaved(false)
   }
 

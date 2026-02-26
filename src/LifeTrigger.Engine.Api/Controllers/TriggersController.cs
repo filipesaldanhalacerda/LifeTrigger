@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -53,11 +54,15 @@ public class TriggersController : ControllerBase
     [ProducesResponseType(typeof(object), 400)]
     public async Task<IActionResult> RegisterLifeTrigger([FromBody] LifeTriggerEvent triggerEvent, CancellationToken cancellationToken)
     {
+        // Enforce tenantId from JWT — prevents callers from spoofing a different tenant
+        var jwtTenantId = GetTenantIdFromJwt();
+
         var revisedRequest = triggerEvent.BaseRequest with
         {
             OperationalData = triggerEvent.BaseRequest.OperationalData with
             {
-               RecentLifeTrigger = true
+                RecentLifeTrigger = true,
+                TenantId = jwtTenantId ?? triggerEvent.BaseRequest.OperationalData.TenantId
             }
         };
 
@@ -98,5 +103,11 @@ public class TriggersController : ControllerBase
         Response.Headers.Append("X-Evaluation-Id", record.Id.ToString());
 
         return Ok(result);
+    }
+
+    private Guid? GetTenantIdFromJwt()
+    {
+        var value = User.FindFirstValue("tenantId");
+        return Guid.TryParse(value, out var id) ? id : null;
     }
 }

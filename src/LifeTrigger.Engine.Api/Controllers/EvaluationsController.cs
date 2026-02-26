@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -7,6 +8,7 @@ using FluentValidation;
 using FluentValidation.Results;
 using LifeTrigger.Engine.Application.Interfaces;
 using LifeTrigger.Engine.Domain.Entities;
+using LifeTrigger.Engine.Domain.Enums;
 using LifeTrigger.Engine.Domain.Requests;
 using LifeTrigger.Engine.Api.Filters;
 using Microsoft.AspNetCore.Authorization;
@@ -83,6 +85,16 @@ public class EvaluationsController : ControllerBase
             return BadRequest(new { Message = "Validation Failed", Errors = errors });
         }
 
+        // Enforce tenantId from JWT — prevents callers from spoofing a different tenant
+        var jwtTenantId = GetTenantIdFromJwt();
+        if (jwtTenantId.HasValue)
+        {
+            request = request with
+            {
+                OperationalData = request.OperationalData with { TenantId = jwtTenantId }
+            };
+        }
+
         var tenantSettings = request.OperationalData.TenantId.HasValue
             ? await _tenantSettingsRepository.GetByTenantIdAsync(request.OperationalData.TenantId.Value, cancellationToken)
             : null;
@@ -115,6 +127,46 @@ public class EvaluationsController : ControllerBase
         Response.Headers.Append("X-Evaluation-Id", record.Id.ToString());
 
         return Ok(renderedResult);
+    }
+
+    /// <summary>
+    /// Lista avaliações do tenant com paginação e filtros opcionais.
+    /// </summary>
+    [HttpGet]
+    [ProducesResponseType(typeof(object), 200)]
+    public async Task<IActionResult> ListEvaluations(
+        [FromQuery] Guid? tenantId,
+        [FromQuery] DateTimeOffset? startDate,
+        [FromQuery] DateTimeOffset? endDate,
+        [FromQuery] int limit = 50,
+        [FromQuery] int offset = 0,
+        CancellationToken cancellationToken = default)
+    {
+        if (limit < 1 || limit > 200)
+            return BadRequest(new { Message = "O parâmetro 'limit' deve estar entre 1 e 200." });
+
+        // JWT tenantId overrides query param for non-SuperAdmin
+        var jwtTenantId     = GetTenantIdFromJwt();
+        var effectiveTenant = jwtTenantId ?? tenantId;
+
+        if (effectiveTenant is null)
+            return BadRequest(new { Message = "tenantId é obrigatório para SuperAdmin." });
+
+        var evaluations = await _repository.GetByFilterAsync(
+            effectiveTenant.Value, startDate, endDate, limit, offset, cancellationToken);
+
+        var items = evaluations.Select(e => new
+        {
+            id        = e.Id,
+            timestamp = e.Timestamp,
+            action    = e.Result.RecommendedAction.ToString(),
+            risk      = e.Result.RiskClassification.ToString(),
+            score     = e.Result.CoverageEfficiencyScore,
+            gapPct    = e.Result.ProtectionGapPercentage,
+            channel   = e.Request.OperationalData.OriginChannel,
+        }).ToList();
+
+        return Ok(new { total = items.Count, items });
     }
 
     /// <summary>
@@ -233,30 +285,45 @@ public class EvaluationsController : ControllerBase
         var total = evaluations.Count();
         if (total == 0)
         {
-            return Ok(new { TotalEvaluations = 0, Message = "Nenhum dado encontrado para os filtros informados." });
+            return Ok(new
+            {
+                totalEvaluations   = 0,
+                riskDistribution   = new { critico = 0, moderado = 0, adequado = 0 },
+                actionDistribution = new { aumentar = 0, manter = 0, reduzir = 0, revisar = 0 },
+                triggerCount       = 0,
+            });
         }
 
-        var riskDistribution = evaluations
-            .GroupBy(e => e.Result.RiskClassification.ToString())
-            .ToDictionary(g => g.Key, g => g.Count());
-
-        var actionDistribution = evaluations
-            .GroupBy(e => e.Result.RecommendedAction.ToString())
-            .ToDictionary(g => g.Key, g => g.Count());
-
+        var riskDist     = evaluations.GroupBy(e => e.Result.RiskClassification).ToDictionary(g => g.Key, g => g.Count());
+        var actionDist   = evaluations.GroupBy(e => e.Result.RecommendedAction).ToDictionary(g => g.Key, g => g.Count());
         var triggerCount = evaluations.Count(e => e.Request.OperationalData.RecentLifeTrigger);
 
         return Ok(new
         {
-            TenantId = tenantId,
-            Period = new { Start = startDate, End = endDate },
-            Pagination = new { Limit = limit, Offset = offset, ReturnedCount = total },
-            Metrics = new
+            totalEvaluations = total,
+            riskDistribution = new
             {
-                RiskDistribution = riskDistribution,
-                ActionDistribution = actionDistribution,
-                EvaluationsWithRecentLifeTrigger = triggerCount
-            }
+                critico  = riskDist.GetValueOrDefault(RiskClassification.CRITICO,  0),
+                moderado = riskDist.GetValueOrDefault(RiskClassification.MODERADO, 0),
+                adequado = riskDist.GetValueOrDefault(RiskClassification.ADEQUADO, 0),
+            },
+            actionDistribution = new
+            {
+                aumentar = actionDist.GetValueOrDefault(RecommendedAction.AUMENTAR, 0),
+                manter   = actionDist.GetValueOrDefault(RecommendedAction.MANTER,   0),
+                reduzir  = actionDist.GetValueOrDefault(RecommendedAction.REDUZIR,  0),
+                revisar  = actionDist.GetValueOrDefault(RecommendedAction.REVISAR,  0),
+            },
+            triggerCount,
         });
+    }
+
+    /// <summary>
+    /// Extrai o tenantId do claim JWT. Retorna null se o token não contém esse claim (ex: SuperAdmin).
+    /// </summary>
+    private Guid? GetTenantIdFromJwt()
+    {
+        var value = User.FindFirstValue("tenantId");
+        return Guid.TryParse(value, out var id) ? id : null;
     }
 }

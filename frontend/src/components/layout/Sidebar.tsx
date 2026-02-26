@@ -10,18 +10,37 @@ import {
   Activity,
 } from 'lucide-react'
 import { cn } from '../../lib/utils'
+import { useAuth } from '../../contexts/AuthContext'
 
-const navItems = [
+type UserRole = 'SuperAdmin' | 'TenantAdmin' | 'Partner' | 'ReadOnly'
+
+interface NavItemDef {
+  to: string
+  label: string
+  icon: React.ElementType
+  end?: boolean
+  minRole?: UserRole
+}
+
+const mainItems: NavItemDef[] = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
-  { to: '/evaluations/new', label: 'Nova Avaliação', icon: FilePlus },
+  { to: '/evaluations/new', label: 'Nova Avaliação', icon: FilePlus, minRole: 'Partner' },
   { to: '/evaluations', label: 'Histórico', icon: History },
-  { to: '/triggers/new', label: 'Gatilhos de Vida', icon: Zap },
-  { to: '/settings', label: 'Configurações', icon: Settings },
-  { to: '/audit', label: 'Auditoria', icon: Shield },
-  { to: '/engine', label: 'Motor', icon: Cpu },
+  { to: '/triggers/new', label: 'Gatilhos de Vida', icon: Zap, minRole: 'Partner' },
+]
+
+const adminItems: NavItemDef[] = [
+  { to: '/settings', label: 'Configurações', icon: Settings, minRole: 'TenantAdmin' },
+  { to: '/audit', label: 'Auditoria', icon: Shield, minRole: 'TenantAdmin' },
+  { to: '/engine', label: 'Motor', icon: Cpu, minRole: 'TenantAdmin' },
 ]
 
 export function Sidebar() {
+  const { hasRole } = useAuth()
+
+  const visibleMain = mainItems.filter((item) => !item.minRole || hasRole(item.minRole))
+  const visibleAdmin = adminItems.filter((item) => !item.minRole || hasRole(item.minRole))
+
   return (
     <aside className="fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-slate-950 text-white">
       {/* Logo */}
@@ -40,16 +59,20 @@ export function Sidebar() {
         <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
           Principal
         </p>
-        {navItems.slice(0, 4).map((item) => (
+        {visibleMain.map((item) => (
           <NavItem key={item.to} {...item} />
         ))}
 
-        <p className="mb-2 mt-5 px-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-          Administração
-        </p>
-        {navItems.slice(4).map((item) => (
-          <NavItem key={item.to} {...item} />
-        ))}
+        {visibleAdmin.length > 0 && (
+          <>
+            <p className="mb-2 mt-5 px-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+              Administração
+            </p>
+            {visibleAdmin.map((item) => (
+              <NavItem key={item.to} {...item} />
+            ))}
+          </>
+        )}
       </nav>
 
       {/* Footer */}

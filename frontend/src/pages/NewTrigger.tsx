@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Send, Zap, AlertCircle } from 'lucide-react'
 import { TopBar } from '../components/layout/TopBar'
-import { postTrigger, getActiveTenantId, fetchDemoToken, getToken } from '../lib/api'
+import { postTrigger, getActiveTenantId } from '../lib/api'
 import { generateIdempotencyKey } from '../lib/utils'
 import type { LifeTriggerEvent } from '../types/api'
 
@@ -41,7 +41,6 @@ export default function NewTrigger() {
     setLoading(true)
     setError(null)
     try {
-      if (!getToken()) await fetchDemoToken(getActiveTenantId())
       const event: LifeTriggerEvent = {
         triggerType,
         description: description || (TRIGGER_TYPES.find((t) => t.value === triggerType)?.label ?? triggerType),
@@ -58,7 +57,7 @@ export default function NewTrigger() {
             originChannel: 'Web',
             hasExplicitActiveConsent: true,
             consentId,
-            tenantId: getActiveTenantId(),
+            tenantId: getActiveTenantId() ?? undefined,
           },
         },
       }

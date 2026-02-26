@@ -1,0 +1,13 @@
+{
+  "name": "lifetrigger-monorepo",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently --names \"AUTH,ENGINE,FRONT\" --prefix-colors \"cyan,yellow,magenta\" \"npm run dev:auth\" \"npm run dev:engine\" \"npm run dev:front\"",
+    "dev:auth":   "dotnet run --project auth-api/src/LifeTrigger.Auth.Api",
+    "dev:engine": "dotnet run --project src/LifeTrigger.Engine.Api",
+    "dev:front":  "npm run dev --prefix frontend"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

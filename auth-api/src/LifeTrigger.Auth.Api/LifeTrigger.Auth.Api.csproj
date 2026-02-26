@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.*" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.5" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.*" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.*" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.*" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="7.*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\LifeTrigger.Auth.Application\LifeTrigger.Auth.Application.csproj" />
+    <ProjectReference Include="..\LifeTrigger.Auth.Infrastructure\LifeTrigger.Auth.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>

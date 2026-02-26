@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Shield, Search, CheckCircle2, XCircle, AlertCircle, Clock } from 'lucide-react'
 import { TopBar } from '../components/layout/TopBar'
-import { verifyEvaluationIntegrity, fetchDemoToken, getToken, getActiveTenantId } from '../lib/api'
+import { verifyEvaluationIntegrity } from '../lib/api'
 import type { AuditVerifyResult } from '../types/api'
 
 export default function AuditVerify() {
@@ -17,7 +17,6 @@ export default function AuditVerify() {
     setError(null)
     setResult(null)
     try {
-      if (!getToken()) await fetchDemoToken(getActiveTenantId())
       const data = await verifyEvaluationIntegrity(evalId.trim())
       setResult(data)
     } catch (e) {

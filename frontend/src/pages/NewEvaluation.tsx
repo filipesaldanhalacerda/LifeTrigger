@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ChevronRight, ChevronLeft, Send, AlertCircle } from 'lucide-react'
 import { TopBar } from '../components/layout/TopBar'
-import { postEvaluation, getActiveTenantId, fetchDemoToken, getToken } from '../lib/api'
+import { postEvaluation, getActiveTenantId } from '../lib/api'
 import { generateIdempotencyKey } from '../lib/utils'
 import type { LifeInsuranceAssessmentRequest } from '../types/api'
 
@@ -41,8 +41,6 @@ export default function NewEvaluation() {
     setLoading(true)
     setError(null)
     try {
-      if (!getToken()) await fetchDemoToken(getActiveTenantId())
-
       const lastReviewDate = lastReviewMonthsAgo
         ? new Date(Date.now() - Number(lastReviewMonthsAgo) * 30 * 24 * 3600 * 1000).toISOString()
         : undefined
@@ -78,7 +76,7 @@ export default function NewEvaluation() {
           consentId,
           hasUnconfirmedData: hasUnconfirmed,
           lastReviewDate,
-          tenantId: getActiveTenantId(),
+          tenantId: getActiveTenantId() ?? undefined,
         },
       }
 

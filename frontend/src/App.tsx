@@ -1,5 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { AuthProvider } from './contexts/AuthContext'
+import { ProtectedRoute } from './components/layout/ProtectedRoute'
 import { AppLayout } from './components/layout/AppLayout'
+import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import NewEvaluation from './pages/NewEvaluation'
 import EvaluationResult from './pages/EvaluationResult'
@@ -12,30 +15,45 @@ import EngineInfo from './pages/EngineInfo'
 export default function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route element={<AppLayout />}>
-          <Route index element={<Dashboard />} />
+      <AuthProvider>
+        <Routes>
+          {/* Public */}
+          <Route path="/login" element={<Login />} />
 
-          {/* Evaluations */}
-          <Route path="evaluations">
-            <Route index element={<EvaluationHistory />} />
-            <Route path="new" element={<NewEvaluation />} />
-            <Route path="result" element={<EvaluationResult />} />
-            <Route path=":id" element={<EvaluationResult />} />
+          {/* Protected — require authentication */}
+          <Route element={<ProtectedRoute />}>
+            <Route element={<AppLayout />}>
+              <Route index element={<Dashboard />} />
+
+              {/* Evaluations */}
+              <Route path="evaluations">
+                <Route index element={<EvaluationHistory />} />
+                {/* Partner+ can create new evaluations */}
+                <Route element={<ProtectedRoute minRole="Partner" />}>
+                  <Route path="new" element={<NewEvaluation />} />
+                </Route>
+                <Route path="result" element={<EvaluationResult />} />
+                <Route path=":id" element={<EvaluationResult />} />
+              </Route>
+
+              {/* Triggers — Partner+ */}
+              <Route element={<ProtectedRoute minRole="Partner" />}>
+                <Route path="triggers/new" element={<NewTrigger />} />
+              </Route>
+
+              {/* Admin section — TenantAdmin+ */}
+              <Route element={<ProtectedRoute minRole="TenantAdmin" />}>
+                <Route path="settings" element={<TenantSettings />} />
+                <Route path="audit" element={<AuditVerify />} />
+                <Route path="engine" element={<EngineInfo />} />
+              </Route>
+
+              {/* Fallback */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Route>
           </Route>
-
-          {/* Triggers */}
-          <Route path="triggers/new" element={<NewTrigger />} />
-
-          {/* Admin */}
-          <Route path="settings" element={<TenantSettings />} />
-          <Route path="audit" element={<AuditVerify />} />
-          <Route path="engine" element={<EngineInfo />} />
-
-          {/* Fallback */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Route>
-      </Routes>
+        </Routes>
+      </AuthProvider>
     </BrowserRouter>
   )
 }

@@ -1,0 +1,22 @@
+## Build artifacts
+bin/
+obj/
+
+## User-specific files
+*.user
+*.suo
+.vs/
+
+## Secrets & environment (NEVER commit these)
+appsettings.Development.json
+appsettings.Production.json
+*.local.json
+secrets.json
+
+## Migrations generated files (keep only the source, not temp)
+## Uncomment if you prefer not to commit migrations:
+# Migrations/
+
+## OS artifacts
+.DS_Store
+Thumbs.db
