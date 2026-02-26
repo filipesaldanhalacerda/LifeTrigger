@@ -117,7 +117,23 @@ export default function NewTrigger() {
   const [age, setAge] = useState('')
   const [income, setIncome] = useState('')
   const [dependentsCount, setDependentsCount] = useState('0')
+  const [dependentsAges, setDependentsAges] = useState<string[]>([])
   const [currentCoverage, setCurrentCoverage] = useState('')
+
+  function setDepCount(delta: number) {
+    const newCount = Math.max(0, Math.min(10, Number(dependentsCount) + delta))
+    setDependentsCount(String(newCount))
+    setDependentsAges((prev) =>
+      newCount > prev.length
+        ? [...prev, ...Array<string>(newCount - prev.length).fill('')]
+        : prev.slice(0, newCount),
+    )
+  }
+
+  function setDepAge(index: number, value: string) {
+    setDependentsAges((prev) => prev.map((v, i) => (i === index ? value : v)))
+    clearError(`depAge_${index}`)
+  }
   const [debtTotal, setDebtTotal] = useState('')
   const [professionRisk, setProfessionRisk] = useState('BAIXO')
   const [isSmoker, setIsSmoker] = useState(false)
@@ -142,6 +158,14 @@ export default function NewTrigger() {
     if (!age.trim()) errors.age = 'Idade é obrigatória.'
     else if (ageNum < 18 || ageNum > 99) errors.age = 'Deve estar entre 18 e 99 anos.'
     if (parseCurrency(income) === 0) errors.income = 'Renda mensal é obrigatória e deve ser maior que zero.'
+    const count = Number(dependentsCount)
+    if (count > 0) {
+      dependentsAges.forEach((a, i) => {
+        const n = Number(a)
+        if (!a.trim()) errors[`depAge_${i}`] = `Informe a idade do dependente ${i + 1}.`
+        else if (n < 0 || n > 99) errors[`depAge_${i}`] = 'Idade inválida (0–99 anos).'
+      })
+    }
     if (!consent) errors.consent = 'Consentimento ativo do cliente é obrigatório (LGPD).'
     return errors
   }
@@ -174,7 +198,12 @@ export default function NewTrigger() {
               ? { totalAmount: parseCurrency(debtTotal) }
               : undefined,
           },
-          familyContext: { dependentsCount: Number(dependentsCount) },
+          familyContext: {
+            dependentsCount: Number(dependentsCount),
+            dependentsAges: dependentsAges
+              .map((a) => parseInt(a, 10))
+              .filter((n) => !isNaN(n)),
+          },
           operationalData: {
             originChannel: 'Web',
             hasExplicitActiveConsent: consent,
@@ -345,7 +374,7 @@ export default function NewTrigger() {
                 <div className="flex items-center gap-4">
                   <button
                     type="button"
-                    onClick={() => setDependentsCount((v) => String(Math.max(0, Number(v) - 1)))}
+                    onClick={() => setDepCount(-1)}
                     className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-xl font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
                   >
                     −
@@ -355,7 +384,7 @@ export default function NewTrigger() {
                   </div>
                   <button
                     type="button"
-                    onClick={() => setDependentsCount((v) => String(Math.min(10, Number(v) + 1)))}
+                    onClick={() => setDepCount(+1)}
                     className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-xl font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
                   >
                     +
@@ -369,6 +398,45 @@ export default function NewTrigger() {
                   </span>
                 </div>
               </Field>
+
+              {Number(dependentsCount) > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-slate-600">
+                    Idade de cada dependente *
+                  </p>
+                  <p className="text-[11px] text-slate-400">
+                    Dependentes mais jovens aumentam o horizonte de proteção calculado pelo motor.
+                  </p>
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                    {dependentsAges.map((depAge, i) => (
+                      <div key={i} className="space-y-1.5">
+                        <label className="text-[11px] font-semibold text-slate-500">
+                          Dependente {i + 1}
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="number"
+                            min="0"
+                            max="99"
+                            value={depAge}
+                            onChange={(e) => setDepAge(i, e.target.value)}
+                            placeholder="Ex: 8"
+                            className={`${cls(!!fieldErrors[`depAge_${i}`])} pr-14`}
+                          />
+                          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">
+                            anos
+                          </span>
+                        </div>
+                        {fieldErrors[`depAge_${i}`] && (
+                          <p className="text-[11px] font-semibold text-red-600">
+                            {fieldErrors[`depAge_${i}`]}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Profession risk */}
               <Field

@@ -68,7 +68,22 @@ export default function NewEvaluation() {
 
   // Family
   const [dependentsCount, setDependentsCount] = useState('0')
-  const [dependentsAges, setDependentsAges] = useState('')
+  const [dependentsAges, setDependentsAges] = useState<string[]>([])
+
+  function setDepCount(delta: number) {
+    const newCount = Math.max(0, Math.min(10, Number(dependentsCount) + delta))
+    setDependentsCount(String(newCount))
+    setDependentsAges((prev) =>
+      newCount > prev.length
+        ? [...prev, ...Array<string>(newCount - prev.length).fill('')]
+        : prev.slice(0, newCount),
+    )
+  }
+
+  function setDepAge(index: number, value: string) {
+    setDependentsAges((prev) => prev.map((v, i) => (i === index ? value : v)))
+    clearError(`depAge_${index}`)
+  }
 
   // Operational
   const [channel, setChannel] = useState('Web')
@@ -96,6 +111,16 @@ export default function NewEvaluation() {
     }
     if (s === 1) {
       if (parseCurrency(income) === 0) errors.income = 'Renda mensal é obrigatória e deve ser maior que zero.'
+    }
+    if (s === 2) {
+      const count = Number(dependentsCount)
+      if (count > 0) {
+        dependentsAges.forEach((a, i) => {
+          const n = Number(a)
+          if (!a.trim()) errors[`depAge_${i}`] = `Informe a idade do dependente ${i + 1}.`
+          else if (n < 0 || n > 99) errors[`depAge_${i}`] = 'Idade inválida (0–99 anos).'
+        })
+      }
     }
     if (s === 3) {
       if (!consentId.trim()) errors.consentId = 'ID de consentimento é obrigatório (LGPD).'
@@ -147,8 +172,8 @@ export default function NewEvaluation() {
         familyContext: {
           dependentsCount: Number(dependentsCount),
           dependentsAges: dependentsAges
-            ? dependentsAges.split(',').map((a) => parseInt(a.trim(), 10)).filter((n) => !isNaN(n))
-            : [],
+            .map((a) => parseInt(a, 10))
+            .filter((n) => !isNaN(n)),
         },
         operationalData: {
           originChannel: channel,
@@ -414,7 +439,7 @@ export default function NewEvaluation() {
                   <div className="flex items-center gap-4">
                     <button
                       type="button"
-                      onClick={() => setDependentsCount((v) => String(Math.max(0, Number(v) - 1)))}
+                      onClick={() => setDepCount(-1)}
                       className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-xl font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
                     >−</button>
                     <div className="flex h-11 w-24 items-center justify-center rounded-xl border-2 border-indigo-200 bg-indigo-50 text-2xl font-bold text-indigo-700">
@@ -422,7 +447,7 @@ export default function NewEvaluation() {
                     </div>
                     <button
                       type="button"
-                      onClick={() => setDependentsCount((v) => String(Math.min(10, Number(v) + 1)))}
+                      onClick={() => setDepCount(+1)}
                       className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-xl font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
                     >+</button>
                     <span className="text-sm font-medium text-slate-600">
@@ -434,18 +459,42 @@ export default function NewEvaluation() {
                 </Field>
 
                 {Number(dependentsCount) > 0 && (
-                  <Field
-                    label="Idades dos Dependentes"
-                    hint="Informe a idade de cada um, separadas por vírgula. Dependentes mais jovens aumentam o horizonte de proteção necessário."
-                  >
-                    <input
-                      type="text"
-                      value={dependentsAges}
-                      onChange={(e) => setDependentsAges(e.target.value)}
-                      placeholder={`Ex: ${Array.from({ length: Math.min(Number(dependentsCount), 4) }, (_, i) => 5 + i * 4).join(', ')}`}
-                      className={cls()}
-                    />
-                  </Field>
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold text-slate-600">
+                      Idade de cada dependente *
+                    </p>
+                    <p className="text-[11px] text-slate-400">
+                      Dependentes mais jovens aumentam o horizonte de proteção calculado pelo motor.
+                    </p>
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                      {dependentsAges.map((depAge, i) => (
+                        <div key={i} className="space-y-1.5">
+                          <label className="text-[11px] font-semibold text-slate-500">
+                            Dependente {i + 1}
+                          </label>
+                          <div className="relative">
+                            <input
+                              type="number"
+                              min="0"
+                              max="99"
+                              value={depAge}
+                              onChange={(e) => setDepAge(i, e.target.value)}
+                              placeholder="Ex: 8"
+                              className={`${cls(!!fieldErrors[`depAge_${i}`])} pr-14`}
+                            />
+                            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">
+                              anos
+                            </span>
+                          </div>
+                          {fieldErrors[`depAge_${i}`] && (
+                            <p className="text-[11px] font-semibold text-red-600">
+                              {fieldErrors[`depAge_${i}`]}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 )}
 
                 <div className={`rounded-xl border p-4 ${
@@ -466,7 +515,7 @@ export default function NewEvaluation() {
                       <>
                         <li>• {dependentsCount} dependente(s): +{Math.min(Number(dependentsCount), 3)} anos de renda acrescidos ao cálculo base.</li>
                         <li>• A cobertura recomendada cobre os dependentes até a independência financeira.</li>
-                        {dependentsAges && <li>• Idades informadas permitem ajuste fino no horizonte de proteção.</li>}
+                        {dependentsAges.some((a) => a) && <li>• Idades informadas permitem ajuste fino no horizonte de proteção.</li>}
                       </>
                     )}
                   </ul>
