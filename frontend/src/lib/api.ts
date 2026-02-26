@@ -72,6 +72,7 @@ async function request<T>(
   path: string,
   options: RequestInit = {},
   idempotencyKey?: string,
+  _retry = true,
 ): Promise<T> {
   const token = getToken()
   const headers: Record<string, string> = {
@@ -81,6 +82,20 @@ async function request<T>(
     ...(options.headers as Record<string, string> | undefined),
   }
   const res = await fetch(`${BASE_URL}${path}`, { ...options, headers })
+
+  // ── Token expirado: tenta refresh automático (uma única vez) ──
+  if (res.status === 401 && _retry) {
+    const newToken = await refreshAccessToken()
+    if (newToken) {
+      // Retry the original request with the fresh token
+      return request<T>(path, options, idempotencyKey, false)
+    }
+    // Refresh also failed — session is gone
+    clearTokens()
+    window.location.replace('/login')
+    throw new ApiError(401, 'Sessão expirada. Faça login novamente.')
+  }
+
   if (!res.ok) {
     const body = await res.text().catch(() => '')
     throw new ApiError(res.status, body || res.statusText)
