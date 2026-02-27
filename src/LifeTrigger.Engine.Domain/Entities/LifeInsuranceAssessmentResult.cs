@@ -38,6 +38,13 @@ public record LifeInsuranceAssessmentResult
     /// Textos legíveis e traduzidos formatados pelo Renderer de Apresentação (ex: pt-BR).
     /// </summary>
     public IReadOnlyCollection<string> JustificationsRendered { get; init; } = Array.Empty<string>();
-    
+
+    /// <summary>
+    /// Personalized broker insights generated from the evaluation result and the client's full
+    /// profile. Five insights ordered by category: ABERTURA → ARGUMENTO_PRINCIPAL →
+    /// OBJECAO_PREVISTA → PRODUTO_SUGERIDO → PROXIMO_PASSO.
+    /// </summary>
+    public IReadOnlyList<BrokerInsight> BrokerInsights { get; init; } = Array.Empty<BrokerInsight>();
+
     public AuditMetadata Audit { get; init; } = null!;
 }

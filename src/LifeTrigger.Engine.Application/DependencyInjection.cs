@@ -12,8 +12,9 @@ public static class DependencyInjection
     {
         services.AddScoped<ILifeInsuranceCalculator, LifeInsuranceCalculator>();
         services.AddScoped<IAuditLoggerService, AuditLoggerService>();
+        services.AddSingleton<IBrokerInsightGenerator, BrokerInsightGenerator>();
         services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
-        
+
         return services;
     }
 }

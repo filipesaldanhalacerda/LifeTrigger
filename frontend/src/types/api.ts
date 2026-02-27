@@ -73,6 +73,22 @@ export interface AuditMetadata {
   consentId: string
 }
 
+export type InsightCategory =
+  | 'ABERTURA'
+  | 'ARGUMENTO_PRINCIPAL'
+  | 'OBJECAO_PREVISTA'
+  | 'PRODUTO_SUGERIDO'
+  | 'PROXIMO_PASSO'
+
+export type InsightPriority = 'ALTA' | 'MEDIA' | 'BAIXA'
+
+export interface BrokerInsight {
+  category: InsightCategory
+  priority: InsightPriority
+  headline: string
+  body: string
+}
+
 export interface LifeInsuranceAssessmentResult {
   recommendedCoverageAmount: number
   currentCoverageAmount: number
@@ -86,6 +102,7 @@ export interface LifeInsuranceAssessmentResult {
   regrasAplicadas: string[]
   justificationsStructured: RuleJustification[]
   justificationsRendered: string[]
+  brokerInsights: BrokerInsight[]
   audit: AuditMetadata
 }
 

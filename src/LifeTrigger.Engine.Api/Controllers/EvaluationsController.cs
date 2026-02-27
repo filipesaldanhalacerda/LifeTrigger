@@ -32,6 +32,7 @@ public class EvaluationsController : ControllerBase
     private readonly ITenantSettingsRepository _tenantSettingsRepository;
     private readonly IRuleJustificationRenderer _justificationRenderer;
     private readonly IEngineContext _engineContext;
+    private readonly IBrokerInsightGenerator _insightGenerator;
 
     public EvaluationsController(
         ILifeInsuranceCalculator calculator,
@@ -40,7 +41,8 @@ public class EvaluationsController : ControllerBase
         IAuditLoggerService auditLogger,
         ITenantSettingsRepository tenantSettingsRepository,
         IRuleJustificationRenderer justificationRenderer,
-        IEngineContext engineContext)
+        IEngineContext engineContext,
+        IBrokerInsightGenerator insightGenerator)
     {
         _calculator = calculator;
         _validator = validator;
@@ -49,6 +51,7 @@ public class EvaluationsController : ControllerBase
         _tenantSettingsRepository = tenantSettingsRepository;
         _justificationRenderer = justificationRenderer;
         _engineContext = engineContext;
+        _insightGenerator = insightGenerator;
     }
 
     /// <summary>
@@ -183,6 +186,32 @@ public class EvaluationsController : ControllerBase
 
         if (record == null)
             return NotFound(new { Message = "Avaliação não encontrada." });
+
+        // Regenerate broker insights on-the-fly for evaluations stored before the feature existed.
+        if (record.Result.BrokerInsights.Count == 0)
+        {
+            var insights = _insightGenerator.Generate(record.Result, record.Request);
+            record = record with
+            {
+                Result = record.Result with { BrokerInsights = insights }
+            };
+        }
+
+        // Recalculate efficiency score for records stored with the symmetric-scoring bug
+        // (bug returned 100 for any current <= recommended, including zero coverage).
+        if (record.Result.CoverageEfficiencyScore == 100 &&
+            record.Result.CurrentCoverageAmount < record.Result.RecommendedCoverageAmount)
+        {
+            record = record with
+            {
+                Result = record.Result with
+                {
+                    CoverageEfficiencyScore = RecalculateEfficiencyScore(
+                        record.Result.CurrentCoverageAmount,
+                        record.Result.RecommendedCoverageAmount)
+                }
+            };
+        }
 
         return Ok(record);
     }
@@ -325,5 +354,15 @@ public class EvaluationsController : ControllerBase
     {
         var value = User.FindFirstValue("tenantId");
         return Guid.TryParse(value, out var id) ? id : null;
+    }
+
+    private static int RecalculateEfficiencyScore(decimal currentCoverage, decimal recommendedCoverage)
+    {
+        if (recommendedCoverage <= 0) return 0;
+        var ratio = currentCoverage / recommendedCoverage;
+        decimal efficiency = ratio <= 1m
+            ? ratio * 100m
+            : 100m - ((ratio - 1m) * 100m);
+        return (int)Math.Clamp(Math.Round(efficiency), 0, 100);
     }
 }

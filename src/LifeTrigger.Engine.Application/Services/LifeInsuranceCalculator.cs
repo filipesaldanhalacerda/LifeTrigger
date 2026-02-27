@@ -12,11 +12,16 @@ public class LifeInsuranceCalculator : ILifeInsuranceCalculator
 {
     private readonly IEngineContext _engineContext;
     private readonly IRuleJustificationProvider _ruleJustificationProvider;
+    private readonly IBrokerInsightGenerator _insightGenerator;
 
-    public LifeInsuranceCalculator(IEngineContext engineContext, IRuleJustificationProvider ruleJustificationProvider)
+    public LifeInsuranceCalculator(
+        IEngineContext engineContext,
+        IRuleJustificationProvider ruleJustificationProvider,
+        IBrokerInsightGenerator insightGenerator)
     {
         _engineContext = engineContext;
         _ruleJustificationProvider = ruleJustificationProvider;
+        _insightGenerator = insightGenerator;
     }
 
     public LifeInsuranceAssessmentResult Calculate(LifeInsuranceAssessmentRequest request, TenantSettings? tenantSettings = null)
@@ -71,7 +76,7 @@ public class LifeInsuranceCalculator : ILifeInsuranceCalculator
         
         var finalSnapshot = evalRecorder.FreezeAndGenerateSnapshot();
         
-        return partialResult with 
+        var scoredResult = partialResult with
         {
             ProtectionScore = scoreAndClassification.ProtectionScore,
             CoverageEfficiencyScore = scoreAndClassification.EfficiencyScore,
@@ -89,6 +94,10 @@ public class LifeInsuranceCalculator : ILifeInsuranceCalculator
                 ConsentId: request.OperationalData.ConsentId
             )
         };
+
+        // Generate personalized broker insights from the final scored result
+        var insights = _insightGenerator.Generate(scoredResult, request);
+        return scoredResult with { BrokerInsights = insights };
     }
 
     private decimal CalculateAnnualIncome(IncomeData monthlyIncome)
@@ -299,18 +308,22 @@ public class LifeInsuranceCalculator : ILifeInsuranceCalculator
     private int CalculateRawEfficiencyScore(LifeInsuranceAssessmentResult partialResult)
     {
         if (partialResult.RecommendedCoverageAmount <= 0) return 0;
-        
-        if (partialResult.CurrentCoverageAmount <= partialResult.RecommendedCoverageAmount)
+
+        var ratio = partialResult.CurrentCoverageAmount / partialResult.RecommendedCoverageAmount;
+
+        decimal efficiency;
+        if (ratio <= 1m)
         {
-            return 100;
+            // Under-insured (including zero coverage): linear scale toward target
+            efficiency = ratio * 100m;
+        }
+        else
+        {
+            // Over-insured: symmetric penalty above target
+            efficiency = 100m - ((ratio - 1m) * 100m);
         }
 
-        // Efficiency = 100 - (((Current / Recommended) - 1) * 100)
-        decimal overInsuranceRatio = (partialResult.CurrentCoverageAmount / partialResult.RecommendedCoverageAmount) - 1m;
-        decimal penalty = overInsuranceRatio * 100m;
-        decimal efficiency = 100m - penalty;
-
-        return (int)Math.Round(efficiency);
+        return (int)Math.Clamp(Math.Round(efficiency), 0, 100);
     }
 
     private int AssessPenalties(int rawScore, LifeInsuranceAssessmentRequest request, decimal annualIncome, EvaluationRecorder evalRecorder)
