@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { useNavigate, Navigate } from 'react-router-dom'
 import {
   Activity, Loader2, ShieldCheck, BarChart2, Zap,
-  Target, Lightbulb, Users, Lock, TrendingUp, Hash,
+  Target, Lightbulb, Users, Lock, TrendingUp, Hash, FlaskConical,
 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { ApiError } from '../lib/api'
@@ -74,7 +74,10 @@ export default function Login() {
               <Activity className="h-6 w-6 text-brand-300" />
             </div>
             <div>
-              <h1 className="text-2xl font-extrabold text-white">LifeTrigger</h1>
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl font-extrabold text-white">LifeTrigger</h1>
+                <span className="rounded-full bg-amber-400/20 px-2 py-0.5 text-[10px] font-bold text-amber-300 uppercase tracking-wider ring-1 ring-amber-400/30">Demo</span>
+              </div>
               <p className="text-sm font-medium text-brand-300/80">Engine</p>
             </div>
           </div>
@@ -127,7 +130,7 @@ export default function Login() {
 
         <div className="relative z-10 px-12 xl:px-16 2xl:px-20 py-6 border-t border-white/5">
           <div className="flex items-center justify-between">
-            <p className="text-xs text-brand-400/50">LifeTrigger Engine v1.0.0</p>
+            <p className="text-xs text-brand-400/50">LifeTrigger Engine v1.0.0 · <span className="text-amber-400/70 font-semibold">Versao Demonstracao</span></p>
             <p className="text-xs text-brand-400/50">B2B SaaS · Plataforma para corretoras de seguros</p>
           </div>
         </div>
@@ -143,13 +146,26 @@ export default function Login() {
             </div>
             <div className="text-center">
               <h1 className="text-xl font-bold text-slate-900">LifeTrigger</h1>
-              <p className="mt-0.5 text-sm text-slate-500">Motor de Inteligência de Proteção de Vida</p>
+              <p className="mt-0.5 text-sm text-slate-500">Motor de Inteligencia de Protecao de Vida</p>
+              <span className="mt-1 inline-block rounded-full bg-amber-100 px-2.5 py-0.5 text-[10px] font-bold text-amber-700 uppercase tracking-wider">Demo</span>
             </div>
           </div>
 
-          <div className="hidden lg:block mb-8">
-            <h2 className="text-2xl font-bold text-slate-900">Acesse sua conta</h2>
-            <p className="mt-1 text-sm text-slate-500">Seus diagnósticos, insights e clientes estão esperando.</p>
+          {/* Demo banner */}
+          <div className="mb-6 animate-fadeIn rounded-xl border border-amber-300 bg-amber-50 px-4 py-3">
+            <div className="flex items-center gap-2">
+              <FlaskConical className="h-4 w-4 shrink-0 text-amber-600" />
+              <p className="text-xs font-bold text-amber-800 uppercase tracking-wide">Ambiente de Demonstracao</p>
+            </div>
+            <p className="mt-1 text-[11px] text-amber-700 leading-relaxed">
+              Voce esta acessando uma <strong>versao demo</strong> do LifeTrigger Engine. Os dados e usuarios sao ficticio e podem ser redefinidos periodicamente.
+              Explore todas as funcionalidades livremente.
+            </p>
+          </div>
+
+          <div className="hidden lg:block mb-6">
+            <h2 className="text-2xl font-bold text-slate-900">Explore a plataforma</h2>
+            <p className="mt-1 text-sm text-slate-500">Escolha um perfil abaixo e veja o motor em acao — sem compromisso.</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -213,26 +229,35 @@ export default function Login() {
 
           {/* Demo credentials */}
           <div className="mt-4 animate-fadeIn" style={{ animationDelay: '220ms' }}>
-            <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
-              <p className="mb-2.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                Credenciais de demonstração
+            <div className="rounded-xl border border-amber-200 bg-amber-50/50 px-4 py-3 shadow-sm">
+              <div className="flex items-center gap-2 mb-2.5">
+                <FlaskConical className="h-3.5 w-3.5 text-amber-500" />
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-600">
+                  Usuarios Demo — clique para preencher
+                </p>
+              </div>
+              <p className="mb-3 text-[10px] text-amber-600/80 leading-relaxed">
+                Cada perfil tem permissoes diferentes. Teste todos para conhecer a plataforma completa.
               </p>
-              <div className="space-y-1">
+              <div className="space-y-1 rounded-lg bg-white/80 border border-amber-100 p-1.5">
                 {[
-                  { role: 'Super Admin',  email: 'superadmin@lifetrigger.io', password: 'Super@123!',  color: 'text-red-500' },
-                  { role: 'Proprietário', email: 'owner@alpha.demo',          password: 'Alpha@123!',  color: 'text-purple-500' },
-                  { role: 'Gerente',      email: 'manager@alpha.demo',        password: 'Alpha@123!',  color: 'text-blue-500'   },
-                  { role: 'Corretor',     email: 'broker@alpha.demo',         password: 'Alpha@123!',  color: 'text-emerald-500' },
-                  { role: 'Observador',   email: 'viewer@alpha.demo',         password: 'Alpha@123!',  color: 'text-slate-500'  },
-                ].map(({ role, email: demoEmail, password: demoPw, color }) => (
+                  { role: 'Super Admin',  email: 'superadmin@lifetrigger.io', password: 'Super@123!',  color: 'text-red-500',     desc: 'Acesso total a plataforma' },
+                  { role: 'Proprietario', email: 'owner@alpha.demo',          password: 'Alpha@123!',  color: 'text-purple-500',  desc: 'Dono da corretora' },
+                  { role: 'Gerente',      email: 'manager@alpha.demo',        password: 'Alpha@123!',  color: 'text-blue-500',    desc: 'Gestao de equipe' },
+                  { role: 'Corretor',     email: 'broker@alpha.demo',         password: 'Alpha@123!',  color: 'text-emerald-500', desc: 'Operacao do dia a dia' },
+                  { role: 'Observador',   email: 'viewer@alpha.demo',         password: 'Alpha@123!',  color: 'text-slate-500',   desc: 'Somente visualizacao' },
+                ].map(({ role, email: demoEmail, password: demoPw, color, desc }) => (
                   <button
                     key={demoEmail}
                     type="button"
                     onClick={() => { setEmail(demoEmail); setPassword(demoPw) }}
-                    className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left hover:bg-slate-50 transition-colors group"
+                    className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left hover:bg-amber-50 transition-colors group"
                   >
                     <span className={`w-20 shrink-0 text-[10px] font-bold ${color}`}>{role}</span>
-                    <span className="font-mono text-[11px] text-slate-500 group-hover:text-slate-700 transition-colors truncate">{demoEmail}</span>
+                    <span className="flex-1 min-w-0">
+                      <span className="block font-mono text-[11px] text-slate-600 group-hover:text-slate-800 transition-colors truncate">{demoEmail}</span>
+                      <span className="block text-[9px] text-slate-400">{desc}</span>
+                    </span>
                   </button>
                 ))}
               </div>
