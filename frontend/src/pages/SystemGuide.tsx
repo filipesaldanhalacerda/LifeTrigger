@@ -6,6 +6,7 @@ import {
   UserCheck, Settings, CreditCard, Building2, Globe,
   Lock, Hash, Layers, GitBranch, ShieldCheck, Database,
   Phone, Filter, Send, CalendarClock, Rocket,
+  Plug, MessageSquare, Bot, Webhook, Code2, RefreshCcw, FileJson,
 } from 'lucide-react'
 import { TopBar } from '../components/layout/TopBar'
 
@@ -919,6 +920,199 @@ export default function SystemGuide() {
                 formulario completo de avaliacao, visao por cliente com classificacao de risco, e 5 insights personalizados por avaliacao.
                 As funcionalidades marcadas como <strong>"Em breve"</strong> estao no roadmap e serao implementadas nas proximas versoes,
                 expandindo a plataforma de motor de avaliacao para uma <strong>central completa de inteligencia comercial</strong>.
+              </p>
+            </div>
+          </div>
+        </Accordion>
+
+        {/* ── API e Integracoes ── */}
+        <Accordion id="api" title="API 100% integravel — conecte o motor a qualquer sistema" icon={Plug} openId={openId} onToggle={toggle}>
+          <div className="space-y-5">
+            <p className="text-sm text-slate-600 leading-relaxed">
+              O LifeTrigger nao e uma ferramenta isolada — e um <strong>motor com API REST completa</strong> que pode ser integrado
+              a qualquer sistema da sua corretora: CRM, ERP, chatbot, WhatsApp, app mobile, landing page ou plataforma propria.
+              Tudo o que o frontend faz, a API faz programaticamente.
+            </p>
+
+            {/* Endpoints disponíveis */}
+            <div>
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-brand-600">Endpoints Disponiveis</p>
+              <div className="space-y-2">
+                <div className="flex items-start gap-3 rounded-lg border border-slate-100 bg-slate-50 p-3">
+                  <code className="mt-0.5 shrink-0 rounded bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700">POST</code>
+                  <div>
+                    <code className="text-xs font-semibold text-slate-800">/api/v1/evaluations</code>
+                    <p className="mt-0.5 text-[11px] text-slate-500">Envia os dados do cliente e recebe o diagnostico completo: score, gap, acao, classificacao de risco, justificativas e 5 insights para o corretor.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 rounded-lg border border-slate-100 bg-slate-50 p-3">
+                  <code className="mt-0.5 shrink-0 rounded bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700">POST</code>
+                  <div>
+                    <code className="text-xs font-semibold text-slate-800">/api/v1/triggers</code>
+                    <p className="mt-0.5 text-[11px] text-slate-500">Registra um gatilho de vida (casamento, filho, imovel, etc.) e recebe nova avaliacao recalculada com base no evento.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 rounded-lg border border-slate-100 bg-slate-50 p-3">
+                  <code className="mt-0.5 shrink-0 rounded bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-700">GET</code>
+                  <div>
+                    <code className="text-xs font-semibold text-slate-800">/api/v1/evaluations</code>
+                    <p className="mt-0.5 text-[11px] text-slate-500">Lista avaliacoes com paginacao e filtros por data. Retorna resumo com acao, risco, score, gap e consentId.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 rounded-lg border border-slate-100 bg-slate-50 p-3">
+                  <code className="mt-0.5 shrink-0 rounded bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-700">GET</code>
+                  <div>
+                    <code className="text-xs font-semibold text-slate-800">{'/api/v1/evaluations/{id}'}</code>
+                    <p className="mt-0.5 text-[11px] text-slate-500">Recupera o registro completo de uma avaliacao: request original, resultado, justificativas, insights e metadados de auditoria.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 rounded-lg border border-slate-100 bg-slate-50 p-3">
+                  <code className="mt-0.5 shrink-0 rounded bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-700">GET</code>
+                  <div>
+                    <code className="text-xs font-semibold text-slate-800">{'/api/v1/admin/audit/evaluations/{id}/verify'}</code>
+                    <p className="mt-0.5 text-[11px] text-slate-500">Verifica a integridade criptografica (SHA-256) de uma avaliacao. Retorna PASS ou FAIL.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 rounded-lg border border-slate-100 bg-slate-50 p-3">
+                  <code className="mt-0.5 shrink-0 rounded bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-700">GET</code>
+                  <div>
+                    <code className="text-xs font-semibold text-slate-800">/api/v1/admin/reports/pilot</code>
+                    <p className="mt-0.5 text-[11px] text-slate-500">Relatorio agregado: total de avaliacoes, distribuicao por risco e acao, contagem de gatilhos.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 rounded-lg border border-slate-100 bg-slate-50 p-3">
+                  <code className="mt-0.5 shrink-0 rounded bg-violet-100 px-2 py-0.5 text-[10px] font-bold text-violet-700">GET/PUT</code>
+                  <div>
+                    <code className="text-xs font-semibold text-slate-800">{'/api/v1/admin/tenants/{id}/settings'}</code>
+                    <p className="mt-0.5 text-[11px] text-slate-500">Consulta e atualiza os parametros do motor (multiplicadores de renda, reserva, limites) via API.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 rounded-lg border border-slate-100 bg-slate-50 p-3">
+                  <code className="mt-0.5 shrink-0 rounded bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-700">GET</code>
+                  <div>
+                    <code className="text-xs font-semibold text-slate-800">/api/v1/engine/versions</code>
+                    <p className="mt-0.5 text-[11px] text-slate-500">Retorna a versao do motor, versao do ruleset e descricao. Util para health checks e monitoramento.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Caracteristicas tecnicas */}
+            <div>
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-brand-600">Caracteristicas Tecnicas da API</p>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <FeatureCard
+                  icon={FileJson}
+                  title="REST + JSON"
+                  desc="API REST padrao com payloads JSON. Qualquer linguagem ou plataforma que faca HTTP pode integrar: Python, Node.js, Java, PHP, n8n, Zapier, Make."
+                  color="bg-brand-600"
+                />
+                <FeatureCard
+                  icon={Lock}
+                  title="Autenticacao JWT"
+                  desc="Todas as rotas sao protegidas por token JWT. Autentique uma vez, use o token em todas as chamadas. Refresh automatico disponivel."
+                  color="bg-violet-600"
+                />
+                <FeatureCard
+                  icon={RefreshCcw}
+                  title="Idempotencia Nativa"
+                  desc="Endpoints de criacao aceitam header Idempotency-Key. Mesmo request enviado duas vezes nao gera duplicata — seguro para retries e filas."
+                  color="bg-sky-600"
+                />
+                <FeatureCard
+                  icon={Database}
+                  title="Multi-tenant Isolado"
+                  desc="Cada corretora opera em silo isolado via tenant_id no JWT. Uma unica integracao serve todas as corretoras sem risco de vazamento."
+                  color="bg-emerald-600"
+                />
+              </div>
+            </div>
+
+            {/* Cenarios de integracao */}
+            <div>
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-brand-600">Cenarios de Integracao</p>
+              <p className="mb-3 text-xs text-slate-500">A API do LifeTrigger abre possibilidades que vao muito alem do frontend web:</p>
+              <div className="space-y-3">
+                <div className="flex gap-3 rounded-xl border border-brand-100 bg-brand-50 p-4">
+                  <MessageSquare className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
+                  <div>
+                    <p className="text-sm font-semibold text-slate-800">WhatsApp / Chatbot</p>
+                    <p className="mt-1 text-xs text-slate-500 leading-relaxed">
+                      Integre a API com um chatbot no WhatsApp (via Twilio, Z-API, ou Evolution API).
+                      O cliente responde perguntas simples (idade, renda, dependentes) e o bot chama <code className="bg-slate-100 px-1 rounded text-brand-600">POST /evaluations</code> —
+                      em segundos, o cliente recebe o score de protecao e o gap diretamente no WhatsApp.
+                      O corretor recebe o diagnostico completo com insights prontos para a ligacao de follow-up.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-3 rounded-xl border border-brand-100 bg-brand-50 p-4">
+                  <Code2 className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
+                  <div>
+                    <p className="text-sm font-semibold text-slate-800">CRM / Sistema da Corretora</p>
+                    <p className="mt-1 text-xs text-slate-500 leading-relaxed">
+                      Conecte o LifeTrigger ao seu CRM (Pipedrive, HubSpot, Salesforce, ou sistema proprio).
+                      Quando um lead entra no funil, dispare automaticamente uma avaliacao via API.
+                      O resultado (score, gap, acao recomendada) e gravado no CRM como campo do lead —
+                      permitindo priorizar contatos por risco critico ou gap alto.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-3 rounded-xl border border-brand-100 bg-brand-50 p-4">
+                  <Webhook className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
+                  <div>
+                    <p className="text-sm font-semibold text-slate-800">Automacao (n8n, Zapier, Make)</p>
+                    <p className="mt-1 text-xs text-slate-500 leading-relaxed">
+                      Crie fluxos automatizados sem codigo: quando um formulario Google Forms e preenchido,
+                      dispare uma avaliacao na API e envie o resultado por email, Slack ou WhatsApp.
+                      Ou automatize: "a cada 12 meses, busque todos os clientes com ultima avaliacao antiga
+                      e envie lembrete de revisao por email com link para agendar".
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-3 rounded-xl border border-brand-100 bg-brand-50 p-4">
+                  <Bot className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
+                  <div>
+                    <p className="text-sm font-semibold text-slate-800">Landing Page de Captacao</p>
+                    <p className="mt-1 text-xs text-slate-500 leading-relaxed">
+                      Crie uma landing page publica com formulario simplificado: "Descubra se voce esta protegido".
+                      O visitante preenche dados basicos, a pagina chama a API e exibe o score de protecao.
+                      Se o gap for significativo, oferece agendamento com o corretor — lead qualificado
+                      que ja chega com diagnostico pronto e consciencia do problema.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-3 rounded-xl border border-brand-100 bg-brand-50 p-4">
+                  <BarChart3 className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
+                  <div>
+                    <p className="text-sm font-semibold text-slate-800">BI / Dashboard Executivo</p>
+                    <p className="mt-1 text-xs text-slate-500 leading-relaxed">
+                      Use o endpoint de relatorios (<code className="bg-slate-100 px-1 rounded text-brand-600">GET /reports/pilot</code>) para alimentar
+                      ferramentas de BI como Power BI, Metabase ou Looker. Acompanhe KPIs da operacao
+                      (total de avaliacoes, distribuicao de risco, taxa de conversao por acao) em dashboards
+                      executivos atualizados em tempo real.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-3 rounded-xl border border-brand-100 bg-brand-50 p-4">
+                  <Send className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
+                  <div>
+                    <p className="text-sm font-semibold text-slate-800">App Mobile / PWA</p>
+                    <p className="mt-1 text-xs text-slate-500 leading-relaxed">
+                      Construa um aplicativo mobile (React Native, Flutter) ou PWA que consuma a mesma API.
+                      O corretor faz avaliacoes pelo celular durante visitas a clientes — sem laptop,
+                      sem planilha, com resultado instantaneo e insights na tela.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-brand-200 bg-brand-50 p-4">
+              <p className="text-xs text-brand-800 leading-relaxed">
+                <strong>A API e o produto.</strong> O frontend web e apenas uma das formas de usar o LifeTrigger.
+                A API RESTful permite que qualquer desenvolvedor, integrador ou plataforma no-code conecte o motor
+                de avaliacao ao ecossistema da corretora — transformando cada ponto de contato com o cliente em
+                uma oportunidade de diagnostico e venda, com a mesma precisao, auditoria e seguranca do sistema web.
               </p>
             </div>
           </div>
