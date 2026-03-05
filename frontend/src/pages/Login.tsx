@@ -1,6 +1,9 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate, Navigate } from 'react-router-dom'
-import { Activity, Loader2, ShieldCheck, BarChart2, Zap } from 'lucide-react'
+import {
+  Activity, Loader2, ShieldCheck, BarChart2, Zap,
+  Target, Lightbulb, Users, Lock, TrendingUp, Hash,
+} from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { ApiError } from '../lib/api'
 
@@ -46,7 +49,7 @@ export default function Login() {
   return (
     <div className="flex min-h-screen">
       {/* ── Left: Brand panel ── */}
-      <div className="relative hidden lg:flex lg:w-1/2 flex-col justify-between overflow-hidden"
+      <div className="relative hidden lg:flex lg:w-[55%] flex-col justify-between overflow-hidden"
         style={{ background: 'linear-gradient(135deg, #071528 0%, #1A3C6E 50%, #0B1F3A 100%)' }}
       >
         {/* Decorative mesh pattern */}
@@ -64,7 +67,8 @@ export default function Login() {
         />
 
         {/* Content */}
-        <div className="relative z-10 flex flex-1 flex-col justify-center px-12 xl:px-16">
+        <div className="relative z-10 flex flex-1 flex-col justify-center px-12 xl:px-16 2xl:px-20">
+          {/* Logo */}
           <div className="flex items-center gap-3 mb-8">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/20 backdrop-blur-sm">
               <Activity className="h-6 w-6 text-brand-300" />
@@ -75,42 +79,66 @@ export default function Login() {
             </div>
           </div>
 
+          {/* Headline */}
           <h2 className="text-3xl xl:text-4xl font-extrabold leading-tight text-white">
-            Motor de Inteligência<br />
-            <span className="text-brand-300">de Proteção de Vida</span>
+            Pare de vender no achismo.<br />
+            <span className="text-accent-400">Venda com inteligência.</span>
           </h2>
-          <p className="mt-4 max-w-md text-base leading-relaxed text-brand-200/70">
-            Avaliações automatizadas de seguros de vida com inteligência de mercado para corretores que buscam excelência.
+          <p className="mt-4 max-w-lg text-base leading-relaxed text-brand-200/70">
+            O motor que transforma dados do cliente em diagnósticos de proteção de vida — com score, gap de cobertura,
+            argumentos de venda e insights prontos para usar na conversa. Em segundos, não em horas.
           </p>
 
-          {/* Feature highlights */}
-          <div className="mt-10 space-y-4">
+          {/* Feature grid */}
+          <div className="mt-10 grid grid-cols-2 gap-3">
             {[
-              { icon: ShieldCheck, text: 'Avaliação de cobertura em tempo real' },
-              { icon: BarChart2, text: 'Relatórios e insights por cliente' },
-              { icon: Zap, text: 'Gatilhos de vida com reavaliação automática' },
-            ].map(({ icon: FIcon, text }) => (
-              <div key={text} className="flex items-center gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10">
-                  <FIcon className="h-4 w-4 text-brand-300" />
+              { icon: Target,      title: 'Score de Proteção',        desc: 'Nota 0–100 que mostra exatamente quão protegido o cliente está' },
+              { icon: TrendingUp,  title: 'Gap de Cobertura',         desc: 'Diferença em R$ entre a cobertura atual e a ideal — o argumento que vende' },
+              { icon: Lightbulb,   title: '5 Insights por Avaliação', desc: 'Abertura, argumento, objeção, produto e próximo passo — prontos para usar' },
+              { icon: Zap,         title: 'Gatilhos de Vida',         desc: 'Casamento, filho, promoção — eventos que criam oportunidades de recontato' },
+              { icon: Users,       title: 'Gestão de Carteira',       desc: 'Visão por cliente com risco, ação e histórico completo de avaliações' },
+              { icon: Hash,        title: 'Auditoria Imutável',       desc: 'Hash SHA-256 em cada avaliação — prova técnica que protege você juridicamente' },
+              { icon: ShieldCheck, title: 'Motor Determinístico',     desc: '13 regras tipadas, sem IA — mesmo input, mesmo resultado, sempre' },
+              { icon: Lock,        title: 'LGPD by Design',           desc: 'Zero dados pessoais na API — apenas perfil anônimo vinculado por Consent ID' },
+            ].map(({ icon: FIcon, title, desc }) => (
+              <div key={title} className="flex gap-3 rounded-xl bg-white/[0.04] border border-white/[0.06] p-3 hover:bg-white/[0.07] transition-colors">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/10">
+                  <FIcon className="h-4 w-4 text-accent-400" />
                 </div>
-                <p className="text-sm font-medium text-white/80">{text}</p>
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-white">{title}</p>
+                  <p className="mt-0.5 text-[11px] leading-snug text-brand-300/60">{desc}</p>
+                </div>
               </div>
             ))}
           </div>
+
+          {/* Social proof / CTA */}
+          <div className="mt-10 flex items-center gap-4">
+            <div className="h-px flex-1 bg-white/10" />
+            <p className="text-xs font-medium text-brand-300/50 uppercase tracking-wider">Usado por corretoras que vendem mais</p>
+            <div className="h-px flex-1 bg-white/10" />
+          </div>
+          <p className="mt-4 text-sm text-brand-200/50 leading-relaxed max-w-lg">
+            Cada avaliação gera um registro auditável que comprova sua recomendação técnica.
+            Seus clientes recebem proteção adequada. Você constrói credibilidade e fecha mais negócios.
+          </p>
         </div>
 
-        <div className="relative z-10 px-12 xl:px-16 py-6">
-          <p className="text-xs text-brand-400/50">B2B SaaS · Plataforma para corretoras de seguros</p>
+        <div className="relative z-10 px-12 xl:px-16 2xl:px-20 py-6 border-t border-white/5">
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-brand-400/50">LifeTrigger Engine v1.0.0</p>
+            <p className="text-xs text-brand-400/50">B2B SaaS · Plataforma para corretoras de seguros</p>
+          </div>
         </div>
       </div>
 
       {/* ── Right: Login form ── */}
-      <div className="flex flex-1 flex-col items-center justify-center bg-white px-6 py-12">
+      <div className="flex flex-1 flex-col items-center justify-center bg-slate-50 px-6 py-12">
         <div className="w-full max-w-sm">
           {/* Mobile logo (hidden on lg) */}
           <div className="mb-8 flex flex-col items-center gap-3 lg:hidden">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-600">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-600 shadow-lg shadow-brand-600/20">
               <Activity className="h-6 w-6 text-white" />
             </div>
             <div className="text-center">
@@ -120,8 +148,8 @@ export default function Login() {
           </div>
 
           <div className="hidden lg:block mb-8">
-            <h2 className="text-2xl font-bold text-slate-900">Bem-vindo de volta</h2>
-            <p className="mt-1 text-sm text-slate-500">Entre com suas credenciais para acessar a plataforma.</p>
+            <h2 className="text-2xl font-bold text-slate-900">Acesse sua conta</h2>
+            <p className="mt-1 text-sm text-slate-500">Seus diagnósticos, insights e clientes estão esperando.</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -133,7 +161,7 @@ export default function Login() {
                 autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100 transition-all"
+                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 shadow-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100 transition-all"
                 placeholder="seu@email.com"
               />
             </div>
@@ -146,7 +174,7 @@ export default function Login() {
                 autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100 transition-all"
+                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 shadow-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100 transition-all"
                 placeholder="••••••••"
               />
             </div>
@@ -161,17 +189,31 @@ export default function Login() {
               <button
                 type="submit"
                 disabled={loading}
-                className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-brand-600/20 hover:bg-brand-700 disabled:opacity-60 transition-all"
+                className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-3.5 text-sm font-semibold text-white shadow-lg shadow-brand-600/20 hover:bg-brand-700 disabled:opacity-60 transition-all"
               >
                 {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-                {loading ? 'Entrando…' : 'Entrar'}
+                {loading ? 'Entrando…' : 'Entrar na plataforma'}
               </button>
             </div>
           </form>
 
+          {/* Value reminder */}
+          <div className="mt-6 animate-fadeIn rounded-xl border border-brand-100 bg-brand-50 p-4" style={{ animationDelay: '180ms' }}>
+            <div className="flex gap-3">
+              <BarChart2 className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
+              <div>
+                <p className="text-xs font-semibold text-brand-800">Cada avaliação é uma oportunidade de venda</p>
+                <p className="mt-1 text-[11px] text-brand-600 leading-relaxed">
+                  O motor gera diagnóstico completo com score, gap em R$, classificação de risco e 5 insights
+                  prontos para converter — tudo em milissegundos, com registro auditável.
+                </p>
+              </div>
+            </div>
+          </div>
+
           {/* Demo credentials */}
-          <div className="mt-6 animate-fadeIn" style={{ animationDelay: '200ms' }}>
-            <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+          <div className="mt-4 animate-fadeIn" style={{ animationDelay: '220ms' }}>
+            <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
               <p className="mb-2.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
                 Credenciais de demonstração
               </p>
@@ -187,7 +229,7 @@ export default function Login() {
                     key={demoEmail}
                     type="button"
                     onClick={() => { setEmail(demoEmail); setPassword(demoPw) }}
-                    className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left hover:bg-white transition-colors group"
+                    className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left hover:bg-slate-50 transition-colors group"
                   >
                     <span className={`w-20 shrink-0 text-[10px] font-bold ${color}`}>{role}</span>
                     <span className="font-mono text-[11px] text-slate-500 group-hover:text-slate-700 transition-colors truncate">{demoEmail}</span>
