@@ -131,11 +131,36 @@ export default function SystemGuide() {
 
         {/* ── O que o sistema faz ── */}
         <Accordion id="what" title="O que o LifeTrigger faz?" icon={Target} openId={openId} onToggle={toggle}>
-          <div className="space-y-4">
-            <p className="text-sm text-slate-600 leading-relaxed">
-              O LifeTrigger e um <strong>motor de inteligencia de protecao de vida</strong> desenhado para corretoras de seguros.
-              Ele recebe os dados do cliente e devolve uma analise completa em milissegundos, sem nenhuma intervencao humana.
-            </p>
+          <div className="space-y-5">
+
+            {/* A Dor */}
+            <div>
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-red-500">O Problema</p>
+              <div className="rounded-xl border border-red-100 bg-red-50 p-4 space-y-2">
+                <p className="text-sm text-red-900 leading-relaxed">
+                  Hoje, a maioria dos corretores de seguro de vida <strong>vende no achismo</strong>. Nao tem ferramenta que diga
+                  quanto de cobertura o cliente realmente precisa, nem dados concretos para justificar a recomendacao.
+                  O resultado:
+                </p>
+                <ul className="text-xs text-red-800 space-y-1.5 ml-4 list-disc">
+                  <li><strong>Clientes subprotegidos</strong> — familias que ficariam desamparadas em caso de falecimento, porque o corretor "chutou" um valor de cobertura</li>
+                  <li><strong>Clientes sobresegurados</strong> — pagando premio alto demais por cobertura que nao precisam</li>
+                  <li><strong>Vendas perdidas</strong> — sem argumentos tecnicos, o cliente nao enxerga valor e nao fecha</li>
+                  <li><strong>Risco juridico</strong> — se a familia cobrar no futuro que a cobertura era insuficiente, o corretor nao tem registro tecnico que comprove a analise feita</li>
+                  <li><strong>Zero acompanhamento</strong> — eventos de vida mudam a necessidade de protecao, mas o corretor nao tem gatilho para retomar o contato</li>
+                </ul>
+              </div>
+            </div>
+
+            {/* A Solucao */}
+            <div>
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-brand-600">A Solucao</p>
+              <p className="text-sm text-slate-600 leading-relaxed">
+                O LifeTrigger e um <strong>motor de inteligencia de protecao de vida</strong> desenhado para corretoras de seguros.
+                Ele recebe os dados do cliente e devolve uma analise completa em milissegundos, sem nenhuma intervencao humana.
+                Em vez de achismo, o corretor passa a ter <strong>dados concretos, argumentacao tecnica e registro auditavel</strong> de cada recomendacao.
+              </p>
+            </div>
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <FeatureCard
@@ -174,6 +199,31 @@ export default function SystemGuide() {
                 desc="Casamento, filho, promocao, divorcio — eventos que mudam a necessidade de protecao. O motor recalcula automaticamente."
                 color="bg-emerald-500"
               />
+            </div>
+
+            {/* ConsentId e Protecao Juridica */}
+            <div className="rounded-xl border border-brand-200 bg-brand-50 p-4 space-y-3">
+              <div className="flex gap-2">
+                <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-brand-700" />
+                <p className="text-sm font-semibold text-brand-800">ID de vinculacao e protecao juridica do corretor</p>
+              </div>
+              <p className="text-xs text-brand-700 leading-relaxed">
+                Cada avaliacao e vinculada a um <strong>Consent ID</strong> — um identificador unico gerado pela corretora que conecta
+                a analise ao cliente no sistema proprio do corretor. O LifeTrigger <strong>nao armazena nome, CPF, email nem qualquer
+                dado pessoal identificavel</strong>. Apenas dados demograficos anonimizados (idade, faixa de renda, quantidade de dependentes).
+              </p>
+              <p className="text-xs text-brand-700 leading-relaxed">
+                Isso cria uma <strong>camada de protecao juridica</strong> para o corretor: cada avaliacao gera um registro imutavel
+                com hash SHA-256, timestamp, versao do motor, regras aplicadas e resultado completo. Se no futuro houver
+                qualquer questionamento sobre a recomendacao dada, o corretor tem uma <strong>prova tecnica auditavel</strong> de
+                que a analise foi feita com base em dados concretos, processada por regras deterministicas e selada com
+                integridade criptografica — sem possibilidade de adulteracao retroativa.
+              </p>
+              <p className="text-xs text-brand-700 leading-relaxed">
+                O Consent ID permite que a corretora vincule a avaliacao ao cadastro do cliente internamente, mantendo
+                a rastreabilidade completa sem que o LifeTrigger precise ter acesso a dados pessoais. <strong>Voce mantem o
+                controle dos dados do seu cliente; nos fornecemos a inteligencia tecnica e o registro de prova.</strong>
+              </p>
             </div>
           </div>
         </Accordion>
