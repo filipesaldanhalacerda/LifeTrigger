@@ -3,18 +3,18 @@
 @theme {
   --font-family-sans: "Plus Jakarta Sans", system-ui, sans-serif;
 
-  /* ── Primary: Deep Teal ──────────────────────────────────────── */
-  --color-brand-50:  #f0fdfa;
-  --color-brand-100: #ccfbf1;
-  --color-brand-200: #99f6e4;
-  --color-brand-300: #5eead4;
-  --color-brand-400: #2dd4bf;
-  --color-brand-500: #14b8a6;
-  --color-brand-600: #0d9488;
-  --color-brand-700: #0f766e;
-  --color-brand-800: #115e59;
-  --color-brand-900: #134e4a;
-  --color-brand-950: #042f2e;
+  /* ── Primary: Navy Blue ──────────────────────────────────────── */
+  --color-brand-50:  #eef3f9;
+  --color-brand-100: #d5e1f0;
+  --color-brand-200: #a8c1e0;
+  --color-brand-300: #7ba1d0;
+  --color-brand-400: #4e81c0;
+  --color-brand-500: #2859A2;
+  --color-brand-600: #214B88;
+  --color-brand-700: #1A3C6E;
+  --color-brand-800: #132D54;
+  --color-brand-900: #0B1F3A;
+  --color-brand-950: #071528;
 
   /* ── Accent: Warm Amber/Gold ─────────────────────────────────── */
   --color-accent-50:  #fffbeb;
@@ -90,7 +90,7 @@
 }
 
 .glass-dark {
-  background: rgba(12, 30, 28, 0.88);
+  background: rgba(11, 31, 58, 0.88);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
 }
@@ -134,14 +134,14 @@
 
 /* Dark scrollbar for sidebar */
 .scrollbar-dark::-webkit-scrollbar-thumb {
-  background: #134e4a;
+  background: #132D54;
 }
 .scrollbar-dark::-webkit-scrollbar-thumb:hover {
-  background: #0f766e;
+  background: #1A3C6E;
 }
 
 /* ── Focus ring ────────────────────────────────────────────────── */
 *:focus-visible {
-  outline: 2px solid #14b8a6;
+  outline: 2px solid #2859A2;
   outline-offset: 2px;
 }

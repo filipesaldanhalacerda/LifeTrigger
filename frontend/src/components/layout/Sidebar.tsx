@@ -81,7 +81,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         'fixed inset-y-0 left-0 z-40 flex flex-col border-r border-brand-900/30 transition-all duration-300 ease-in-out',
         collapsed ? 'w-20' : 'w-64',
       )}
-      style={{ background: 'linear-gradient(180deg, #0c1e1c 0%, #0f2623 100%)' }}
+      style={{ background: 'linear-gradient(180deg, #0B1F3A 0%, #132D54 100%)' }}
     >
       {/* Logo */}
       <div className={cn(

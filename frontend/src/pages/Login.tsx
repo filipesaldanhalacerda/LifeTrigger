@@ -47,14 +47,14 @@ export default function Login() {
     <div className="flex min-h-screen">
       {/* ── Left: Brand panel ── */}
       <div className="relative hidden lg:flex lg:w-1/2 flex-col justify-between overflow-hidden"
-        style={{ background: 'linear-gradient(135deg, #042f2e 0%, #0f766e 50%, #134e4a 100%)' }}
+        style={{ background: 'linear-gradient(135deg, #071528 0%, #1A3C6E 50%, #0B1F3A 100%)' }}
       >
         {/* Decorative mesh pattern */}
         <div className="absolute inset-0 opacity-10"
           style={{
-            backgroundImage: `radial-gradient(circle at 20% 50%, rgba(45, 212, 191, 0.4) 0%, transparent 50%),
+            backgroundImage: `radial-gradient(circle at 20% 50%, rgba(40, 89, 162, 0.4) 0%, transparent 50%),
                               radial-gradient(circle at 80% 20%, rgba(251, 191, 36, 0.3) 0%, transparent 40%),
-                              radial-gradient(circle at 60% 80%, rgba(20, 184, 166, 0.3) 0%, transparent 45%)`,
+                              radial-gradient(circle at 60% 80%, rgba(33, 75, 136, 0.3) 0%, transparent 45%)`,
           }}
         />
         <div className="absolute inset-0 opacity-[0.03]"
