@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import {
   BookOpen, Target, Shield, TrendingUp, Users, Zap, BarChart3,
-  Cpu, CheckCircle, ArrowRight, ChevronDown, ChevronUp,
+  Cpu, CheckCircle, ChevronDown, ChevronUp,
   Lightbulb, DollarSign, ClipboardCheck, Activity, Eye,
   UserCheck, Settings, CreditCard, Building2, Globe,
   Lock, Hash, Layers, GitBranch, ShieldCheck, Database,
   Phone, Filter, Send, CalendarClock, Rocket,
   Plug, MessageSquare, Bot, Webhook, Code2, RefreshCcw, FileJson,
+  ArrowRight,
 } from 'lucide-react'
 import { TopBar } from '../components/layout/TopBar'
 
@@ -37,13 +38,18 @@ function Accordion({ id, title, icon: Icon, children, openId, onToggle }: {
   )
 }
 
-// ── Feature Card ────────────────────────────────────────────────
-function FeatureCard({ icon: Icon, title, desc, color }: {
-  icon: React.ElementType; title: string; desc: string; color: string
+// ── Section Label ────────────────────────────────────────────────
+function SectionLabel({ children, color = 'text-brand-600' }: { children: React.ReactNode; color?: string }) {
+  return <p className={`mb-3 text-xs font-semibold uppercase tracking-wider ${color}`}>{children}</p>
+}
+
+// ── Info Card (icon + title + desc) ─────────────────────────────
+function InfoCard({ icon: Icon, title, desc, bg = 'bg-brand-600' }: {
+  icon: React.ElementType; title: string; desc: string; bg?: string
 }) {
   return (
     <div className="flex gap-3 rounded-xl border border-slate-100 bg-slate-50 p-4">
-      <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${color}`}>
+      <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${bg}`}>
         <Icon className="h-5 w-5 text-white" />
       </div>
       <div>
@@ -54,16 +60,38 @@ function FeatureCard({ icon: Icon, title, desc, color }: {
   )
 }
 
-// ── Step ────────────────────────────────────────────────────────
-function Step({ number, title, desc }: { number: number; title: string; desc: string }) {
+// ── Compact Field (title + desc inline) ─────────────────────────
+function FieldRow({ icon: Icon, title, children }: {
+  icon: React.ElementType; title: string; children: React.ReactNode
+}) {
   return (
-    <div className="flex gap-4">
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-600 text-sm font-bold text-white">
-        {number}
+    <div className="flex gap-3 rounded-lg border border-slate-100 bg-slate-50 p-3">
+      <Icon className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
+      <div>
+        <p className="text-xs font-semibold text-slate-800">{title}</p>
+        <p className="mt-1 text-xs text-slate-500 leading-relaxed">{children}</p>
       </div>
-      <div className="pt-0.5">
-        <p className="text-sm font-semibold text-slate-800">{title}</p>
-        <p className="mt-1 text-xs text-slate-500 leading-relaxed">{desc}</p>
+    </div>
+  )
+}
+
+// ── Highlight Box ────────────────────────────────────────────────
+function HighlightBox({ icon: Icon, title, children, variant = 'brand' }: {
+  icon: React.ElementType; title?: string; children: React.ReactNode
+  variant?: 'brand' | 'amber' | 'emerald'
+}) {
+  const styles = {
+    brand:   { border: 'border-brand-100',   bg: 'bg-brand-50',   icon: 'text-brand-600',   text: 'text-brand-800' },
+    amber:   { border: 'border-amber-200',   bg: 'bg-amber-50',   icon: 'text-amber-600',   text: 'text-amber-800' },
+    emerald: { border: 'border-emerald-100', bg: 'bg-emerald-50', icon: 'text-emerald-600', text: 'text-emerald-800' },
+  }
+  const s = styles[variant]
+  return (
+    <div className={`flex gap-3 rounded-xl border ${s.border} ${s.bg} p-4`}>
+      <Icon className={`mt-0.5 h-4 w-4 shrink-0 ${s.icon}`} />
+      <div>
+        {title && <p className={`text-sm font-semibold ${s.text}`}>{title}</p>}
+        <div className={`${title ? 'mt-1 ' : ''}text-xs ${s.text} leading-relaxed`}>{children}</div>
       </div>
     </div>
   )
@@ -87,12 +115,34 @@ function ScreenRef({ icon: Icon, name, path, desc }: {
   )
 }
 
-// ── Role Badge ──────────────────────────────────────────────────
-function RoleBadge({ role, color, desc }: { role: string; color: string; desc: string }) {
+// ── Pipeline Phase ──────────────────────────────────────────────
+function PipelinePhase({ n, title, desc }: { n: number; title: string; desc: string }) {
   return (
-    <div className="flex items-start gap-3">
-      <span className={`mt-0.5 inline-block rounded-full px-2.5 py-1 text-xs font-bold text-white ${color}`}>{role}</span>
-      <p className="text-xs text-slate-600 leading-relaxed">{desc}</p>
+    <div className="flex gap-3 items-start">
+      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-600 text-[10px] font-bold text-white">{n}</span>
+      <div>
+        <p className="text-xs font-semibold text-slate-700">{title}</p>
+        <p className="text-[11px] text-slate-500">{desc}</p>
+      </div>
+    </div>
+  )
+}
+
+// ── API Endpoint Row ────────────────────────────────────────────
+function EndpointRow({ method, path, desc }: { method: string; path: string; desc: string }) {
+  const colors: Record<string, string> = {
+    POST:     'bg-emerald-100 text-emerald-700',
+    GET:      'bg-blue-100 text-blue-700',
+    'GET/PUT':'bg-violet-100 text-violet-700',
+    DELETE:   'bg-red-100 text-red-700',
+  }
+  return (
+    <div className="flex items-start gap-3 rounded-lg border border-slate-100 bg-slate-50 p-3">
+      <code className={`mt-0.5 shrink-0 rounded px-2 py-0.5 text-[10px] font-bold ${colors[method] ?? 'bg-slate-100 text-slate-700'}`}>{method}</code>
+      <div>
+        <code className="text-xs font-semibold text-slate-800">{path}</code>
+        <p className="mt-0.5 text-[11px] text-slate-500">{desc}</p>
+      </div>
     </div>
   )
 }
@@ -117,90 +167,57 @@ export default function SystemGuide() {
             <div>
               <h1 className="text-lg font-bold text-slate-900">LifeTrigger Engine</h1>
               <p className="mt-1 text-sm text-slate-600 leading-relaxed">
-                Motor inteligente de avaliacao de seguro de vida para corretoras. O LifeTrigger analisa
-                o perfil de cada cliente — idade, renda, dependentes, dividas e cobertura atual — e entrega
-                em segundos um diagnostico completo: score de protecao, gap de cobertura, recomendacao
+                Motor inteligente de avaliacao de seguro de vida para corretoras. Analisa o perfil de cada cliente
+                e entrega em segundos um diagnostico completo: score de protecao, gap de cobertura, recomendacao
                 de acao e insights prontos para usar na conversa com o cliente.
               </p>
               <p className="mt-3 text-sm text-slate-600 leading-relaxed">
-                O objetivo e simples: <strong className="text-brand-700">ajudar corretores a vender mais e melhor</strong>,
-                com dados concretos e argumentacao tecnica que transforma uma conversa de vendas em uma
-                consultoria de protecao.
+                Objetivo: <strong className="text-brand-700">ajudar corretores a vender mais e melhor</strong>,
+                com dados concretos e argumentacao tecnica que transforma uma conversa de vendas em uma consultoria de protecao.
               </p>
             </div>
           </div>
         </div>
 
-        {/* ── O que o sistema faz ── */}
+        {/* ━━ 1. O QUE O SISTEMA FAZ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
         <Accordion id="what" title="O que o LifeTrigger faz?" icon={Target} openId={openId} onToggle={toggle}>
-          <div className="space-y-5">
+          <div className="space-y-6">
 
             {/* A Dor */}
             <div>
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-red-500">O Problema</p>
+              <SectionLabel color="text-red-500">O Problema</SectionLabel>
               <div className="rounded-xl border border-red-100 bg-red-50 p-4 space-y-2">
                 <p className="text-sm text-red-900 leading-relaxed">
                   Hoje, a maioria dos corretores de seguro de vida <strong>vende no achismo</strong>. Nao tem ferramenta que diga
                   quanto de cobertura o cliente realmente precisa, nem dados concretos para justificar a recomendacao.
-                  O resultado:
                 </p>
                 <ul className="text-xs text-red-800 space-y-1.5 ml-4 list-disc">
-                  <li><strong>Clientes subprotegidos</strong> — familias que ficariam desamparadas em caso de falecimento, porque o corretor "chutou" um valor de cobertura</li>
+                  <li><strong>Clientes subprotegidos</strong> — familias que ficariam desamparadas porque o corretor "chutou" um valor</li>
                   <li><strong>Clientes sobresegurados</strong> — pagando premio alto demais por cobertura que nao precisam</li>
                   <li><strong>Vendas perdidas</strong> — sem argumentos tecnicos, o cliente nao enxerga valor e nao fecha</li>
-                  <li><strong>Risco juridico</strong> — se a familia cobrar no futuro que a cobertura era insuficiente, o corretor nao tem registro tecnico que comprove a analise feita</li>
-                  <li><strong>Zero acompanhamento</strong> — eventos de vida mudam a necessidade de protecao, mas o corretor nao tem gatilho para retomar o contato</li>
+                  <li><strong>Risco juridico</strong> — sem registro tecnico que comprove a analise feita</li>
+                  <li><strong>Zero acompanhamento</strong> — eventos de vida mudam a necessidade, mas o corretor nao tem gatilho para retomar</li>
                 </ul>
               </div>
             </div>
 
             {/* A Solucao */}
             <div>
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-brand-600">A Solucao</p>
-              <p className="text-sm text-slate-600 leading-relaxed">
-                O LifeTrigger e um <strong>motor de inteligencia de protecao de vida</strong> desenhado para corretoras de seguros.
-                Ele recebe os dados do cliente e devolve uma analise completa em milissegundos, sem nenhuma intervencao humana.
-                Em vez de achismo, o corretor passa a ter <strong>dados concretos, argumentacao tecnica e registro auditavel</strong> de cada recomendacao.
+              <SectionLabel>A Solucao</SectionLabel>
+              <p className="text-sm text-slate-600 leading-relaxed mb-4">
+                O LifeTrigger e um <strong>motor de inteligencia de protecao de vida</strong> que recebe os dados do cliente
+                e devolve uma analise completa em milissegundos. Em vez de achismo, o corretor passa a ter
+                <strong> dados concretos, argumentacao tecnica e registro auditavel</strong> de cada recomendacao.
               </p>
-            </div>
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <FeatureCard
-                icon={Shield}
-                title="Score de Protecao (0–100)"
-                desc="Nota unica que resume o quao protegido o cliente esta. Quanto maior, melhor a cobertura em relacao a necessidade real."
-                color="bg-brand-600"
-              />
-              <FeatureCard
-                icon={DollarSign}
-                title="Gap de Cobertura"
-                desc="Diferenca exata entre a cobertura atual e a cobertura recomendada, em reais e em percentual. Mostra o 'buraco' na protecao."
-                color="bg-red-500"
-              />
-              <FeatureCard
-                icon={TrendingUp}
-                title="Recomendacao de Acao"
-                desc="AUMENTAR, MANTER, REDUZIR ou REVISAR — uma diretriz clara para o corretor saber o que fazer com cada cliente."
-                color="bg-amber-500"
-              />
-              <FeatureCard
-                icon={BarChart3}
-                title="Classificacao de Risco"
-                desc="CRITICO, MODERADO ou ADEQUADO — o motor cruza idade, profissao, fumante e dependentes para classificar o risco."
-                color="bg-violet-500"
-              />
-              <FeatureCard
-                icon={Lightbulb}
-                title="Insights para o Corretor"
-                desc="5 insights prontos: abertura de conversa, argumento principal, objecao prevista, produto sugerido e proximo passo."
-                color="bg-sky-500"
-              />
-              <FeatureCard
-                icon={Zap}
-                title="Gatilhos de Vida"
-                desc="Casamento, filho, promocao, divorcio — eventos que mudam a necessidade de protecao. O motor recalcula automaticamente."
-                color="bg-emerald-500"
-              />
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <InfoCard icon={Shield}     title="Score de Protecao (0-100)"  desc="Nota unica que resume o quao protegido o cliente esta. Quanto maior, melhor a cobertura em relacao a necessidade real." bg="bg-brand-600" />
+                <InfoCard icon={DollarSign}  title="Gap de Cobertura"          desc="Diferenca exata entre a cobertura atual e a recomendada, em reais e em percentual. Mostra o 'buraco' na protecao." bg="bg-red-500" />
+                <InfoCard icon={TrendingUp}  title="Recomendacao de Acao"      desc="AUMENTAR, MANTER, REDUZIR ou REVISAR — diretriz clara para o corretor saber o que fazer." bg="bg-amber-500" />
+                <InfoCard icon={BarChart3}   title="Classificacao de Risco"    desc="CRITICO, MODERADO ou ADEQUADO — cruza idade, profissao, fumante e dependentes para classificar." bg="bg-violet-500" />
+                <InfoCard icon={Lightbulb}   title="5 Insights por Avaliacao"  desc="Abertura de conversa, argumento principal, objecao prevista, produto sugerido e proximo passo." bg="bg-sky-500" />
+                <InfoCard icon={Zap}         title="Gatilhos de Vida"          desc="Casamento, filho, promocao, divorcio — eventos que recalculam a protecao automaticamente." bg="bg-emerald-500" />
+              </div>
             </div>
 
             {/* ConsentId e Protecao Juridica */}
@@ -210,250 +227,140 @@ export default function SystemGuide() {
                 <p className="text-sm font-semibold text-brand-800">ID de vinculacao e protecao juridica do corretor</p>
               </div>
               <p className="text-xs text-brand-700 leading-relaxed">
-                Cada avaliacao e vinculada a um <strong>Consent ID</strong> — um identificador unico gerado pela corretora que conecta
-                a analise ao cliente no sistema proprio do corretor. O LifeTrigger <strong>nao armazena nome, CPF, email nem qualquer
-                dado pessoal identificavel</strong>. Apenas dados demograficos anonimizados (idade, faixa de renda, quantidade de dependentes).
+                Cada avaliacao e vinculada a um <strong>Consent ID</strong> — identificador unico que conecta a analise ao cliente
+                no sistema do corretor. O LifeTrigger <strong>nao armazena nome, CPF, email nem qualquer dado pessoal</strong>.
+                Apenas dados demograficos anonimizados (idade, faixa de renda, quantidade de dependentes).
               </p>
               <p className="text-xs text-brand-700 leading-relaxed">
-                Isso cria uma <strong>camada de protecao juridica</strong> para o corretor: cada avaliacao gera um registro imutavel
-                com hash SHA-256, timestamp, versao do motor, regras aplicadas e resultado completo. Se no futuro houver
-                qualquer questionamento sobre a recomendacao dada, o corretor tem uma <strong>prova tecnica auditavel</strong> de
-                que a analise foi feita com base em dados concretos, processada por regras deterministicas e selada com
-                integridade criptografica — sem possibilidade de adulteracao retroativa.
+                Cada avaliacao gera um registro imutavel com hash SHA-256, timestamp, versao do motor e resultado completo.
+                Se no futuro houver qualquer questionamento, o corretor tem uma <strong>prova tecnica auditavel</strong> de que
+                a analise foi feita com base em dados concretos e regras deterministicas — sem possibilidade de adulteracao.
               </p>
               <p className="text-xs text-brand-700 leading-relaxed">
-                O Consent ID permite que a corretora vincule a avaliacao ao cadastro do cliente internamente, mantendo
-                a rastreabilidade completa sem que o LifeTrigger precise ter acesso a dados pessoais. <strong>Voce mantem o
-                controle dos dados do seu cliente; nos fornecemos a inteligencia tecnica e o registro de prova.</strong>
+                <strong>Voce mantem o controle dos dados do seu cliente; nos fornecemos a inteligencia tecnica e o registro de prova.</strong>
               </p>
             </div>
           </div>
         </Accordion>
 
-        {/* ── Como funciona ── */}
+        {/* ━━ 2. COMO FUNCIONA ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
         <Accordion id="how" title="Como funciona na pratica?" icon={ClipboardCheck} openId={openId} onToggle={toggle}>
           <div className="space-y-5">
             <p className="text-sm text-slate-600 leading-relaxed">
-              O fluxo de trabalho do corretor com o LifeTrigger segue 4 passos simples:
+              O fluxo de trabalho do corretor segue 4 passos simples:
             </p>
 
-            <div className="space-y-4">
-              <Step
-                number={1}
-                title="Coleta dos dados do cliente"
-                desc="Na tela 'Nova Avaliacao', o corretor preenche um formulario guiado em 4 etapas: dados pessoais (idade, profissao, fumante), financeiros (renda, cobertura atual, dividas), familiares (dependentes e idades) e operacionais (canal, consentimento LGPD). O formulario valida tudo em tempo real e formata valores automaticamente."
-              />
-              <Step
-                number={2}
-                title="Motor processa a avaliacao"
-                desc="Ao enviar, o motor LifeTrigger cruza mais de 30 regras deterministicas em milissegundos. Nao usa IA nem heuristica — mesmo input sempre gera o mesmo resultado. Calcula a cobertura recomendada, o gap, o score de protecao, a eficiencia e gera os insights para o corretor."
-              />
-              <Step
-                number={3}
-                title="Resultado completo em tela"
-                desc="O corretor recebe imediatamente o resultado com: score em anel visual, gap em barra de progresso, acao recomendada com explicacao, todas as justificativas do motor, e 5 insights prontos para usar na conversa com o cliente (abertura, argumento, objecao, produto e proximo passo)."
-              />
-              <Step
-                number={4}
-                title="Historico e acompanhamento"
-                desc="Todas as avaliacoes ficam salvas com hash de auditoria imutavel. O corretor pode consultar qualquer avaliacao passada, acompanhar a evolucao dos clientes, e o gestor tem dashboard com visao consolidada da carteira (distribuicao de risco, acoes e saude geral)."
-              />
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {[
+                { n: 1, title: 'Coleta dos dados', desc: 'Formulario guiado em 4 etapas (Pessoal, Financeiro, Familia, Operacional) com validacao em tempo real e formatacao BRL automatica.' },
+                { n: 2, title: 'Motor processa', desc: 'Mais de 30 regras deterministicas cruzadas em milissegundos. Mesmo input, mesmo resultado — sempre.' },
+                { n: 3, title: 'Resultado completo', desc: 'Score, gap, acao, justificativas e 5 insights prontos para usar na conversa com o cliente.' },
+                { n: 4, title: 'Historico e acompanhamento', desc: 'Todas as avaliacoes ficam salvas com hash de auditoria imutavel. Consulte e acompanhe a evolucao.' },
+              ].map(({ n, title, desc }) => (
+                <div key={n} className="flex gap-3 rounded-xl border border-slate-100 bg-slate-50 p-4">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-600 text-sm font-bold text-white">{n}</div>
+                  <div className="pt-0.5">
+                    <p className="text-sm font-semibold text-slate-800">{title}</p>
+                    <p className="mt-1 text-xs text-slate-500 leading-relaxed">{desc}</p>
+                  </div>
+                </div>
+              ))}
             </div>
 
-            <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4">
-              <div className="flex gap-2">
-                <Zap className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
-                <div>
-                  <p className="text-sm font-semibold text-amber-800">Gatilhos de Vida</p>
-                  <p className="mt-1 text-xs text-amber-700 leading-relaxed">
-                    Alem da avaliacao padrao, o corretor pode registrar <strong>eventos de vida</strong> (casamento, nascimento de filho,
-                    promocao, divorcio, aposentadoria). O motor recalcula a protecao com base no evento e gera uma nova recomendacao.
-                    Isso permite abordagens proativas — o corretor liga para o cliente no momento certo, com dados concretos.
-                  </p>
-                </div>
-              </div>
-            </div>
+            <HighlightBox icon={Zap} title="Gatilhos de Vida" variant="amber">
+              O corretor pode registrar <strong>eventos de vida</strong> (casamento, filho, promocao, divorcio, aposentadoria).
+              O motor recalcula a protecao com base no evento e gera nova recomendacao — abordagem proativa com dados concretos.
+            </HighlightBox>
           </div>
         </Accordion>
 
-        {/* ── Potencia do motor ── */}
-        <Accordion id="engine-power" title="A potencia do motor: determinismo, complexidade e auditoria" icon={Cpu} openId={openId} onToggle={toggle}>
-          <div className="space-y-5">
+        {/* ━━ 3. POTENCIA DO MOTOR ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+        <Accordion id="engine-power" title="Potencia do motor: determinismo, complexidade e auditoria" icon={Cpu} openId={openId} onToggle={toggle}>
+          <div className="space-y-6">
             <p className="text-sm text-slate-600 leading-relaxed">
-              O LifeTrigger nao e um calculador simples. E um <strong>motor de regras deterministico de alta complexidade</strong>,
-              projetado para entregar diagnosticos de grau institucional — com a robustez que seguradoras, auditorias e orgaos reguladores exigem.
+              O LifeTrigger e um <strong>motor de regras deterministico de alta complexidade</strong>, projetado para
+              entregar diagnosticos de grau institucional com a robustez que seguradoras e auditorias exigem.
             </p>
 
             {/* Determinismo */}
             <div>
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-brand-600">Motor 100% Deterministico</p>
-              <div className="space-y-3">
-                <div className="flex gap-3 rounded-xl border border-brand-100 bg-brand-50 p-4">
-                  <GitBranch className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
-                  <div>
-                    <p className="text-sm font-semibold text-slate-800">Zero aleatoriedade</p>
-                    <p className="mt-1 text-xs text-slate-500 leading-relaxed">
-                      O motor nao usa inteligencia artificial, machine learning, modelos estatisticos nem heuristicas probabilisticas.
-                      Cada resultado e produzido por <strong>regras deterministicas puras</strong>: dado o mesmo input, o motor gera exatamente
-                      o mesmo output — sempre, em qualquer momento, em qualquer servidor. Isso significa reprodutibilidade total
-                      e previsibilidade absoluta, um requisito critico para mercados regulados.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex gap-3 rounded-xl border border-brand-100 bg-brand-50 p-4">
-                  <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
-                  <div>
-                    <p className="text-sm font-semibold text-slate-800">Regras versionadas e rastreadas</p>
-                    <p className="mt-1 text-xs text-slate-500 leading-relaxed">
-                      Cada avaliacao registra a versao exata do motor (<code className="text-brand-600 bg-slate-100 px-1 rounded">engineVersion</code>)
-                      e do conjunto de regras (<code className="text-brand-600 bg-slate-100 px-1 rounded">ruleSetVersion</code> + <code className="text-brand-600 bg-slate-100 px-1 rounded">ruleSetHash</code>).
-                      Se as regras mudarem no futuro, voce ainda pode verificar com qual versao cada diagnostico foi produzido.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Complexidade de calculo */}
-            <div>
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-brand-600">Complexidade do Calculo</p>
-              <div className="space-y-3">
-                <div className="rounded-xl border border-slate-200 bg-white p-4">
-                  <p className="text-sm font-semibold text-slate-800 mb-3">O motor executa um pipeline de 6 fases para cada avaliacao:</p>
-                  <div className="space-y-2">
-                    <div className="flex gap-3 items-start">
-                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-600 text-[10px] font-bold text-white">1</span>
-                      <div>
-                        <p className="text-xs font-semibold text-slate-700">Substituicao de Renda</p>
-                        <p className="text-[11px] text-slate-500">Calcula quantos anos de renda a familia precisa em caso de falecimento. Varia de 2 a 10 anos, com bonificacao progressiva por dependente (ate +3 anos), limitada por teto configuravel por corretora.</p>
-                      </div>
-                    </div>
-                    <div className="flex gap-3 items-start">
-                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-600 text-[10px] font-bold text-white">2</span>
-                      <div>
-                        <p className="text-xs font-semibold text-slate-700">Quitacao de Dividas</p>
-                        <p className="text-[11px] text-slate-500">Soma o saldo total de dividas do cliente para garantir que a cobertura cubra 100% dos debitos pendentes. Evita que a familia herde dividas.</p>
-                      </div>
-                    </div>
-                    <div className="flex gap-3 items-start">
-                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-600 text-[10px] font-bold text-white">3</span>
-                      <div>
-                        <p className="text-xs font-semibold text-slate-700">Reserva de Transicao</p>
-                        <p className="text-[11px] text-slate-500">Adiciona colchao de seguranca (3 a 9 meses de renda), descontando reserva de emergencia existente. Clampeado por limites rigidos para evitar manipulacao.</p>
-                      </div>
-                    </div>
-                    <div className="flex gap-3 items-start">
-                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-600 text-[10px] font-bold text-white">4</span>
-                      <div>
-                        <p className="text-xs font-semibold text-slate-700">Guardrails (Teto e Piso)</p>
-                        <p className="text-[11px] text-slate-500">Aplica limites de seguranca: a cobertura recomendada nunca fica abaixo de 2x a renda anual nem acima de 20x (configuravel). Evita recomendacoes absurdas.</p>
-                      </div>
-                    </div>
-                    <div className="flex gap-3 items-start">
-                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-600 text-[10px] font-bold text-white">5</span>
-                      <div>
-                        <p className="text-xs font-semibold text-slate-700">Score + Penalidades</p>
-                        <p className="text-[11px] text-slate-500">Calcula Protection Score (razao cobertura/necessidade) e aplica 3 penalidades independentes: baixa cobertura com dependentes (-10), divida alta acima de 50% da renda (-10), e ausencia de reserva de emergencia (-10). Score e eficiencia sao clampeados entre 0 e 100.</p>
-                      </div>
-                    </div>
-                    <div className="flex gap-3 items-start">
-                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-600 text-[10px] font-bold text-white">6</span>
-                      <div>
-                        <p className="text-xs font-semibold text-slate-700">Overrides de Acao + Insights</p>
-                        <p className="text-[11px] text-slate-500">Verifica 3 condicoes especiais (revisao {'>'} 12 meses, dados nao confirmados, gatilho recente) que forcam acao REVISAR. Por fim, gera 5 insights personalizados para o corretor baseados no resultado completo.</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    <strong>13 regras catalogadas</strong> em enum fortemente tipado (<code className="text-brand-600 bg-white px-1 rounded">EngineRuleId</code>),
-                    cada uma com template de justificativa, argumentos primitivos e rastreabilidade completa.
-                    Nenhuma regra opera como "string magica" — tudo e validado em tempo de compilacao.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Auditoria */}
-            <div>
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-brand-600">Auditoria e Integridade</p>
+              <SectionLabel>Motor 100% Deterministico</SectionLabel>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <FeatureCard
-                  icon={Hash}
-                  title="Hash SHA-256 Imutavel"
-                  desc="Cada avaliacao recebe um hash criptografico no momento da criacao. Qualquer alteracao posterior (mesmo 1 byte) invalida o hash. Verificavel a qualquer momento na tela de Auditoria."
-                  color="bg-violet-600"
-                />
-                <FeatureCard
-                  icon={Layers}
-                  title="Snapshot Completo"
-                  desc="O motor congela um snapshot com todas as regras aplicadas, justificativas estruturadas, versao do motor e timestamp. Esse snapshot e a 'foto' juridica do momento da avaliacao."
-                  color="bg-brand-600"
-                />
-                <FeatureCard
-                  icon={Lock}
-                  title="Imutabilidade por Design"
-                  desc="Avaliacoes salvas NUNCA sao alteradas. Se os parametros mudarem, as avaliacoes anteriores mantem o resultado original. Isso garante integridade historica e rastreabilidade regulatoria."
-                  color="bg-red-500"
-                />
-                <FeatureCard
-                  icon={Database}
-                  title="Isolamento Multi-Tenant"
-                  desc="Cada corretora opera em silo isolado via tenant_id no JWT. Impossivel que dados de uma corretora vazem para outra. Segregacao enforced no nivel do banco de dados."
-                  color="bg-sky-600"
-                />
+                <HighlightBox icon={GitBranch} title="Zero aleatoriedade">
+                  Sem IA, sem machine learning, sem heuristicas probabilisticas. Regras deterministicas puras: mesmo input = mesmo output, sempre, em qualquer servidor. Reprodutibilidade total.
+                </HighlightBox>
+                <HighlightBox icon={ShieldCheck} title="Regras versionadas e rastreadas">
+                  Cada avaliacao registra <code className="text-brand-600 bg-slate-100 px-1 rounded">engineVersion</code>,{' '}
+                  <code className="text-brand-600 bg-slate-100 px-1 rounded">ruleSetVersion</code> e{' '}
+                  <code className="text-brand-600 bg-slate-100 px-1 rounded">ruleSetHash</code>. Se as regras mudarem, voce verifica com qual versao cada diagnostico foi produzido.
+                </HighlightBox>
+              </div>
+            </div>
+
+            {/* Pipeline de 6 fases */}
+            <div>
+              <SectionLabel>Pipeline de Calculo (6 Fases)</SectionLabel>
+              <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-2.5">
+                <PipelinePhase n={1} title="Substituicao de Renda" desc="Calcula quantos anos de renda a familia precisa (2-10 anos), com bonificacao por dependente (ate +3), limitada por teto configuravel." />
+                <PipelinePhase n={2} title="Quitacao de Dividas" desc="Soma o saldo total de dividas para garantir que a cobertura cubra 100% dos debitos pendentes." />
+                <PipelinePhase n={3} title="Reserva de Transicao" desc="Adiciona colchao de seguranca (3-9 meses de renda), descontando reserva existente. Clampeado por limites rigidos." />
+                <PipelinePhase n={4} title="Guardrails (Teto e Piso)" desc="Cobertura recomendada nunca fica abaixo de 2x nem acima de 20x a renda anual (configuravel). Evita recomendacoes absurdas." />
+                <PipelinePhase n={5} title="Score + Penalidades" desc="Protection Score (razao cobertura/necessidade) com 3 penalidades independentes: dependentes subprotegidos (-10), divida alta (-10), sem reserva (-10)." />
+                <PipelinePhase n={6} title="Overrides de Acao + Insights" desc={`Verifica condicoes especiais (revisao > 12 meses, dados nao confirmados, gatilho recente) que forcam REVISAR. Gera 5 insights personalizados.`} />
+              </div>
+              <div className="mt-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  <strong>13 regras catalogadas</strong> em enum fortemente tipado (<code className="text-brand-600 bg-white px-1 rounded">EngineRuleId</code>),
+                  cada uma com template de justificativa e rastreabilidade completa. Nenhuma "string magica" — tudo validado em compilacao.
+                </p>
+              </div>
+            </div>
+
+            {/* Auditoria e Integridade */}
+            <div>
+              <SectionLabel>Auditoria e Integridade</SectionLabel>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <InfoCard icon={Hash}     title="Hash SHA-256 Imutavel"    desc="Cada avaliacao recebe hash criptografico na criacao. Qualquer alteracao posterior invalida o hash. Verificavel na tela de Auditoria." bg="bg-violet-600" />
+                <InfoCard icon={Layers}   title="Snapshot Completo"        desc="Congela regras aplicadas, justificativas, versao do motor e timestamp. A 'foto' juridica do momento da avaliacao." bg="bg-brand-600" />
+                <InfoCard icon={Lock}     title="Imutabilidade por Design" desc="Avaliacoes salvas NUNCA sao alteradas. Parametros mudam? Avaliacoes anteriores mantem resultado original." bg="bg-red-500" />
+                <InfoCard icon={Database} title="Isolamento Multi-Tenant"  desc="Cada corretora em silo isolado via tenant_id no JWT. Impossivel que dados vazem entre corretoras." bg="bg-sky-600" />
               </div>
             </div>
 
             {/* Seguranca */}
             <div>
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-brand-600">Seguranca em Camadas</p>
-              <div className="space-y-2">
-                <div className="flex gap-3 rounded-xl border border-emerald-100 bg-emerald-50 p-4">
-                  <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
-                  <p className="text-xs text-emerald-800 leading-relaxed">
-                    <strong>Autenticacao JWT com refresh automatico:</strong> tokens de curta duracao com renovacao transparente.
-                    Toda requisicao e autenticada e autorizada por role cumulativo (5 niveis). Sem token valido, a API recusa 100% das chamadas.
-                  </p>
-                </div>
-                <div className="flex gap-3 rounded-xl border border-emerald-100 bg-emerald-50 p-4">
-                  <Shield className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
-                  <p className="text-xs text-emerald-800 leading-relaxed">
-                    <strong>Zero dados pessoais na API:</strong> o motor nao recebe nome, CPF, email ou qualquer PII.
-                    Opera exclusivamente com dados demograficos anonimizados (idade, faixa de renda, quantidade de dependentes).
-                    Conformidade LGPD by design — nao ha dados pessoais para vazar.
-                  </p>
-                </div>
-                <div className="flex gap-3 rounded-xl border border-emerald-100 bg-emerald-50 p-4">
-                  <Lock className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
-                  <p className="text-xs text-emerald-800 leading-relaxed">
-                    <strong>Consentimento obrigatorio enforced:</strong> toda avaliacao exige <code className="bg-emerald-100 px-1 rounded">hasExplicitActiveConsent=true</code> e
-                    um <code className="bg-emerald-100 px-1 rounded">consentId</code> valido. A API rejeita qualquer request sem consentimento — nao ha bypass.
-                  </p>
-                </div>
-                <div className="flex gap-3 rounded-xl border border-emerald-100 bg-emerald-50 p-4">
-                  <Database className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
-                  <p className="text-xs text-emerald-800 leading-relaxed">
-                    <strong>Guardrails contra manipulacao:</strong> parametros configurados pelo tenant sao clampeados por limites rigidos
-                    definidos no codigo-fonte. Mesmo que um TenantOwner tente definir valores extremos, o motor aplica teto e piso de seguranca.
-                  </p>
-                </div>
+              <SectionLabel>Seguranca em Camadas</SectionLabel>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <HighlightBox icon={ShieldCheck} variant="emerald">
+                  <strong>JWT com refresh automatico:</strong> tokens de curta duracao com renovacao transparente.
+                  5 niveis de role cumulativo. Sem token valido, a API recusa 100% das chamadas.
+                </HighlightBox>
+                <HighlightBox icon={Shield} variant="emerald">
+                  <strong>Zero dados pessoais na API:</strong> sem nome, CPF ou email. Apenas dados demograficos anonimizados.
+                  LGPD by design — nao ha dados pessoais para vazar.
+                </HighlightBox>
+                <HighlightBox icon={Lock} variant="emerald">
+                  <strong>Consentimento obrigatorio:</strong> toda avaliacao exige{' '}
+                  <code className="bg-emerald-100 px-1 rounded">hasExplicitActiveConsent=true</code> e{' '}
+                  <code className="bg-emerald-100 px-1 rounded">consentId</code> valido. Sem bypass.
+                </HighlightBox>
+                <HighlightBox icon={Database} variant="emerald">
+                  <strong>Guardrails contra manipulacao:</strong> parametros configurados pelo tenant sao clampeados por limites rigidos
+                  no codigo-fonte. Mesmo valores extremos sao travados por teto e piso de seguranca.
+                </HighlightBox>
               </div>
             </div>
 
             <div className="rounded-xl border border-brand-200 bg-brand-50 p-4">
               <p className="text-xs text-brand-800 leading-relaxed">
-                <strong>Em resumo:</strong> o LifeTrigger combina a <strong>precisao de um motor deterministico</strong> com a
-                <strong> rastreabilidade de um sistema de auditoria</strong> e a <strong>seguranca de uma arquitetura zero-trust</strong>.
-                Cada avaliacao e reproduzivel, verificavel, imutavel e segregada — exatamente o que o mercado segurador exige.
+                <strong>Em resumo:</strong> precisao de um motor deterministico + rastreabilidade de sistema de auditoria +
+                seguranca de arquitetura zero-trust. Cada avaliacao e reproduzivel, verificavel, imutavel e segregada.
               </p>
             </div>
           </div>
         </Accordion>
 
-        {/* ── Telas do sistema ── */}
+        {/* ━━ 4. TELAS DO SISTEMA ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
         <Accordion id="screens" title="Telas do sistema" icon={Eye} openId={openId} onToggle={toggle}>
           <div className="space-y-5">
             <p className="text-sm text-slate-600 leading-relaxed">
@@ -461,658 +368,359 @@ export default function SystemGuide() {
             </p>
 
             <div>
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-brand-600">Area Principal</p>
+              <SectionLabel>Area Principal</SectionLabel>
               <div className="space-y-2">
-                <ScreenRef
-                  icon={BarChart3}
-                  name="Dashboard"
-                  path="/"
-                  desc="Visao consolidada da carteira: saude geral (score 0–100), distribuicao de risco e acoes recomendadas, barra de protecao da carteira, ultimas avaliacoes e acoes rapidas. Viewers veem em modo leitura."
-                />
-                <ScreenRef
-                  icon={ClipboardCheck}
-                  name="Nova Avaliacao"
-                  path="/evaluations/new"
-                  desc="Formulario guiado em 4 etapas (Pessoal, Financeiro, Familia, Operacional) com validacao em tempo real, formatacao BRL automatica e indicador de progresso. Ao enviar, redireciona para o resultado completo."
-                />
-                <ScreenRef
-                  icon={Zap}
-                  name="Gatilhos de Vida"
-                  path="/triggers/new"
-                  desc="Registro de eventos de vida (casamento, filho, promocao, etc.) vinculados a uma avaliacao base. O motor recalcula a protecao considerando o impacto do evento."
-                />
-                <ScreenRef
-                  icon={BookOpen}
-                  name="Historico de Avaliacoes"
-                  path="/evaluations"
-                  desc="Lista paginada de todas as avaliacoes realizadas, com filtros por data. Cada linha mostra acao, risco, score e gap. Clique para ver o resultado completo."
-                />
-                <ScreenRef
-                  icon={UserCheck}
-                  name="Meus Clientes"
-                  path="/clients"
-                  desc="Visao agrupada por cliente (consentId), mostrando o historico de avaliacoes de cada pessoa. Permite acompanhar a evolucao do cliente ao longo do tempo."
-                />
+                <ScreenRef icon={BarChart3}      name="Dashboard"              path="/"                 desc="Visao consolidada da carteira: saude geral, distribuicao de risco e acoes, barra de protecao, ultimas avaliacoes e acoes rapidas." />
+                <ScreenRef icon={ClipboardCheck}  name="Nova Avaliacao"         path="/evaluations/new"  desc="Formulario guiado em 4 etapas com validacao em tempo real, formatacao BRL e indicador de progresso." />
+                <ScreenRef icon={Zap}             name="Gatilhos de Vida"       path="/triggers/new"     desc="Registro de eventos de vida vinculados a uma avaliacao base. Motor recalcula considerando o impacto." />
+                <ScreenRef icon={BookOpen}         name="Historico de Avaliacoes" path="/evaluations"     desc="Lista paginada com filtros por data. Cada linha mostra acao, risco, score e gap." />
+                <ScreenRef icon={UserCheck}        name="Meus Clientes"          path="/clients"         desc="Visao agrupada por consentId, mostrando o historico de avaliacoes de cada cliente." />
               </div>
             </div>
 
             <div>
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-brand-600">Administracao</p>
+              <SectionLabel>Administracao</SectionLabel>
               <div className="space-y-2">
-                <ScreenRef
-                  icon={Users}
-                  name="Gestao de Equipe"
-                  path="/team"
-                  desc="Criar, ativar/desativar usuarios e alterar perfis de acesso. Cada usuario tem um role que define o que pode ver e fazer no sistema."
-                />
-                <ScreenRef
-                  icon={BarChart3}
-                  name="Relatorios"
-                  path="/reports"
-                  desc="Relatorio agregado da operacao: total de avaliacoes, distribuicao por risco e acao, quantidade de gatilhos disparados. Util para reunioes de gestao."
-                />
-                <ScreenRef
-                  icon={Shield}
-                  name="Auditoria"
-                  path="/audit"
-                  desc="Verificacao de integridade de qualquer avaliacao. Compara o hash armazenado com o hash recalculado — garante que nenhum resultado foi adulterado."
-                />
-                <ScreenRef
-                  icon={Cpu}
-                  name="Motor"
-                  path="/engine"
-                  desc="Status do motor (saude, versao, versao do ruleset). Mostra a arquitetura tecnica do sistema e os endpoints disponiveis."
-                />
-                <ScreenRef
-                  icon={Settings}
-                  name="Configuracoes"
-                  path="/settings"
-                  desc="Parametros do motor para sua corretora: multiplicadores de renda, meses de reserva de emergencia, limite maximo de cobertura. Cada corretora pode personalizar as formulas."
-                />
-                <ScreenRef
-                  icon={CreditCard}
-                  name="Plano e Faturamento"
-                  path="/billing"
-                  desc="Informacoes sobre o plano contratado, uso da plataforma e gestao de assinatura."
-                />
+                <ScreenRef icon={Users}      name="Gestao de Equipe"   path="/team"      desc="Criar, ativar/desativar usuarios e alterar perfis de acesso." />
+                <ScreenRef icon={BarChart3}  name="Relatorios"         path="/reports"   desc="Relatorio agregado: total de avaliacoes, distribuicao por risco e acao, gatilhos disparados." />
+                <ScreenRef icon={Shield}     name="Auditoria"          path="/audit"     desc="Verificacao de integridade: compara hash armazenado com hash recalculado." />
+                <ScreenRef icon={Cpu}        name="Motor"              path="/engine"    desc="Status do motor: saude, versao, ruleset e endpoints disponiveis." />
+                <ScreenRef icon={Settings}   name="Configuracoes"      path="/settings"  desc="Parametros do motor: multiplicadores de renda, reserva de emergencia, limite de cobertura." />
+                <ScreenRef icon={CreditCard} name="Plano e Faturamento" path="/billing"  desc="Plano contratado, uso da plataforma e gestao de assinatura." />
               </div>
             </div>
 
             <div>
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-brand-600">Plataforma (SuperAdmin)</p>
+              <SectionLabel>Plataforma (SuperAdmin)</SectionLabel>
               <div className="space-y-2">
-                <ScreenRef
-                  icon={Building2}
-                  name="Corretoras"
-                  path="/admin/tenants"
-                  desc="Gestao de todas as corretoras cadastradas na plataforma. Criar, ativar ou desativar tenants."
-                />
-                <ScreenRef
-                  icon={Globe}
-                  name="Plataforma"
-                  path="/admin/platform"
-                  desc="Visao geral da plataforma: metricas globais, status dos servicos e monitoramento."
-                />
-                <ScreenRef
-                  icon={Users}
-                  name="Usuarios Globais"
-                  path="/admin/users"
-                  desc="Gestao de todos os usuarios de todas as corretoras. Busca, filtragem e acoes administrativas."
-                />
+                <ScreenRef icon={Building2} name="Corretoras"        path="/admin/tenants"   desc="Gestao de todas as corretoras. Criar, ativar ou desativar tenants." />
+                <ScreenRef icon={Globe}     name="Plataforma"        path="/admin/platform"  desc="Metricas globais, status dos servicos e monitoramento." />
+                <ScreenRef icon={Users}     name="Usuarios Globais"  path="/admin/users"     desc="Gestao de todos os usuarios de todas as corretoras." />
               </div>
             </div>
           </div>
         </Accordion>
 
-        {/* ── Perfis de acesso ── */}
+        {/* ━━ 5. PERFIS DE ACESSO ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
         <Accordion id="roles" title="Perfis de acesso (Roles)" icon={Users} openId={openId} onToggle={toggle}>
           <div className="space-y-4">
             <p className="text-sm text-slate-600 leading-relaxed">
-              O LifeTrigger tem 5 perfis de acesso <strong>cumulativos</strong> — cada perfil inclui todas as
-              permissoes dos perfis abaixo dele. Isso significa que um Manager pode fazer tudo o que um Broker faz, e mais.
+              5 perfis <strong>cumulativos</strong> — cada perfil inclui todas as permissoes dos perfis abaixo dele:
             </p>
 
-            <div className="space-y-3">
-              <RoleBadge
-                role="Viewer"
-                color="bg-slate-500"
-                desc="Visualizacao apenas. Ve o Dashboard (sem acoes rapidas), historico de avaliacoes e seu perfil. Nao pode criar avaliacoes nem acessar areas administrativas. Ideal para auditores ou acompanhamento externo."
-              />
-              <RoleBadge
-                role="Broker"
-                color="bg-emerald-600"
-                desc="Corretor operacional. Tudo do Viewer, mais: criar avaliacoes, registrar gatilhos de vida, consultar clientes. Ve apenas suas proprias avaliacoes (filtro por usuario). E o perfil padrao para corretores no dia a dia."
-              />
-              <RoleBadge
-                role="Manager"
-                color="bg-blue-600"
-                desc="Gestor da equipe. Tudo do Broker, mais: gestao de equipe, relatorios agregados, auditoria de integridade e acesso ao motor/sistema. Ve todas as avaliacoes da corretora, nao apenas as proprias."
-              />
-              <RoleBadge
-                role="TenantOwner"
-                color="bg-purple-600"
-                desc="Dono da corretora. Tudo do Manager, mais: configuracoes do motor (formulas e multiplicadores) e plano/faturamento. Controle total sobre a operacao da corretora na plataforma."
-              />
-              <RoleBadge
-                role="SuperAdmin"
-                color="bg-red-600"
-                desc="Administrador da plataforma LifeTrigger. Gerencia todas as corretoras, todos os usuarios, visao global da plataforma. Pode selecionar qualquer corretora para operar como se fosse parte dela."
-              />
+            <div className="space-y-2">
+              {[
+                { role: 'Super Admin', level: 5, color: 'bg-red-600',     desc: 'Administrador da plataforma. Gerencia todas as corretoras, todos os usuarios e visao global.' },
+                { role: 'Proprietario', level: 4, color: 'bg-purple-600', desc: 'Dono da corretora. Configuracoes do motor (formulas) e plano/faturamento. Controle total.' },
+                { role: 'Gerente',      level: 3, color: 'bg-blue-600',   desc: 'Gestor de equipe. Relatorios agregados, auditoria e acesso ao motor. Ve todas as avaliacoes.' },
+                { role: 'Corretor',     level: 2, color: 'bg-emerald-600',desc: 'Operacional. Cria avaliacoes, registra gatilhos, consulta clientes. Ve apenas suas avaliacoes.' },
+                { role: 'Observador',   level: 1, color: 'bg-slate-500',  desc: 'Visualizacao apenas. Dashboard (sem acoes), historico e perfil. Ideal para auditores.' },
+              ].map(({ role, level, color, desc }) => (
+                <div key={role} className="flex items-start gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3">
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className={`inline-block rounded-full px-2.5 py-1 text-xs font-bold text-white ${color}`}>{role}</span>
+                    <span className="text-[10px] font-mono text-slate-400">Lv {level}</span>
+                  </div>
+                  <p className="text-xs text-slate-600 leading-relaxed">{desc}</p>
+                </div>
+              ))}
             </div>
 
-            <div className="mt-2 rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
               <p className="text-xs text-slate-600 leading-relaxed">
                 <strong>Hierarquia cumulativa:</strong> SuperAdmin (5) {'>'} TenantOwner (4) {'>'} Manager (3) {'>'} Broker (2) {'>'} Viewer (1).
-                Um usuario com role Manager pode acessar tudo o que Broker e Viewer acessam. Nao e preciso atribuir multiplos roles.
+                Nao e preciso atribuir multiplos roles — um nivel inclui todos os anteriores.
               </p>
             </div>
           </div>
         </Accordion>
 
-        {/* ── Resultado da avaliacao ── */}
+        {/* ━━ 6. RESULTADO DA AVALIACAO ━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
         <Accordion id="result" title="Entendendo o resultado da avaliacao" icon={CheckCircle} openId={openId} onToggle={toggle}>
           <div className="space-y-4">
             <p className="text-sm text-slate-600 leading-relaxed">
-              Quando o corretor envia uma avaliacao, o motor retorna um conjunto completo de informacoes.
-              Aqui esta o que cada campo significa:
+              O motor retorna um conjunto completo de informacoes. Aqui esta o significado de cada campo:
             </p>
 
-            <div className="space-y-3">
-              <div className="rounded-lg border border-slate-100 bg-slate-50 p-3">
-                <p className="text-xs font-semibold text-slate-800">Score de Protecao (0–100)</p>
-                <p className="mt-1 text-xs text-slate-500">Nota que resume a adequacao da cobertura. Acima de 70 e saudavel. Abaixo de 45 requer atencao. Calculado cruzando cobertura atual, renda, dependentes e dividas.</p>
+            {/* Metricas numericas */}
+            <div>
+              <SectionLabel>Metricas Numericas</SectionLabel>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <FieldRow icon={Shield} title="Score de Protecao (0-100)">
+                  Nota que resume a adequacao da cobertura. Acima de 70 e saudavel. Abaixo de 45 requer atencao.
+                </FieldRow>
+                <FieldRow icon={Target} title="Eficiencia de Cobertura (0-100)">
+                  Quao bem a cobertura atual se aproxima da ideal. 100 = perfeito. Acima = sobresegurado.
+                </FieldRow>
+                <FieldRow icon={DollarSign} title="Gap de Protecao (R$ e %)">
+                  Diferenca entre a cobertura recomendada e a atual. Positivo = subprotegido. Negativo = sobresegurado.
+                </FieldRow>
               </div>
-              <div className="rounded-lg border border-slate-100 bg-slate-50 p-3">
-                <p className="text-xs font-semibold text-slate-800">Eficiencia de Cobertura (0–100)</p>
-                <p className="mt-1 text-xs text-slate-500">Mede o quao bem a cobertura atual se aproxima da ideal. 100 = perfeitamente coberto. Acima de 100 = sobresegurado (pagando mais do que precisa).</p>
+            </div>
+
+            {/* Classificacoes */}
+            <div>
+              <SectionLabel>Classificacoes</SectionLabel>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <div className="rounded-lg border border-slate-100 bg-slate-50 p-3">
+                  <p className="text-xs font-semibold text-slate-800 mb-2">Acao Recomendada</p>
+                  <div className="space-y-1">
+                    <p className="text-[11px] text-slate-500"><strong className="text-amber-600">AUMENTAR</strong> — cobertura insuficiente, ampliar apolice</p>
+                    <p className="text-[11px] text-slate-500"><strong className="text-emerald-600">MANTER</strong> — cobertura adequada, revisao periodica</p>
+                    <p className="text-[11px] text-slate-500"><strong className="text-blue-600">REDUZIR</strong> — cobertura excessiva, otimizar premio</p>
+                    <p className="text-[11px] text-slate-500"><strong className="text-violet-600">REVISAR</strong> — dados incompletos ou situacao atipica</p>
+                  </div>
+                </div>
+                <div className="rounded-lg border border-slate-100 bg-slate-50 p-3">
+                  <p className="text-xs font-semibold text-slate-800 mb-2">Classificacao de Risco</p>
+                  <div className="space-y-1">
+                    <p className="text-[11px] text-slate-500"><strong className="text-red-600">CRITICO</strong> — alta vulnerabilidade, atencao imediata</p>
+                    <p className="text-[11px] text-slate-500"><strong className="text-amber-600">MODERADO</strong> — protecao parcial, melhorias recomendadas</p>
+                    <p className="text-[11px] text-slate-500"><strong className="text-emerald-600">ADEQUADO</strong> — protecao alinhada com o perfil</p>
+                  </div>
+                </div>
               </div>
+            </div>
+
+            {/* Insights */}
+            <div>
+              <SectionLabel>5 Insights para o Corretor</SectionLabel>
               <div className="rounded-lg border border-slate-100 bg-slate-50 p-3">
-                <p className="text-xs font-semibold text-slate-800">Gap de Protecao (R$ e %)</p>
-                <p className="mt-1 text-xs text-slate-500">Diferenca entre a cobertura recomendada e a atual. Valor positivo = subprotegido (precisa de mais). Valor negativo = sobresegurado (pode otimizar).</p>
-              </div>
-              <div className="rounded-lg border border-slate-100 bg-slate-50 p-3">
-                <p className="text-xs font-semibold text-slate-800">Acao Recomendada</p>
-                <p className="mt-1 text-xs text-slate-500">
-                  <strong>AUMENTAR:</strong> cobertura insuficiente, recomende ao cliente ampliar a apolice. <br/>
-                  <strong>MANTER:</strong> cobertura adequada, programe revisao periodica. <br/>
-                  <strong>REDUZIR:</strong> cobertura excessiva, otimize o premio sem perder protecao. <br/>
-                  <strong>REVISAR:</strong> dados incompletos ou situacao atipica, revisao manual necessaria.
-                </p>
-              </div>
-              <div className="rounded-lg border border-slate-100 bg-slate-50 p-3">
-                <p className="text-xs font-semibold text-slate-800">Classificacao de Risco</p>
-                <p className="mt-1 text-xs text-slate-500">
-                  <strong>CRITICO:</strong> cliente em situacao de alta vulnerabilidade. <br/>
-                  <strong>MODERADO:</strong> protecao parcial, melhorias recomendadas. <br/>
-                  <strong>ADEQUADO:</strong> proteção alinhada com o perfil.
-                </p>
-              </div>
-              <div className="rounded-lg border border-slate-100 bg-slate-50 p-3">
-                <p className="text-xs font-semibold text-slate-800">Insights para o Corretor</p>
-                <p className="mt-1 text-xs text-slate-500">
-                  5 insights gerados automaticamente para cada avaliacao: <br/>
-                  <strong>Abertura:</strong> frase para iniciar a conversa. <br/>
-                  <strong>Argumento Principal:</strong> dado mais forte para convencer. <br/>
-                  <strong>Objecao Prevista:</strong> o que o cliente pode questionar e como responder. <br/>
-                  <strong>Produto Sugerido:</strong> tipo de apolice mais indicado. <br/>
-                  <strong>Proximo Passo:</strong> acao concreta apos a conversa.
-                </p>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-5">
+                  {[
+                    { title: 'Abertura',            desc: 'Frase para iniciar a conversa' },
+                    { title: 'Argumento Principal',  desc: 'Dado mais forte para convencer' },
+                    { title: 'Objecao Prevista',     desc: 'Questao provavel e contra-argumento' },
+                    { title: 'Produto Sugerido',     desc: 'Tipo de apolice mais indicado' },
+                    { title: 'Proximo Passo',        desc: 'Acao concreta apos a conversa' },
+                  ].map(({ title, desc }) => (
+                    <div key={title} className="text-center p-2 rounded-lg bg-white border border-slate-100">
+                      <p className="text-[10px] font-bold text-brand-600 uppercase tracking-wider">{title}</p>
+                      <p className="mt-1 text-[10px] text-slate-500">{desc}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
         </Accordion>
 
-        {/* ── Configuracoes do motor ── */}
+        {/* ━━ 7. CONFIGURACOES ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
         <Accordion id="settings" title="Configuracoes personalizaveis" icon={Settings} openId={openId} onToggle={toggle}>
           <div className="space-y-4">
             <p className="text-sm text-slate-600 leading-relaxed">
-              Cada corretora pode personalizar as formulas do motor na tela de Configuracoes. Isso permite
-              adaptar o LifeTrigger a estrategia comercial de cada operacao:
+              Cada corretora personaliza as formulas do motor para adaptar a sua estrategia comercial:
             </p>
 
-            <div className="space-y-3">
-              <div className="rounded-lg border border-slate-100 bg-slate-50 p-3">
-                <p className="text-xs font-semibold text-slate-800">Multiplicador de Renda (Solteiro)</p>
-                <p className="mt-1 text-xs text-slate-500">Quantos anos de renda a cobertura deve cobrir para uma pessoa sem dependentes. Padrao: 5 anos.</p>
-              </div>
-              <div className="rounded-lg border border-slate-100 bg-slate-50 p-3">
-                <p className="text-xs font-semibold text-slate-800">Multiplicador de Renda (Com Dependentes)</p>
-                <p className="mt-1 text-xs text-slate-500">Quantos anos de renda para quem tem dependentes. Padrao: 10 anos. Aumentar esse valor gera recomendacoes mais conservadoras (coberturas maiores).</p>
-              </div>
-              <div className="rounded-lg border border-slate-100 bg-slate-50 p-3">
-                <p className="text-xs font-semibold text-slate-800">Buffer de Reserva de Emergencia</p>
-                <p className="mt-1 text-xs text-slate-500">Meses de renda adicionados a cobertura como colchao de seguranca. Padrao: 6 meses.</p>
-              </div>
-              <div className="rounded-lg border border-slate-100 bg-slate-50 p-3">
-                <p className="text-xs font-semibold text-slate-800">Limite Maximo de Cobertura</p>
-                <p className="mt-1 text-xs text-slate-500">Teto maximo em multiplos de renda anual. Evita recomendacoes irreais para perfis de alta renda. Padrao: 25x.</p>
-              </div>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {[
+                { title: 'Multiplicador de Renda (Solteiro)',        desc: 'Anos de renda para pessoa sem dependentes. Padrao: 5.' },
+                { title: 'Multiplicador de Renda (Com Dependentes)', desc: 'Anos de renda com dependentes. Padrao: 10. Mais alto = mais conservador.' },
+                { title: 'Buffer de Reserva de Emergencia',         desc: 'Meses de renda como colchao de seguranca. Padrao: 6.' },
+                { title: 'Limite Maximo de Cobertura',               desc: 'Teto em multiplos de renda anual. Evita recomendacoes irreais. Padrao: 25x.' },
+              ].map(({ title, desc }) => (
+                <div key={title} className="rounded-lg border border-slate-100 bg-slate-50 p-3">
+                  <p className="text-xs font-semibold text-slate-800">{title}</p>
+                  <p className="mt-1 text-xs text-slate-500 leading-relaxed">{desc}</p>
+                </div>
+              ))}
             </div>
 
-            <div className="mt-2 rounded-xl border border-brand-200 bg-brand-50 p-4">
+            <div className="rounded-xl border border-brand-200 bg-brand-50 p-3">
               <p className="text-xs text-brand-800 leading-relaxed">
-                <strong>Dica:</strong> alterar essas configuracoes impacta todas as avaliacoes futuras da sua corretora.
-                Avaliacoes ja realizadas mantem o resultado original (imutavel por design).
-                Use a simulacao ao vivo na tela de Configuracoes para testar antes de salvar.
+                <strong>Dica:</strong> alteracoes impactam apenas avaliacoes futuras. Avaliacoes ja realizadas mantem
+                o resultado original (imutavel). Use a simulacao ao vivo na tela de Configuracoes para testar antes de salvar.
               </p>
             </div>
           </div>
         </Accordion>
 
-        {/* ── Seguranca e conformidade ── */}
-        <Accordion id="security" title="Seguranca, LGPD e Auditoria" icon={Shield} openId={openId} onToggle={toggle}>
+        {/* ━━ 8. SEGURANCA E LGPD ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+        <Accordion id="security" title="Seguranca, LGPD e Conformidade" icon={Shield} openId={openId} onToggle={toggle}>
           <div className="space-y-4">
             <p className="text-sm text-slate-600 leading-relaxed">
-              O LifeTrigger foi projetado com seguranca e conformidade desde o primeiro dia:
+              Projetado com seguranca e conformidade desde o primeiro dia:
             </p>
-
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <FeatureCard
-                icon={Shield}
-                title="Sem Dados Pessoais na API"
-                desc="A API nao recebe nome, CPF ou qualquer dado pessoal identificavel. Apenas perfil demografico anonimizado (idade, renda, dependentes)."
-                color="bg-brand-600"
-              />
-              <FeatureCard
-                icon={CheckCircle}
-                title="Consentimento Obrigatorio"
-                desc="Toda avaliacao exige consentimento ativo (hasExplicitActiveConsent=true + consentId). Sem consentimento, a API recusa o request."
-                color="bg-emerald-500"
-              />
-              <FeatureCard
-                icon={Shield}
-                title="Audit Hash Imutavel"
-                desc="Cada avaliacao recebe um hash SHA-256 no momento da criacao. Qualquer alteracao posterior quebra o hash — detectavel na tela de Auditoria."
-                color="bg-violet-500"
-              />
-              <FeatureCard
-                icon={Users}
-                title="Isolamento Multi-tenant"
-                desc="Cada corretora opera em isolamento total. Avaliacoes, usuarios e configuracoes sao segregados por tenant_id via JWT."
-                color="bg-sky-500"
-              />
+              <InfoCard icon={Shield}      title="Sem Dados Pessoais na API"  desc="Sem nome, CPF ou qualquer PII. Apenas perfil demografico anonimizado. LGPD by design." bg="bg-brand-600" />
+              <InfoCard icon={CheckCircle} title="Consentimento Obrigatorio"  desc="Toda avaliacao exige consentimento ativo + consentId. Sem consentimento, a API recusa." bg="bg-emerald-500" />
+              <InfoCard icon={Hash}        title="Audit Hash Imutavel"       desc="SHA-256 na criacao. Qualquer alteracao quebra o hash — detectavel na tela de Auditoria." bg="bg-violet-500" />
+              <InfoCard icon={Database}    title="Isolamento Multi-tenant"   desc="Cada corretora em isolamento total. Avaliacoes, usuarios e configuracoes segregados por tenant." bg="bg-sky-500" />
             </div>
           </div>
         </Accordion>
 
-        {/* ── Dicas pro corretor ── */}
+        {/* ━━ 9. DICAS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
         <Accordion id="tips" title="Dicas para tirar o maximo do LifeTrigger" icon={Lightbulb} openId={openId} onToggle={toggle}>
-          <div className="space-y-4">
-            <div className="space-y-3">
-              <div className="flex gap-3 rounded-xl border border-emerald-100 bg-emerald-50 p-4">
-                <ArrowRight className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
-                <p className="text-xs text-emerald-800 leading-relaxed">
-                  <strong>Preencha todos os campos:</strong> quanto mais dados, mais preciso o diagnostico. Um campo de divida
-                  zerado vs. vazio muda a recomendacao. Dados incompletos geram acao REVISAR.
-                </p>
-              </div>
-              <div className="flex gap-3 rounded-xl border border-emerald-100 bg-emerald-50 p-4">
-                <ArrowRight className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
-                <p className="text-xs text-emerald-800 leading-relaxed">
-                  <strong>Use os Insights na conversa:</strong> os 5 insights sao gerados especificamente para o perfil do cliente.
-                  A "Abertura" e ideal para iniciar a conversa. A "Objecao Prevista" prepara voce para a resistencia mais provavel.
-                </p>
-              </div>
-              <div className="flex gap-3 rounded-xl border border-emerald-100 bg-emerald-50 p-4">
-                <ArrowRight className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
-                <p className="text-xs text-emerald-800 leading-relaxed">
-                  <strong>Registre Gatilhos de Vida:</strong> quando um cliente casar, tiver um filho ou for promovido, registre o
-                  evento. Isso gera um novo diagnostico e uma oportunidade natural de contato — o cliente percebe que voce
-                  acompanha a vida dele, nao so a apolice.
-                </p>
-              </div>
-              <div className="flex gap-3 rounded-xl border border-emerald-100 bg-emerald-50 p-4">
-                <ArrowRight className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
-                <p className="text-xs text-emerald-800 leading-relaxed">
-                  <strong>Acompanhe o Dashboard:</strong> a barra de saude da carteira e o melhor termometro da sua operacao.
-                  Se o score medio esta caindo, e hora de revisitar os clientes com recomendacao AUMENTAR.
-                </p>
-              </div>
-              <div className="flex gap-3 rounded-xl border border-emerald-100 bg-emerald-50 p-4">
-                <ArrowRight className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
-                <p className="text-xs text-emerald-800 leading-relaxed">
-                  <strong>Mostre o resultado ao cliente:</strong> o Score de Protecao e visual e facil de entender. Mostre o anel
-                  de score e a barra de gap — dados concretos vendem mais que argumentos abstratos.
-                </p>
-              </div>
-            </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {[
+              { title: 'Preencha todos os campos', desc: 'Quanto mais dados, mais preciso o diagnostico. Divida zerada vs. vazia muda a recomendacao. Dados incompletos geram REVISAR.' },
+              { title: 'Use os Insights na conversa', desc: 'Os 5 insights sao gerados para o perfil especifico. A Abertura inicia a conversa. A Objecao Prevista prepara voce para a resistencia.' },
+              { title: 'Registre Gatilhos de Vida', desc: 'Casamento, filho ou promocao? Registre o evento para novo diagnostico e oportunidade natural de contato.' },
+              { title: 'Acompanhe o Dashboard', desc: 'A barra de saude da carteira e o termometro da operacao. Score medio caindo? Hora de revisitar clientes com acao AUMENTAR.' },
+              { title: 'Mostre o resultado ao cliente', desc: 'O Score de Protecao e visual e facil de entender. Dados concretos vendem mais que argumentos abstratos.' },
+            ].map(({ title, desc }) => (
+              <HighlightBox key={title} icon={ArrowRight} title={title} variant="emerald">
+                {desc}
+              </HighlightBox>
+            ))}
           </div>
         </Accordion>
 
-        {/* ── Estrategias de venda e recontato ── */}
-        <Accordion id="sales" title="Estrategias de venda, recontato e captacao de leads" icon={Rocket} openId={openId} onToggle={toggle}>
-          <div className="space-y-5">
+        {/* ━━ 10. ESTRATEGIAS DE VENDA ━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+        <Accordion id="sales" title="Estrategias de venda, recontato e captacao" icon={Rocket} openId={openId} onToggle={toggle}>
+          <div className="space-y-6">
             <p className="text-sm text-slate-600 leading-relaxed">
-              O LifeTrigger nao e apenas um motor de avaliacao — e uma <strong>plataforma de inteligencia comercial</strong> que
-              ajuda o corretor a vender mais, no momento certo, com os argumentos certos.
+              O LifeTrigger e uma <strong>plataforma de inteligencia comercial</strong> que ajuda o corretor a vender mais,
+              no momento certo, com os argumentos certos.
             </p>
 
             {/* 1. Gatilhos para retorno de contato */}
             <div>
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-brand-600">1. Gatilhos para Retornar Contato</p>
-              <div className="space-y-3">
-                <div className="flex gap-3 rounded-xl border border-brand-100 bg-brand-50 p-4">
-                  <Phone className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
-                  <div>
-                    <p className="text-sm font-semibold text-slate-800">Eventos de vida como gatilho de recontato</p>
-                    <p className="mt-1 text-xs text-slate-500 leading-relaxed">
-                      O sistema permite registrar <strong>7 tipos de gatilhos de vida</strong> (casamento, novo filho, imovel,
-                      aumento de salario, divorcio, aposentadoria e eventos personalizados). Cada gatilho gera automaticamente
-                      uma nova avaliacao com o diagnostico atualizado — criando um <strong>motivo concreto e natural para retomar
-                      o contato</strong> com o cliente. O corretor nao precisa inventar desculpas para ligar: o evento de vida
-                      e o novo diagnostico sao a razao da abordagem.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex gap-3 rounded-xl border border-brand-100 bg-brand-50 p-4">
-                  <CalendarClock className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
-                  <div>
-                    <p className="text-sm font-semibold text-slate-800">Revisao anual automatica como oportunidade</p>
-                    <p className="mt-1 text-xs text-slate-500 leading-relaxed">
-                      O motor identifica avaliacoes com mais de 12 meses sem revisao e aplica automaticamente a acao <strong>REVISAR</strong>,
-                      gerando um insight de proximo passo que orienta o corretor a agendar revisao anual. O insight PROXIMO_PASSO
-                      para clientes com acao MANTER sugere explicitamente: registrar lembrete de revisao em 12 meses, perguntar
-                      sobre mudancas de vida esperadas e pedir indicacoes.
-                    </p>
-                  </div>
-                </div>
-                <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-                  <div className="flex gap-2">
-                    <Rocket className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
-                    <div>
-                      <p className="text-xs font-semibold text-amber-800">Em breve no roadmap</p>
-                      <p className="mt-1 text-xs text-amber-700 leading-relaxed">
-                        Notificacoes automaticas por email/push quando uma avaliacao completar 12 meses sem revisao,
-                        lembretes programados para datas de gatilhos futuros (ex: aniversario do cliente, vencimento de apolice),
-                        e alerta proativo quando o score da carteira cair abaixo de um limite configuravel.
-                      </p>
-                    </div>
-                  </div>
-                </div>
+              <SectionLabel>1. Gatilhos para Retornar Contato</SectionLabel>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <HighlightBox icon={Phone} title="Eventos de vida como gatilho">
+                  <strong>7 tipos de gatilhos</strong> (casamento, filho, imovel, salario, divorcio, aposentadoria, personalizado).
+                  Cada um gera nova avaliacao com diagnostico atualizado — motivo concreto para retomar contato.
+                </HighlightBox>
+                <HighlightBox icon={CalendarClock} title="Revisao anual automatica">
+                  Avaliacoes com mais de 12 meses recebem acao <strong>REVISAR</strong> automaticamente.
+                  O insight PROXIMO_PASSO sugere agendar revisao e perguntar sobre mudancas de vida.
+                </HighlightBox>
+              </div>
+              <div className="mt-3">
+                <HighlightBox icon={Rocket} title="Em breve no roadmap" variant="amber">
+                  Notificacoes automaticas por email/push quando avaliacao completar 12 meses.
+                  Lembretes programados para datas de gatilhos futuros. Alerta proativo quando score da carteira cair.
+                </HighlightBox>
               </div>
             </div>
 
-            {/* 2. Disparo de questionario */}
+            {/* 2. Questionario */}
             <div>
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-brand-600">2. Questionario de Atualizacao para o Cliente</p>
+              <SectionLabel>2. Questionario de Atualizacao</SectionLabel>
               <div className="space-y-3">
-                <div className="flex gap-3 rounded-xl border border-slate-200 bg-white p-4">
-                  <ClipboardCheck className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
-                  <div>
-                    <p className="text-sm font-semibold text-slate-800">Formulario completo de avaliacao</p>
-                    <p className="mt-1 text-xs text-slate-500 leading-relaxed">
-                      O sistema oferece um <strong>formulario guiado em 4 etapas</strong> (Pessoal, Financeiro, Familia, Operacional)
-                      com validacao em tempo real, formatacao automatica de valores e indicador de progresso. O corretor pode
-                      preencher junto com o cliente em atendimento presencial ou por telefone, coletando os dados
-                      necessarios para gerar o diagnostico completo em segundos.
-                    </p>
-                  </div>
-                </div>
-                <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-                  <div className="flex gap-2">
-                    <Send className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
-                    <div>
-                      <p className="text-xs font-semibold text-amber-800">Em breve no roadmap</p>
-                      <p className="mt-1 text-xs text-amber-700 leading-relaxed">
-                        Link compartilhavel por WhatsApp/email para que o <strong>proprio cliente preencha</strong> o questionario
-                        de atualizacao de dados, sem precisar do corretor presente. O formulario publico sera vinculado
-                        ao consentId do cliente, nao exigira login, e ao ser preenchido disparara automaticamente uma nova
-                        avaliacao — gerando uma notificacao para o corretor com o diagnostico atualizado pronto para acao.
-                        Isso transforma a atualizacao de dados em uma <strong>maquina de oportunidades de venda recorrente</strong>.
-                      </p>
-                    </div>
-                  </div>
-                </div>
+                <HighlightBox icon={ClipboardCheck} title="Formulario completo de avaliacao">
+                  <strong>4 etapas guiadas</strong> (Pessoal, Financeiro, Familia, Operacional) com validacao em tempo real
+                  e formatacao automatica. Preencha junto com o cliente em atendimento presencial ou por telefone.
+                </HighlightBox>
+                <HighlightBox icon={Send} title="Em breve no roadmap" variant="amber">
+                  Link compartilhavel por WhatsApp/email para que o <strong>proprio cliente preencha</strong> o questionario.
+                  Vinculado ao consentId, sem login, dispara avaliacao automaticamente com notificacao para o corretor.
+                </HighlightBox>
               </div>
             </div>
 
-            {/* 3. Filtrar leads e insights para vender */}
+            {/* 3. Filtragem de leads */}
             <div>
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-brand-600">3. Filtragem de Leads e Insights de Venda</p>
-              <div className="space-y-3">
-                <div className="flex gap-3 rounded-xl border border-brand-100 bg-brand-50 p-4">
-                  <Filter className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
-                  <div>
-                    <p className="text-sm font-semibold text-slate-800">Identifique oportunidades na sua carteira</p>
-                    <p className="mt-1 text-xs text-slate-500 leading-relaxed">
-                      A tela <strong>Meus Clientes</strong> agrupa todas as avaliacoes por consentId (cliente), mostrando para cada um:
-                      classificacao de risco atual (Critico, Moderado, Adequado), acao recomendada (Aumentar, Manter, Reduzir, Revisar)
-                      e score de protecao. Com busca por consentId, voce localiza rapidamente qualquer cliente. O <strong>Dashboard</strong> mostra
-                      a distribuicao consolidada de risco e acoes da carteira inteira — permitindo identificar de imediato quantos
-                      clientes precisam de atencao.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex gap-3 rounded-xl border border-brand-100 bg-brand-50 p-4">
-                  <Lightbulb className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
-                  <div>
-                    <p className="text-sm font-semibold text-slate-800">5 insights personalizados por avaliacao</p>
-                    <p className="mt-1 text-xs text-slate-500 leading-relaxed">
-                      Cada avaliacao gera automaticamente <strong>5 insights prontos para uso comercial</strong>: abertura de conversa,
-                      argumento principal, objecao prevista (com contra-argumento), produto sugerido e proximo passo.
-                      Esses insights sao personalizados com base no perfil completo do cliente — idade, renda, dependentes,
-                      dividas, risco profissional e resultado da avaliacao. Nao sao textos genericos: sao argumentos
-                      tecnicos calibrados para <strong>maximizar a conversao</strong> de cada perfil especifico.
-                    </p>
-                  </div>
-                </div>
-                <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-                  <div className="flex gap-2">
-                    <TrendingUp className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
-                    <div>
-                      <p className="text-xs font-semibold text-amber-800">Em breve no roadmap</p>
-                      <p className="mt-1 text-xs text-amber-700 leading-relaxed">
-                        Filtros avancados por acao recomendada, faixa de score e classificacao de risco na tela de Clientes
-                        (ex: "mostre todos os clientes com acao AUMENTAR e risco CRITICO" — seus leads mais quentes).
-                        Ranking automatico de oportunidades de venda por potencial de conversao.
-                        Painel de "leads quentes" no Dashboard com os clientes que mais precisam de atencao imediata.
-                        Exportacao da lista de leads filtrada para CRM externo.
-                      </p>
-                    </div>
-                  </div>
-                </div>
+              <SectionLabel>3. Filtragem de Leads e Insights de Venda</SectionLabel>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <HighlightBox icon={Filter} title="Identifique oportunidades">
+                  <strong>Meus Clientes</strong> agrupa avaliacoes por consentId com risco, acao e score.
+                  <strong> Dashboard</strong> mostra distribuicao consolidada — veja quantos clientes precisam de atencao.
+                </HighlightBox>
+                <HighlightBox icon={Lightbulb} title="5 insights por avaliacao">
+                  Abertura, argumento, objecao, produto e proximo passo — personalizados para cada perfil,
+                  calibrados para <strong>maximizar a conversao</strong>.
+                </HighlightBox>
+              </div>
+              <div className="mt-3">
+                <HighlightBox icon={TrendingUp} title="Em breve no roadmap" variant="amber">
+                  Filtros avancados por acao, score e risco. Ranking de oportunidades por potencial de conversao.
+                  Painel de "leads quentes" no Dashboard. Exportacao para CRM externo.
+                </HighlightBox>
               </div>
             </div>
 
-            <div className="rounded-xl border border-brand-200 bg-brand-50 p-4">
+            <div className="rounded-xl border border-brand-200 bg-brand-50 p-3">
               <p className="text-xs text-brand-800 leading-relaxed">
-                <strong>Resumo:</strong> o LifeTrigger ja oferece gatilhos de vida como motivo de recontato, revisao anual automatica,
-                formulario completo de avaliacao, visao por cliente com classificacao de risco, e 5 insights personalizados por avaliacao.
-                As funcionalidades marcadas como <strong>"Em breve"</strong> estao no roadmap e serao implementadas nas proximas versoes,
-                expandindo a plataforma de motor de avaliacao para uma <strong>central completa de inteligencia comercial</strong>.
+                <strong>Resumo:</strong> gatilhos de vida, revisao anual automatica, formulario completo, visao por cliente
+                e 5 insights personalizados ja disponiveis. Funcionalidades marcadas "Em breve" expandirao a plataforma para
+                uma <strong>central completa de inteligencia comercial</strong>.
               </p>
             </div>
           </div>
         </Accordion>
 
-        {/* ── API e Integracoes ── */}
-        <Accordion id="api" title="API 100% integravel — conecte o motor a qualquer sistema" icon={Plug} openId={openId} onToggle={toggle}>
-          <div className="space-y-5">
+        {/* ━━ 11. API E INTEGRACOES ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+        <Accordion id="api" title="API 100% integravel — conecte a qualquer sistema" icon={Plug} openId={openId} onToggle={toggle}>
+          <div className="space-y-6">
             <p className="text-sm text-slate-600 leading-relaxed">
-              O LifeTrigger nao e uma ferramenta isolada — e um <strong>motor com API REST completa</strong> que pode ser integrado
-              a qualquer sistema da sua corretora: CRM, ERP, chatbot, WhatsApp, app mobile, landing page ou plataforma propria.
+              O LifeTrigger tem <strong>API REST completa</strong> integravel a qualquer sistema: CRM, ERP, chatbot, WhatsApp, app mobile ou plataforma propria.
               Tudo o que o frontend faz, a API faz programaticamente.
             </p>
 
-            {/* Endpoints disponíveis */}
+            {/* Endpoints */}
             <div>
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-brand-600">Endpoints Disponiveis</p>
-              <div className="space-y-2">
-                <div className="flex items-start gap-3 rounded-lg border border-slate-100 bg-slate-50 p-3">
-                  <code className="mt-0.5 shrink-0 rounded bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700">POST</code>
-                  <div>
-                    <code className="text-xs font-semibold text-slate-800">/api/v1/evaluations</code>
-                    <p className="mt-0.5 text-[11px] text-slate-500">Envia os dados do cliente e recebe o diagnostico completo: score, gap, acao, classificacao de risco, justificativas e 5 insights para o corretor.</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3 rounded-lg border border-slate-100 bg-slate-50 p-3">
-                  <code className="mt-0.5 shrink-0 rounded bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700">POST</code>
-                  <div>
-                    <code className="text-xs font-semibold text-slate-800">/api/v1/triggers</code>
-                    <p className="mt-0.5 text-[11px] text-slate-500">Registra um gatilho de vida (casamento, filho, imovel, etc.) e recebe nova avaliacao recalculada com base no evento.</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3 rounded-lg border border-slate-100 bg-slate-50 p-3">
-                  <code className="mt-0.5 shrink-0 rounded bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-700">GET</code>
-                  <div>
-                    <code className="text-xs font-semibold text-slate-800">/api/v1/evaluations</code>
-                    <p className="mt-0.5 text-[11px] text-slate-500">Lista avaliacoes com paginacao e filtros por data. Retorna resumo com acao, risco, score, gap e consentId.</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3 rounded-lg border border-slate-100 bg-slate-50 p-3">
-                  <code className="mt-0.5 shrink-0 rounded bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-700">GET</code>
-                  <div>
-                    <code className="text-xs font-semibold text-slate-800">{'/api/v1/evaluations/{id}'}</code>
-                    <p className="mt-0.5 text-[11px] text-slate-500">Recupera o registro completo de uma avaliacao: request original, resultado, justificativas, insights e metadados de auditoria.</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3 rounded-lg border border-slate-100 bg-slate-50 p-3">
-                  <code className="mt-0.5 shrink-0 rounded bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-700">GET</code>
-                  <div>
-                    <code className="text-xs font-semibold text-slate-800">{'/api/v1/admin/audit/evaluations/{id}/verify'}</code>
-                    <p className="mt-0.5 text-[11px] text-slate-500">Verifica a integridade criptografica (SHA-256) de uma avaliacao. Retorna PASS ou FAIL.</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3 rounded-lg border border-slate-100 bg-slate-50 p-3">
-                  <code className="mt-0.5 shrink-0 rounded bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-700">GET</code>
-                  <div>
-                    <code className="text-xs font-semibold text-slate-800">/api/v1/admin/reports/pilot</code>
-                    <p className="mt-0.5 text-[11px] text-slate-500">Relatorio agregado: total de avaliacoes, distribuicao por risco e acao, contagem de gatilhos.</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3 rounded-lg border border-slate-100 bg-slate-50 p-3">
-                  <code className="mt-0.5 shrink-0 rounded bg-violet-100 px-2 py-0.5 text-[10px] font-bold text-violet-700">GET/PUT</code>
-                  <div>
-                    <code className="text-xs font-semibold text-slate-800">{'/api/v1/admin/tenants/{id}/settings'}</code>
-                    <p className="mt-0.5 text-[11px] text-slate-500">Consulta e atualiza os parametros do motor (multiplicadores de renda, reserva, limites) via API.</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3 rounded-lg border border-slate-100 bg-slate-50 p-3">
-                  <code className="mt-0.5 shrink-0 rounded bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-700">GET</code>
-                  <div>
-                    <code className="text-xs font-semibold text-slate-800">/api/v1/engine/versions</code>
-                    <p className="mt-0.5 text-[11px] text-slate-500">Retorna a versao do motor, versao do ruleset e descricao. Util para health checks e monitoramento.</p>
-                  </div>
-                </div>
+              <SectionLabel>Endpoints Disponiveis</SectionLabel>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <EndpointRow method="POST" path="/api/v1/evaluations"                       desc="Envia dados do cliente, recebe diagnostico completo com score, gap, acao e insights." />
+                <EndpointRow method="POST" path="/api/v1/triggers"                          desc="Registra gatilho de vida e recebe avaliacao recalculada." />
+                <EndpointRow method="GET"  path="/api/v1/evaluations"                       desc="Lista avaliacoes com paginacao e filtros por data." />
+                <EndpointRow method="GET"  path={'/api/v1/evaluations/{id}'}                desc="Registro completo: request, resultado, justificativas e auditoria." />
+                <EndpointRow method="GET"  path={'/api/v1/admin/audit/evaluations/{id}/verify'} desc="Verifica integridade criptografica (SHA-256). PASS ou FAIL." />
+                <EndpointRow method="GET"  path="/api/v1/admin/reports/pilot"                desc="Relatorio agregado: distribuicao por risco, acao e gatilhos." />
+                <EndpointRow method="GET/PUT" path={'/api/v1/admin/tenants/{id}/settings'}  desc="Consulta e atualiza parametros do motor via API." />
+                <EndpointRow method="GET"  path="/api/v1/engine/versions"                   desc="Versao do motor e ruleset. Health check e monitoramento." />
               </div>
             </div>
 
             {/* Caracteristicas tecnicas */}
             <div>
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-brand-600">Caracteristicas Tecnicas da API</p>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <FeatureCard
-                  icon={FileJson}
-                  title="REST + JSON"
-                  desc="API REST padrao com payloads JSON. Qualquer linguagem ou plataforma que faca HTTP pode integrar: Python, Node.js, Java, PHP, n8n, Zapier, Make."
-                  color="bg-brand-600"
-                />
-                <FeatureCard
-                  icon={Lock}
-                  title="Autenticacao JWT"
-                  desc="Todas as rotas sao protegidas por token JWT. Autentique uma vez, use o token em todas as chamadas. Refresh automatico disponivel."
-                  color="bg-violet-600"
-                />
-                <FeatureCard
-                  icon={RefreshCcw}
-                  title="Idempotencia Nativa"
-                  desc="Endpoints de criacao aceitam header Idempotency-Key. Mesmo request enviado duas vezes nao gera duplicata — seguro para retries e filas."
-                  color="bg-sky-600"
-                />
-                <FeatureCard
-                  icon={Database}
-                  title="Multi-tenant Isolado"
-                  desc="Cada corretora opera em silo isolado via tenant_id no JWT. Uma unica integracao serve todas as corretoras sem risco de vazamento."
-                  color="bg-emerald-600"
-                />
+              <SectionLabel>Caracteristicas Tecnicas</SectionLabel>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {[
+                  { icon: FileJson,   title: 'REST + JSON',         desc: 'Qualquer linguagem: Python, Node, Java, PHP, no-code', bg: 'bg-brand-600' },
+                  { icon: Lock,       title: 'JWT Auth',            desc: 'Todas as rotas protegidas. Refresh automatico',        bg: 'bg-violet-600' },
+                  { icon: RefreshCcw, title: 'Idempotencia',        desc: 'Header Idempotency-Key. Seguro para retries',          bg: 'bg-sky-600' },
+                  { icon: Database,   title: 'Multi-tenant',        desc: 'Silo isolado por tenant_id no JWT',                    bg: 'bg-emerald-600' },
+                ] .map(({ icon: FIcon, title, desc, bg }) => (
+                  <div key={title} className="rounded-xl border border-slate-100 bg-slate-50 p-3 text-center">
+                    <div className={`mx-auto mb-2 flex h-9 w-9 items-center justify-center rounded-lg ${bg}`}>
+                      <FIcon className="h-4 w-4 text-white" />
+                    </div>
+                    <p className="text-xs font-semibold text-slate-800">{title}</p>
+                    <p className="mt-0.5 text-[10px] text-slate-500">{desc}</p>
+                  </div>
+                ))}
               </div>
             </div>
 
             {/* Cenarios de integracao */}
             <div>
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-brand-600">Cenarios de Integracao</p>
-              <p className="mb-3 text-xs text-slate-500">A API do LifeTrigger abre possibilidades que vao muito alem do frontend web:</p>
-              <div className="space-y-3">
-                <div className="flex gap-3 rounded-xl border border-brand-100 bg-brand-50 p-4">
-                  <MessageSquare className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
-                  <div>
-                    <p className="text-sm font-semibold text-slate-800">WhatsApp / Chatbot</p>
-                    <p className="mt-1 text-xs text-slate-500 leading-relaxed">
-                      Integre a API com um chatbot no WhatsApp (via Twilio, Z-API, ou Evolution API).
-                      O cliente responde perguntas simples (idade, renda, dependentes) e o bot chama <code className="bg-slate-100 px-1 rounded text-brand-600">POST /evaluations</code> —
-                      em segundos, o cliente recebe o score de protecao e o gap diretamente no WhatsApp.
-                      O corretor recebe o diagnostico completo com insights prontos para a ligacao de follow-up.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex gap-3 rounded-xl border border-brand-100 bg-brand-50 p-4">
-                  <Code2 className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
-                  <div>
-                    <p className="text-sm font-semibold text-slate-800">CRM / Sistema da Corretora</p>
-                    <p className="mt-1 text-xs text-slate-500 leading-relaxed">
-                      Conecte o LifeTrigger ao seu CRM (Pipedrive, HubSpot, Salesforce, ou sistema proprio).
-                      Quando um lead entra no funil, dispare automaticamente uma avaliacao via API.
-                      O resultado (score, gap, acao recomendada) e gravado no CRM como campo do lead —
-                      permitindo priorizar contatos por risco critico ou gap alto.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex gap-3 rounded-xl border border-brand-100 bg-brand-50 p-4">
-                  <Webhook className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
-                  <div>
-                    <p className="text-sm font-semibold text-slate-800">Automacao (n8n, Zapier, Make)</p>
-                    <p className="mt-1 text-xs text-slate-500 leading-relaxed">
-                      Crie fluxos automatizados sem codigo: quando um formulario Google Forms e preenchido,
-                      dispare uma avaliacao na API e envie o resultado por email, Slack ou WhatsApp.
-                      Ou automatize: "a cada 12 meses, busque todos os clientes com ultima avaliacao antiga
-                      e envie lembrete de revisao por email com link para agendar".
-                    </p>
-                  </div>
-                </div>
-                <div className="flex gap-3 rounded-xl border border-brand-100 bg-brand-50 p-4">
-                  <Bot className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
-                  <div>
-                    <p className="text-sm font-semibold text-slate-800">Landing Page de Captacao</p>
-                    <p className="mt-1 text-xs text-slate-500 leading-relaxed">
-                      Crie uma landing page publica com formulario simplificado: "Descubra se voce esta protegido".
-                      O visitante preenche dados basicos, a pagina chama a API e exibe o score de protecao.
-                      Se o gap for significativo, oferece agendamento com o corretor — lead qualificado
-                      que ja chega com diagnostico pronto e consciencia do problema.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex gap-3 rounded-xl border border-brand-100 bg-brand-50 p-4">
-                  <BarChart3 className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
-                  <div>
-                    <p className="text-sm font-semibold text-slate-800">BI / Dashboard Executivo</p>
-                    <p className="mt-1 text-xs text-slate-500 leading-relaxed">
-                      Use o endpoint de relatorios (<code className="bg-slate-100 px-1 rounded text-brand-600">GET /reports/pilot</code>) para alimentar
-                      ferramentas de BI como Power BI, Metabase ou Looker. Acompanhe KPIs da operacao
-                      (total de avaliacoes, distribuicao de risco, taxa de conversao por acao) em dashboards
-                      executivos atualizados em tempo real.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex gap-3 rounded-xl border border-brand-100 bg-brand-50 p-4">
-                  <Send className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
-                  <div>
-                    <p className="text-sm font-semibold text-slate-800">App Mobile / PWA</p>
-                    <p className="mt-1 text-xs text-slate-500 leading-relaxed">
-                      Construa um aplicativo mobile (React Native, Flutter) ou PWA que consuma a mesma API.
-                      O corretor faz avaliacoes pelo celular durante visitas a clientes — sem laptop,
-                      sem planilha, com resultado instantaneo e insights na tela.
-                    </p>
-                  </div>
-                </div>
+              <SectionLabel>Cenarios de Integracao</SectionLabel>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <HighlightBox icon={MessageSquare} title="WhatsApp / Chatbot">
+                  Integre com Twilio, Z-API ou Evolution API. Cliente responde perguntas simples,
+                  bot chama <code className="bg-slate-100 px-1 rounded text-brand-600">POST /evaluations</code> e envia score no WhatsApp.
+                </HighlightBox>
+                <HighlightBox icon={Code2} title="CRM / Sistema da Corretora">
+                  Conecte a Pipedrive, HubSpot, Salesforce ou sistema proprio.
+                  Lead entra no funil, avaliacao dispara automaticamente. Score e gap ficam no CRM.
+                </HighlightBox>
+                <HighlightBox icon={Webhook} title="Automacao (n8n, Zapier, Make)">
+                  Fluxos sem codigo: Google Forms preenchido → avaliacao na API → resultado por email/Slack/WhatsApp.
+                  Automatize lembretes de revisao de 12 meses.
+                </HighlightBox>
+                <HighlightBox icon={Bot} title="Landing Page de Captacao">
+                  "Descubra se voce esta protegido" — visitante preenche dados, ve score.
+                  Gap significativo? Ofereca agendamento. Lead qualificado com diagnostico pronto.
+                </HighlightBox>
+                <HighlightBox icon={BarChart3} title="BI / Dashboard Executivo">
+                  <code className="bg-slate-100 px-1 rounded text-brand-600">GET /reports/pilot</code> alimenta Power BI, Metabase ou Looker.
+                  KPIs da operacao em dashboards executivos atualizados em tempo real.
+                </HighlightBox>
+                <HighlightBox icon={Send} title="App Mobile / PWA">
+                  React Native, Flutter ou PWA consumindo a mesma API.
+                  Corretor faz avaliacoes pelo celular em visitas — resultado instantaneo na tela.
+                </HighlightBox>
               </div>
             </div>
 
-            <div className="rounded-xl border border-brand-200 bg-brand-50 p-4">
+            <div className="rounded-xl border border-brand-200 bg-brand-50 p-3">
               <p className="text-xs text-brand-800 leading-relaxed">
-                <strong>A API e o produto.</strong> O frontend web e apenas uma das formas de usar o LifeTrigger.
-                A API RESTful permite que qualquer desenvolvedor, integrador ou plataforma no-code conecte o motor
-                de avaliacao ao ecossistema da corretora — transformando cada ponto de contato com o cliente em
-                uma oportunidade de diagnostico e venda, com a mesma precisao, auditoria e seguranca do sistema web.
+                <strong>A API e o produto.</strong> O frontend web e uma das formas de usar o motor.
+                A API RESTful permite integrar o motor ao ecossistema da corretora — cada ponto de contato vira oportunidade de diagnostico e venda.
               </p>
             </div>
           </div>
