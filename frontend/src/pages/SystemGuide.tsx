@@ -4,6 +4,7 @@ import {
   Cpu, CheckCircle, ArrowRight, ChevronDown, ChevronUp,
   Lightbulb, DollarSign, ClipboardCheck, Activity, Eye,
   UserCheck, Settings, CreditCard, Building2, Globe,
+  Lock, Hash, Layers, GitBranch, ShieldCheck, Database,
 } from 'lucide-react'
 import { TopBar } from '../components/layout/TopBar'
 
@@ -219,6 +220,183 @@ export default function SystemGuide() {
                   </p>
                 </div>
               </div>
+            </div>
+          </div>
+        </Accordion>
+
+        {/* ── Potencia do motor ── */}
+        <Accordion id="engine-power" title="A potencia do motor: determinismo, complexidade e auditoria" icon={Cpu} openId={openId} onToggle={toggle}>
+          <div className="space-y-5">
+            <p className="text-sm text-slate-600 leading-relaxed">
+              O LifeTrigger nao e um calculador simples. E um <strong>motor de regras deterministico de alta complexidade</strong>,
+              projetado para entregar diagnosticos de grau institucional — com a robustez que seguradoras, auditorias e orgaos reguladores exigem.
+            </p>
+
+            {/* Determinismo */}
+            <div>
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-brand-600">Motor 100% Deterministico</p>
+              <div className="space-y-3">
+                <div className="flex gap-3 rounded-xl border border-brand-100 bg-brand-50 p-4">
+                  <GitBranch className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
+                  <div>
+                    <p className="text-sm font-semibold text-slate-800">Zero aleatoriedade</p>
+                    <p className="mt-1 text-xs text-slate-500 leading-relaxed">
+                      O motor nao usa inteligencia artificial, machine learning, modelos estatisticos nem heuristicas probabilisticas.
+                      Cada resultado e produzido por <strong>regras deterministicas puras</strong>: dado o mesmo input, o motor gera exatamente
+                      o mesmo output — sempre, em qualquer momento, em qualquer servidor. Isso significa reprodutibilidade total
+                      e previsibilidade absoluta, um requisito critico para mercados regulados.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-3 rounded-xl border border-brand-100 bg-brand-50 p-4">
+                  <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
+                  <div>
+                    <p className="text-sm font-semibold text-slate-800">Regras versionadas e rastreadas</p>
+                    <p className="mt-1 text-xs text-slate-500 leading-relaxed">
+                      Cada avaliacao registra a versao exata do motor (<code className="text-brand-600 bg-slate-100 px-1 rounded">engineVersion</code>)
+                      e do conjunto de regras (<code className="text-brand-600 bg-slate-100 px-1 rounded">ruleSetVersion</code> + <code className="text-brand-600 bg-slate-100 px-1 rounded">ruleSetHash</code>).
+                      Se as regras mudarem no futuro, voce ainda pode verificar com qual versao cada diagnostico foi produzido.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Complexidade de calculo */}
+            <div>
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-brand-600">Complexidade do Calculo</p>
+              <div className="space-y-3">
+                <div className="rounded-xl border border-slate-200 bg-white p-4">
+                  <p className="text-sm font-semibold text-slate-800 mb-3">O motor executa um pipeline de 6 fases para cada avaliacao:</p>
+                  <div className="space-y-2">
+                    <div className="flex gap-3 items-start">
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-600 text-[10px] font-bold text-white">1</span>
+                      <div>
+                        <p className="text-xs font-semibold text-slate-700">Substituicao de Renda</p>
+                        <p className="text-[11px] text-slate-500">Calcula quantos anos de renda a familia precisa em caso de falecimento. Varia de 2 a 10 anos, com bonificacao progressiva por dependente (ate +3 anos), limitada por teto configuravel por corretora.</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-3 items-start">
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-600 text-[10px] font-bold text-white">2</span>
+                      <div>
+                        <p className="text-xs font-semibold text-slate-700">Quitacao de Dividas</p>
+                        <p className="text-[11px] text-slate-500">Soma o saldo total de dividas do cliente para garantir que a cobertura cubra 100% dos debitos pendentes. Evita que a familia herde dividas.</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-3 items-start">
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-600 text-[10px] font-bold text-white">3</span>
+                      <div>
+                        <p className="text-xs font-semibold text-slate-700">Reserva de Transicao</p>
+                        <p className="text-[11px] text-slate-500">Adiciona colchao de seguranca (3 a 9 meses de renda), descontando reserva de emergencia existente. Clampeado por limites rigidos para evitar manipulacao.</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-3 items-start">
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-600 text-[10px] font-bold text-white">4</span>
+                      <div>
+                        <p className="text-xs font-semibold text-slate-700">Guardrails (Teto e Piso)</p>
+                        <p className="text-[11px] text-slate-500">Aplica limites de seguranca: a cobertura recomendada nunca fica abaixo de 2x a renda anual nem acima de 20x (configuravel). Evita recomendacoes absurdas.</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-3 items-start">
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-600 text-[10px] font-bold text-white">5</span>
+                      <div>
+                        <p className="text-xs font-semibold text-slate-700">Score + Penalidades</p>
+                        <p className="text-[11px] text-slate-500">Calcula Protection Score (razao cobertura/necessidade) e aplica 3 penalidades independentes: baixa cobertura com dependentes (-10), divida alta acima de 50% da renda (-10), e ausencia de reserva de emergencia (-10). Score e eficiencia sao clampeados entre 0 e 100.</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-3 items-start">
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-600 text-[10px] font-bold text-white">6</span>
+                      <div>
+                        <p className="text-xs font-semibold text-slate-700">Overrides de Acao + Insights</p>
+                        <p className="text-[11px] text-slate-500">Verifica 3 condicoes especiais (revisao {'>'} 12 meses, dados nao confirmados, gatilho recente) que forcam acao REVISAR. Por fim, gera 5 insights personalizados para o corretor baseados no resultado completo.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    <strong>13 regras catalogadas</strong> em enum fortemente tipado (<code className="text-brand-600 bg-white px-1 rounded">EngineRuleId</code>),
+                    cada uma com template de justificativa, argumentos primitivos e rastreabilidade completa.
+                    Nenhuma regra opera como "string magica" — tudo e validado em tempo de compilacao.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Auditoria */}
+            <div>
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-brand-600">Auditoria e Integridade</p>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <FeatureCard
+                  icon={Hash}
+                  title="Hash SHA-256 Imutavel"
+                  desc="Cada avaliacao recebe um hash criptografico no momento da criacao. Qualquer alteracao posterior (mesmo 1 byte) invalida o hash. Verificavel a qualquer momento na tela de Auditoria."
+                  color="bg-violet-600"
+                />
+                <FeatureCard
+                  icon={Layers}
+                  title="Snapshot Completo"
+                  desc="O motor congela um snapshot com todas as regras aplicadas, justificativas estruturadas, versao do motor e timestamp. Esse snapshot e a 'foto' juridica do momento da avaliacao."
+                  color="bg-brand-600"
+                />
+                <FeatureCard
+                  icon={Lock}
+                  title="Imutabilidade por Design"
+                  desc="Avaliacoes salvas NUNCA sao alteradas. Se os parametros mudarem, as avaliacoes anteriores mantem o resultado original. Isso garante integridade historica e rastreabilidade regulatoria."
+                  color="bg-red-500"
+                />
+                <FeatureCard
+                  icon={Database}
+                  title="Isolamento Multi-Tenant"
+                  desc="Cada corretora opera em silo isolado via tenant_id no JWT. Impossivel que dados de uma corretora vazem para outra. Segregacao enforced no nivel do banco de dados."
+                  color="bg-sky-600"
+                />
+              </div>
+            </div>
+
+            {/* Seguranca */}
+            <div>
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-brand-600">Seguranca em Camadas</p>
+              <div className="space-y-2">
+                <div className="flex gap-3 rounded-xl border border-emerald-100 bg-emerald-50 p-4">
+                  <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                  <p className="text-xs text-emerald-800 leading-relaxed">
+                    <strong>Autenticacao JWT com refresh automatico:</strong> tokens de curta duracao com renovacao transparente.
+                    Toda requisicao e autenticada e autorizada por role cumulativo (5 niveis). Sem token valido, a API recusa 100% das chamadas.
+                  </p>
+                </div>
+                <div className="flex gap-3 rounded-xl border border-emerald-100 bg-emerald-50 p-4">
+                  <Shield className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                  <p className="text-xs text-emerald-800 leading-relaxed">
+                    <strong>Zero dados pessoais na API:</strong> o motor nao recebe nome, CPF, email ou qualquer PII.
+                    Opera exclusivamente com dados demograficos anonimizados (idade, faixa de renda, quantidade de dependentes).
+                    Conformidade LGPD by design — nao ha dados pessoais para vazar.
+                  </p>
+                </div>
+                <div className="flex gap-3 rounded-xl border border-emerald-100 bg-emerald-50 p-4">
+                  <Lock className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                  <p className="text-xs text-emerald-800 leading-relaxed">
+                    <strong>Consentimento obrigatorio enforced:</strong> toda avaliacao exige <code className="bg-emerald-100 px-1 rounded">hasExplicitActiveConsent=true</code> e
+                    um <code className="bg-emerald-100 px-1 rounded">consentId</code> valido. A API rejeita qualquer request sem consentimento — nao ha bypass.
+                  </p>
+                </div>
+                <div className="flex gap-3 rounded-xl border border-emerald-100 bg-emerald-50 p-4">
+                  <Database className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                  <p className="text-xs text-emerald-800 leading-relaxed">
+                    <strong>Guardrails contra manipulacao:</strong> parametros configurados pelo tenant sao clampeados por limites rigidos
+                    definidos no codigo-fonte. Mesmo que um TenantOwner tente definir valores extremos, o motor aplica teto e piso de seguranca.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-brand-200 bg-brand-50 p-4">
+              <p className="text-xs text-brand-800 leading-relaxed">
+                <strong>Em resumo:</strong> o LifeTrigger combina a <strong>precisao de um motor deterministico</strong> com a
+                <strong> rastreabilidade de um sistema de auditoria</strong> e a <strong>seguranca de uma arquitetura zero-trust</strong>.
+                Cada avaliacao e reproduzivel, verificavel, imutavel e segregada — exatamente o que o mercado segurador exige.
+              </p>
             </div>
           </div>
         </Accordion>
