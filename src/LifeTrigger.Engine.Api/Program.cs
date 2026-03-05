@@ -210,7 +210,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "LifeTrigger.Engine.Api v1"));
 }
 
-app.UseHttpsRedirection();
+if (app.Environment.IsDevelopment())
+    app.UseHttpsRedirection();
 app.UseRateLimiter();
 
 app.UseAuthentication(); // Must be explicitly called before Authorization
