@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import {
   Users, UserPlus, KeyRound, Loader2, X,
   AlertCircle, CheckCircle, Search, Filter,
-  RefreshCw, UserCheck, UserX, ChevronDown,
+  RefreshCw, UserCheck, UserX, ChevronDown, Lock,
 } from 'lucide-react'
 import { TopBar } from '../components/layout/TopBar'
 import { useAuth, type UserRole } from '../contexts/AuthContext'
@@ -734,37 +734,24 @@ export default function TeamManagement() {
                           {formatDate(u.createdAt)}
                         </td>
 
-                        {/* Actions */}
+                        {/* Actions — disabled in demo */}
                         <td className="px-4 py-3.5">
                           {canManage ? (
                             <div className="flex items-center justify-end gap-2">
-                              {/* Reset password */}
                               <button
-                                onClick={() => setResetTarget(u)}
-                                title="Redefinir senha"
-                                className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-600 hover:bg-amber-50 hover:border-amber-200 hover:text-amber-700 transition-colors"
+                                disabled
+                                title="Indisponivel na versao demo"
+                                className="flex items-center gap-1.5 rounded-lg border border-slate-100 bg-slate-50 px-2.5 py-1.5 text-xs text-slate-400 cursor-not-allowed"
                               >
-                                <KeyRound className="h-3.5 w-3.5" />
+                                <Lock className="h-3 w-3" />
                                 Senha
                               </button>
-
-                              {/* Toggle active */}
                               <button
-                                onClick={() => handleToggleStatus(u)}
-                                disabled={isToggling}
-                                title={u.isActive ? 'Desativar acesso' : 'Reativar acesso'}
-                                className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition-colors disabled:opacity-50 ${
-                                  u.isActive
-                                    ? 'border-red-200 bg-red-50 text-red-700 hover:bg-red-100'
-                                    : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
-                                }`}
+                                disabled
+                                title="Indisponivel na versao demo"
+                                className="flex items-center gap-1.5 rounded-lg border border-slate-100 bg-slate-50 px-2.5 py-1.5 text-xs text-slate-400 cursor-not-allowed"
                               >
-                                {isToggling
-                                  ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                  : u.isActive
-                                    ? <UserX className="h-3.5 w-3.5" />
-                                    : <UserCheck className="h-3.5 w-3.5" />
-                                }
+                                <Lock className="h-3 w-3" />
                                 {u.isActive ? 'Desativar' : 'Ativar'}
                               </button>
                             </div>
@@ -781,12 +768,19 @@ export default function TeamManagement() {
           </div>
         )}
 
-        {/* ── Help note ── */}
+        {/* ── Demo notice ── */}
         {!loading && !error && users.length > 0 && (
-          <p className="text-center text-[11px] text-slate-400">
-            Você pode gerenciar apenas membros com perfil abaixo do seu ({ROLE_META[callerRole]?.label}).
-            Alterações de perfil e senha têm efeito imediato.
-          </p>
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+            <div className="flex items-center gap-2 mb-1">
+              <Lock className="h-3.5 w-3.5 text-amber-600" />
+              <p className="text-[11px] font-semibold text-amber-800 uppercase tracking-wide">Versao de Demonstracao</p>
+            </div>
+            <p className="text-[11px] text-amber-700 leading-relaxed">
+              Na versao demo, a redefinicao de senha e a ativacao/desativacao de usuarios estao desabilitadas
+              para preservar as credenciais compartilhadas. A alteracao de perfil (role) esta liberada para que voce
+              explore as diferentes permissoes. Na versao de producao, todas as funcionalidades estarao disponiveis.
+            </p>
+          </div>
         )}
       </div>
 

@@ -1,7 +1,5 @@
-import { useState, type FormEvent } from 'react'
-import { User, KeyRound, CheckCircle, Loader2, AlertTriangle } from 'lucide-react'
+import { User, KeyRound, CheckCircle, Lock } from 'lucide-react'
 import { useAuth, type UserRole } from '../contexts/AuthContext'
-import { resetUserPassword, ApiError } from '../lib/api'
 
 // ── Role appearance (matches TeamManagement) ─────────────────────────────────
 const ROLE_META: Record<UserRole, { label: string; color: string }> = {
@@ -12,91 +10,24 @@ const ROLE_META: Record<UserRole, { label: string; color: string }> = {
   Viewer:      { label: 'Observador',   color: 'bg-slate-500/20 text-slate-400 ring-1 ring-slate-500/40' },
 }
 
-// ── Change Password section ───────────────────────────────────────────────────
-function ChangePasswordSection({ userId }: { userId: string }) {
-  const [newPassword, setNewPassword]   = useState('')
-  const [confirm, setConfirm]           = useState('')
-  const [error, setError]               = useState<string | null>(null)
-  const [success, setSuccess]           = useState(false)
-  const [loading, setLoading]           = useState(false)
-
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault()
-    if (newPassword !== confirm) { setError('As senhas não coincidem.'); return }
-    if (newPassword.length < 8)  { setError('A senha deve ter pelo menos 8 caracteres.'); return }
-    setError(null)
-    setLoading(true)
-    try {
-      await resetUserPassword(userId, newPassword)
-      setSuccess(true)
-      setNewPassword('')
-      setConfirm('')
-      setTimeout(() => setSuccess(false), 4000)
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Erro ao alterar senha.')
-    } finally {
-      setLoading(false)
-    }
-  }
-
+// ── Demo restriction for password change ─────────────────────────────────────
+function ChangePasswordSection() {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-card">
-      <div className="mb-5 flex items-center gap-3">
+    <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 shadow-card">
+      <div className="flex items-center gap-3">
         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-100">
-          <KeyRound className="h-4 w-4 text-amber-600" />
+          <Lock className="h-4 w-4 text-amber-600" />
         </div>
         <div>
-          <h2 className="text-base font-semibold text-slate-900">Alterar senha</h2>
-          <p className="text-xs text-slate-500">Mínimo de 8 caracteres</p>
+          <h2 className="text-base font-semibold text-amber-900">Alterar senha</h2>
+          <p className="text-xs text-amber-700">Indisponivel na versao de demonstracao</p>
         </div>
       </div>
-
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="mb-1.5 block text-xs font-medium text-slate-500">Nova senha</label>
-          <input
-            type="password"
-            required
-            value={newPassword}
-            onChange={e => setNewPassword(e.target.value)}
-            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-100 transition-colors"
-            placeholder="••••••••"
-          />
-        </div>
-        <div>
-          <label className="mb-1.5 block text-xs font-medium text-slate-500">Confirmar nova senha</label>
-          <input
-            type="password"
-            required
-            value={confirm}
-            onChange={e => setConfirm(e.target.value)}
-            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-100 transition-colors"
-            placeholder="••••••••"
-          />
-        </div>
-
-        {error && (
-          <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-xs text-red-700">
-            <AlertTriangle className="h-4 w-4 shrink-0" />
-            {error}
-          </div>
-        )}
-        {success && (
-          <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-xs text-emerald-700">
-            <CheckCircle className="h-4 w-4 shrink-0" />
-            Senha alterada com sucesso.
-          </div>
-        )}
-
-        <button
-          type="submit"
-          disabled={loading}
-          className="flex items-center gap-2 rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60 transition-colors"
-        >
-          {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-          {loading ? 'Salvando…' : 'Alterar senha'}
-        </button>
-      </form>
+      <p className="mt-3 text-xs text-amber-700 leading-relaxed">
+        A alteracao de senha esta desabilitada nesta versao demo do LifeTrigger Engine.
+        As credenciais dos usuarios de demonstracao sao compartilhadas e nao podem ser modificadas.
+        Na versao de producao, cada usuario pode alterar sua senha livremente.
+      </p>
     </div>
   )
 }
@@ -194,7 +125,7 @@ export default function UserProfile() {
       </div>
 
       {/* Change password */}
-      <ChangePasswordSection userId={user.id} />
+      <ChangePasswordSection />
     </div>
   )
 }

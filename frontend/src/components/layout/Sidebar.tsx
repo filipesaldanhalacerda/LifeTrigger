@@ -129,7 +129,10 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         </div>
         {!collapsed && (
           <div className="overflow-hidden">
-            <p className="text-sm font-bold leading-none text-white">LifeTrigger</p>
+            <div className="flex items-center gap-1.5">
+              <p className="text-sm font-bold leading-none text-white">LifeTrigger</p>
+              <span className="rounded bg-amber-400/20 px-1.5 py-0.5 text-[8px] font-bold text-amber-300 uppercase tracking-wider ring-1 ring-amber-400/30">Demo</span>
+            </div>
             <p className="mt-0.5 text-[11px] leading-none text-brand-300/70">Engine v1.0.0</p>
           </div>
         )}
