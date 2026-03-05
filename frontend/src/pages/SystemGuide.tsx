@@ -8,17 +8,19 @@ import {
 import { TopBar } from '../components/layout/TopBar'
 
 // ── Accordion ───────────────────────────────────────────────────
-function Accordion({ title, icon: Icon, children, defaultOpen = false }: {
+function Accordion({ id, title, icon: Icon, children, openId, onToggle }: {
+  id: string
   title: string
   icon: React.ElementType
   children: React.ReactNode
-  defaultOpen?: boolean
+  openId: string | null
+  onToggle: (id: string) => void
 }) {
-  const [open, setOpen] = useState(defaultOpen)
+  const open = openId === id
   return (
     <div className="rounded-2xl border border-slate-200 bg-white shadow-card overflow-hidden">
       <button
-        onClick={() => setOpen(!open)}
+        onClick={() => onToggle(id)}
         className="flex w-full items-center gap-3 px-6 py-4 text-left hover:bg-slate-50 transition-colors"
       >
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-50">
@@ -94,6 +96,9 @@ function RoleBadge({ role, color, desc }: { role: string; color: string; desc: s
 
 // ── Page ────────────────────────────────────────────────────────
 export default function SystemGuide() {
+  const [openId, setOpenId] = useState<string | null>('what')
+  const toggle = (id: string) => setOpenId(prev => prev === id ? null : id)
+
   return (
     <div>
       <TopBar title="Guia do Sistema" subtitle="Entenda o que o LifeTrigger faz e como usar cada funcionalidade" />
@@ -124,7 +129,7 @@ export default function SystemGuide() {
         </div>
 
         {/* ── O que o sistema faz ── */}
-        <Accordion title="O que o LifeTrigger faz?" icon={Target} defaultOpen>
+        <Accordion id="what" title="O que o LifeTrigger faz?" icon={Target} openId={openId} onToggle={toggle}>
           <div className="space-y-4">
             <p className="text-sm text-slate-600 leading-relaxed">
               O LifeTrigger e um <strong>motor de inteligencia de protecao de vida</strong> desenhado para corretoras de seguros.
@@ -173,7 +178,7 @@ export default function SystemGuide() {
         </Accordion>
 
         {/* ── Como funciona ── */}
-        <Accordion title="Como funciona na pratica?" icon={ClipboardCheck} defaultOpen>
+        <Accordion id="how" title="Como funciona na pratica?" icon={ClipboardCheck} openId={openId} onToggle={toggle}>
           <div className="space-y-5">
             <p className="text-sm text-slate-600 leading-relaxed">
               O fluxo de trabalho do corretor com o LifeTrigger segue 4 passos simples:
@@ -219,7 +224,7 @@ export default function SystemGuide() {
         </Accordion>
 
         {/* ── Telas do sistema ── */}
-        <Accordion title="Telas do sistema" icon={Eye}>
+        <Accordion id="screens" title="Telas do sistema" icon={Eye} openId={openId} onToggle={toggle}>
           <div className="space-y-5">
             <p className="text-sm text-slate-600 leading-relaxed">
               Cada perfil de usuario ve um conjunto diferente de telas. Abaixo esta o mapa completo:
@@ -330,7 +335,7 @@ export default function SystemGuide() {
         </Accordion>
 
         {/* ── Perfis de acesso ── */}
-        <Accordion title="Perfis de acesso (Roles)" icon={Users}>
+        <Accordion id="roles" title="Perfis de acesso (Roles)" icon={Users} openId={openId} onToggle={toggle}>
           <div className="space-y-4">
             <p className="text-sm text-slate-600 leading-relaxed">
               O LifeTrigger tem 5 perfis de acesso <strong>cumulativos</strong> — cada perfil inclui todas as
@@ -375,7 +380,7 @@ export default function SystemGuide() {
         </Accordion>
 
         {/* ── Resultado da avaliacao ── */}
-        <Accordion title="Entendendo o resultado da avaliacao" icon={CheckCircle}>
+        <Accordion id="result" title="Entendendo o resultado da avaliacao" icon={CheckCircle} openId={openId} onToggle={toggle}>
           <div className="space-y-4">
             <p className="text-sm text-slate-600 leading-relaxed">
               Quando o corretor envia uma avaliacao, o motor retorna um conjunto completo de informacoes.
@@ -428,7 +433,7 @@ export default function SystemGuide() {
         </Accordion>
 
         {/* ── Configuracoes do motor ── */}
-        <Accordion title="Configuracoes personalizaveis" icon={Settings}>
+        <Accordion id="settings" title="Configuracoes personalizaveis" icon={Settings} openId={openId} onToggle={toggle}>
           <div className="space-y-4">
             <p className="text-sm text-slate-600 leading-relaxed">
               Cada corretora pode personalizar as formulas do motor na tela de Configuracoes. Isso permite
@@ -465,7 +470,7 @@ export default function SystemGuide() {
         </Accordion>
 
         {/* ── Seguranca e conformidade ── */}
-        <Accordion title="Seguranca, LGPD e Auditoria" icon={Shield}>
+        <Accordion id="security" title="Seguranca, LGPD e Auditoria" icon={Shield} openId={openId} onToggle={toggle}>
           <div className="space-y-4">
             <p className="text-sm text-slate-600 leading-relaxed">
               O LifeTrigger foi projetado com seguranca e conformidade desde o primeiro dia:
@@ -501,7 +506,7 @@ export default function SystemGuide() {
         </Accordion>
 
         {/* ── Dicas pro corretor ── */}
-        <Accordion title="Dicas para tirar o maximo do LifeTrigger" icon={Lightbulb}>
+        <Accordion id="tips" title="Dicas para tirar o maximo do LifeTrigger" icon={Lightbulb} openId={openId} onToggle={toggle}>
           <div className="space-y-4">
             <div className="space-y-3">
               <div className="flex gap-3 rounded-xl border border-emerald-100 bg-emerald-50 p-4">
