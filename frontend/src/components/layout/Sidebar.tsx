@@ -94,7 +94,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         {!collapsed && (
           <div className="overflow-hidden">
             <p className="text-sm font-bold leading-none text-white">LifeTrigger</p>
-            <p className="mt-0.5 text-[11px] leading-none text-brand-500">Engine v1.0.0</p>
+            <p className="mt-0.5 text-[11px] leading-none text-brand-300/70">Engine v1.0.0</p>
           </div>
         )}
       </div>
@@ -104,7 +104,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         {visibleMain.length > 0 && (
           <>
             {!collapsed && (
-              <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-wider text-brand-600/60">
+              <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-wider text-brand-300/50">
                 Principal
               </p>
             )}
@@ -118,7 +118,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
           <>
             {!collapsed ? (
               <p className={cn(
-                'mb-2 px-2 text-[10px] font-semibold uppercase tracking-wider text-brand-600/60',
+                'mb-2 px-2 text-[10px] font-semibold uppercase tracking-wider text-brand-300/50',
                 visibleMain.length > 0 && 'mt-6',
               )}>
                 {isSuperAdmin ? 'Plataforma' : 'Administração'}
@@ -137,7 +137,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       <div className="border-t border-brand-800/30 px-3 py-3">
         <button
           onClick={onToggle}
-          className="flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-brand-500 hover:bg-brand-800/30 hover:text-brand-300 transition-colors"
+          className="flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-brand-300 hover:bg-brand-700/30 hover:text-white transition-colors"
         >
           {collapsed ? (
             <PanelLeftOpen className="h-4 w-4 shrink-0" />
@@ -150,8 +150,8 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         </button>
         {!collapsed && (
           <div className="mt-2 px-2">
-            <p className="text-[11px] text-brand-700/50">Motor de Inteligência de</p>
-            <p className="text-[11px] text-brand-700/50">Proteção de Vida · B2B SaaS</p>
+            <p className="text-[11px] text-brand-300/40">Motor de Inteligência de</p>
+            <p className="text-[11px] text-brand-300/40">Proteção de Vida · B2B SaaS</p>
           </div>
         )}
       </div>
@@ -181,8 +181,8 @@ function NavItem({
           'group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
           collapsed && 'justify-center px-0',
           isActive
-            ? 'bg-brand-700/40 text-white'
-            : 'text-brand-400/70 hover:bg-brand-800/30 hover:text-brand-200',
+            ? 'bg-brand-500/20 text-white'
+            : 'text-brand-200/60 hover:bg-brand-700/30 hover:text-white',
         )
       }
     >
