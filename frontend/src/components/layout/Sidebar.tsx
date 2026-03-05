@@ -37,25 +37,57 @@ interface NavItemDef {
   tenantOnly?: boolean
 }
 
-const mainItems: NavItemDef[] = [
-  { to: '/',              label: 'Dashboard',        icon: LayoutDashboard, end: true,    tenantOnly: true },
-  { to: '/evaluations/new', label: 'Nova Avaliação', icon: FilePlus,        minRole: 'Broker', tenantOnly: true },
-  { to: '/triggers/new',  label: 'Gatilhos de Vida', icon: Zap,             minRole: 'Broker', tenantOnly: true },
-  { to: '/evaluations',   label: 'Histórico',        icon: History,         end: true,    tenantOnly: true },
-  { to: '/clients',       label: 'Meus Clientes',    icon: UserCheck,       minRole: 'Broker', tenantOnly: true },
-  { to: '/guide',          label: 'Guia do Sistema',   icon: BookOpen },
-]
+interface NavSection {
+  label: string
+  items: NavItemDef[]
+}
 
-const adminItems: NavItemDef[] = [
-  { to: '/team',           label: 'Gestão de Equipe',   icon: Users,     minRole: 'Manager',     tenantOnly: true },
-  { to: '/reports',        label: 'Relatórios',          icon: BarChart2, minRole: 'Manager',     tenantOnly: true },
-  { to: '/audit',          label: 'Auditoria',           icon: Shield,    minRole: 'Manager',     tenantOnly: true },
-  { to: '/engine',         label: 'Motor',               icon: Cpu,       minRole: 'Manager',     tenantOnly: true },
-  { to: '/settings',       label: 'Configurações',       icon: Settings,  minRole: 'TenantOwner', tenantOnly: true },
-  { to: '/billing',        label: 'Plano & Faturamento', icon: CreditCard,minRole: 'TenantOwner', tenantOnly: true },
-  { to: '/admin/tenants',  label: 'Corretoras',          icon: Building2, minRole: 'SuperAdmin' },
-  { to: '/admin/platform', label: 'Plataforma',          icon: Globe,     minRole: 'SuperAdmin' },
-  { to: '/admin/users',    label: 'Usuários Globais',    icon: Users,     minRole: 'SuperAdmin' },
+const sections: NavSection[] = [
+  {
+    label: 'Visão Geral',
+    items: [
+      { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true, tenantOnly: true },
+    ],
+  },
+  {
+    label: 'Operações',
+    items: [
+      { to: '/evaluations/new', label: 'Nova Avaliação',  icon: FilePlus, minRole: 'Broker', tenantOnly: true },
+      { to: '/triggers/new',    label: 'Gatilhos de Vida', icon: Zap,      minRole: 'Broker', tenantOnly: true },
+      { to: '/evaluations',     label: 'Histórico',        icon: History,  end: true, tenantOnly: true },
+      { to: '/clients',         label: 'Meus Clientes',    icon: UserCheck, minRole: 'Broker', tenantOnly: true },
+    ],
+  },
+  {
+    label: 'Gestão',
+    items: [
+      { to: '/team',    label: 'Equipe',     icon: Users,    minRole: 'Manager', tenantOnly: true },
+      { to: '/reports', label: 'Relatórios',  icon: BarChart2, minRole: 'Manager', tenantOnly: true },
+      { to: '/audit',   label: 'Auditoria',   icon: Shield,   minRole: 'Manager', tenantOnly: true },
+      { to: '/engine',  label: 'Motor',        icon: Cpu,      minRole: 'Manager', tenantOnly: true },
+    ],
+  },
+  {
+    label: 'Configurações',
+    items: [
+      { to: '/settings', label: 'Tenant',             icon: Settings,   minRole: 'TenantOwner', tenantOnly: true },
+      { to: '/billing',  label: 'Plano & Faturamento', icon: CreditCard, minRole: 'TenantOwner', tenantOnly: true },
+    ],
+  },
+  {
+    label: 'Plataforma',
+    items: [
+      { to: '/admin/tenants',  label: 'Corretoras',       icon: Building2, minRole: 'SuperAdmin' },
+      { to: '/admin/platform', label: 'Visão Global',     icon: Globe,     minRole: 'SuperAdmin' },
+      { to: '/admin/users',    label: 'Usuários Globais', icon: Users,     minRole: 'SuperAdmin' },
+    ],
+  },
+  {
+    label: 'Suporte',
+    items: [
+      { to: '/guide', label: 'Guia do Sistema', icon: BookOpen },
+    ],
+  },
 ]
 
 export function Sidebar({ collapsed, onToggle }: SidebarProps) {
@@ -72,8 +104,12 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
     return !item.minRole || hasRole(item.minRole)
   }
 
-  const visibleMain  = mainItems.filter(visible)
-  const visibleAdmin = adminItems.filter(visible)
+  const visibleSections = sections
+    .map((section) => ({
+      ...section,
+      items: section.items.filter(visible),
+    }))
+    .filter((section) => section.items.length > 0)
 
   return (
     <aside
@@ -100,37 +136,23 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       </div>
 
       {/* Navigation */}
-      <nav className="scrollbar-dark flex-1 space-y-0.5 overflow-y-auto px-3 py-4">
-        {visibleMain.length > 0 && (
-          <>
-            {!collapsed && (
-              <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-wider text-brand-300/50">
-                Principal
-              </p>
-            )}
-            {visibleMain.map((item) => (
-              <NavItem key={item.to} {...item} collapsed={collapsed} />
-            ))}
-          </>
-        )}
-
-        {visibleAdmin.length > 0 && (
-          <>
+      <nav className="scrollbar-dark flex-1 overflow-y-auto px-3 py-4">
+        {visibleSections.map((section, idx) => (
+          <div key={section.label} className={cn(idx > 0 && 'mt-5')}>
             {!collapsed ? (
-              <p className={cn(
-                'mb-2 px-2 text-[10px] font-semibold uppercase tracking-wider text-brand-300/50',
-                visibleMain.length > 0 && 'mt-6',
-              )}>
-                {isSuperAdmin ? 'Plataforma' : 'Administração'}
+              <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-wider text-brand-300/50">
+                {section.label}
               </p>
-            ) : visibleMain.length > 0 ? (
-              <div className="mx-auto my-4 h-px w-8 bg-brand-800/40" />
+            ) : idx > 0 ? (
+              <div className="mx-auto mb-3 h-px w-8 bg-brand-700/50" />
             ) : null}
-            {visibleAdmin.map((item) => (
-              <NavItem key={item.to} {...item} collapsed={collapsed} />
-            ))}
-          </>
-        )}
+            <div className="space-y-0.5">
+              {section.items.map((item) => (
+                <NavItem key={item.to} {...item} collapsed={collapsed} />
+              ))}
+            </div>
+          </div>
+        ))}
       </nav>
 
       {/* Toggle + Footer */}
