@@ -1,27 +1,29 @@
 import { Navigate, Outlet } from 'react-router-dom'
-import { Loader2 } from 'lucide-react'
+import { Activity } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
-
-type UserRole = 'SuperAdmin' | 'TenantAdmin' | 'Partner' | 'ReadOnly'
+import { getActiveTenantId } from '../../lib/api'
+import type { UserRole } from '../../contexts/AuthContext'
 
 interface ProtectedRouteProps {
   minRole?: UserRole
+  tenantRequired?: boolean
 }
 
-/**
- * Layout route that guards children behind authentication (and optionally a minimum role).
- * - While loading: shows a full-screen spinner
- * - Not authenticated: redirects to /login
- * - Authenticated but insufficient role: redirects to /
- * - OK: renders <Outlet />
- */
-export function ProtectedRoute({ minRole }: ProtectedRouteProps) {
+export function ProtectedRoute({ minRole, tenantRequired }: ProtectedRouteProps) {
   const { user, loading, hasRole } = useAuth()
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-950">
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
+      <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-brand-950 via-brand-900 to-brand-950">
+        <div className="flex flex-col items-center gap-4 animate-fadeIn">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-700/40 ring-1 ring-brand-500/30">
+            <Activity className="h-7 w-7 text-brand-400 animate-pulse-brand" />
+          </div>
+          <div className="text-center">
+            <p className="text-sm font-semibold text-brand-300">LifeTrigger</p>
+            <p className="mt-1 text-xs text-brand-500">Carregando…</p>
+          </div>
+        </div>
       </div>
     )
   }
@@ -32,6 +34,16 @@ export function ProtectedRoute({ minRole }: ProtectedRouteProps) {
 
   if (minRole && !hasRole(minRole)) {
     return <Navigate to="/" replace />
+  }
+
+  // SuperAdmin has no tenantId in JWT, but can select a tenant via dropdown.
+  // Allow access to tenant routes if they have a selected tenant in localStorage.
+  if (tenantRequired && !user.tenantId) {
+    const isSuperAdmin = user.role === 'SuperAdmin'
+    const hasSelectedTenant = !!getActiveTenantId()
+    if (!isSuperAdmin || !hasSelectedTenant) {
+      return <Navigate to="/admin/tenants" replace />
+    }
   }
 
   return <Outlet />

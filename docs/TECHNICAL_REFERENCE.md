@@ -138,11 +138,107 @@ Toda etapa acima insere um ID na lista `regras_aplicadas`. Ex: `RULE_GUARDRAIL_M
 
 ## 8. Segurança e Controle de Acesso
 
-A fronteira ataca problemas complexos em três defesas de Hardening:
-* **JWT Enforcing:** O Front envia uma Role Assinada. Diferencia o End-User preenchendo o formulário da Corretora X contra o Administrador que pode auditar dados do LifeTrigger Engine global;
+### 8.1 Defesas de Hardening
+
+* **JWT Enforcing:** O Front envia uma Role Assinada. Diferencia o End-User preenchendo o formulário da Corretora X contra o Administrador que pode auditar dados do LifeTrigger Engine global.
 * **Rate Limiting no Gateway:** Configuração esperada de Backpressure nas nuvens parceiras.
 * **Idempotency (Replay Attacks):** A `ConcurrentDictionary` com Sliding Expiration mitigando o envio da mesma Key que corromperia o `Result` estatístico e afogaria o funil da base de leads.
 * **Data Sanitization:** A FluentValidation recusa instâncias lixo injetadas na API (Negative Incomes extirpados em 5ms).
+
+---
+
+### 8.2 Hierarquia de Perfis (Roles)
+
+O sistema adota **5 perfis cumulativos** — cada perfil superior herda automaticamente todas as permissões dos perfis abaixo na hierarquia. O nível numérico serve como comparador de autoridade: um Manager (3) nunca pode criar ou gerenciar um TenantOwner (4).
+
+| Nível | Role         | Nome UI        | Escopo                                       |
+|-------|--------------|----------------|----------------------------------------------|
+| 5     | `SuperAdmin` | Super Admin    | Lifetrigger (plataforma) — acesso total       |
+| 4     | `TenantOwner`| Proprietário   | Dono da corretora — configura o plano/tenant  |
+| 3     | `Manager`    | Gerente        | Gerencia a equipe e acessa relatórios admin   |
+| 2     | `Broker`     | Corretor       | Cria avaliações e dispara gatilhos de vida    |
+| 1     | `Viewer`     | Observador     | Leitura apenas — sem capacidade de criação    |
+
+**Regra de delegação:** Um usuário só pode criar ou alterar o perfil de outro usuário cujo nível seja **estritamente inferior** ao seu próprio. Um Manager cria Brokers e Viewers. Um TenantOwner cria até Managers.
+
+---
+
+### 8.3 Políticas de Autorização (Authorization Policies)
+
+Ambos os serviços (Auth API e Engine API) configuram as mesmas 5 políticas cumulativas no JWT Bearer:
+
+```
+"SuperAdmin"  → RequireRole("SuperAdmin")
+"TenantOwner" → RequireRole("SuperAdmin", "TenantOwner")
+"Manager"     → RequireRole("SuperAdmin", "TenantOwner", "Manager")
+"Broker"      → RequireRole("SuperAdmin", "TenantOwner", "Manager", "Broker")
+"Viewer"      → RequireAuthenticatedUser()  (qualquer role autenticada)
+```
+
+O claim `"role"` no JWT é configurado como `RoleClaimType` no `JwtBearerOptions`, garantindo que `[Authorize(Policy = "X")]` funcione corretamente com a claim customizada.
+
+---
+
+### 8.4 Mapeamento de Rotas × Permissão Mínima
+
+#### Engine API (`src/LifeTrigger.Engine.Api`)
+
+| Método | Rota                                          | Política Mínima | Observação                                     |
+|--------|-----------------------------------------------|-----------------|------------------------------------------------|
+| POST   | `/api/v1/evaluations`                         | `Broker`        | Corretor cria avaliação; TenantId forçado do JWT |
+| GET    | `/api/v1/evaluations`                         | Autenticado     | Broker vê só as suas (filtro `CreatedByUserId`) |
+| GET    | `/api/v1/evaluations/{id}`                    | Autenticado     | —                                              |
+| POST   | `/api/v1/triggers`                            | `Broker`        | Disparo de Gatilho de Vida                     |
+| GET    | `/api/v1/engine/versions`                     | Autenticado     | Info de versão do motor                        |
+| GET    | `/api/v1/admin/tenants/{id}/settings`         | `Manager`       | Leitura de configurações do tenant             |
+| PUT    | `/api/v1/admin/tenants/{id}/settings`         | `TenantOwner`   | Apenas o dono altera parâmetros do plano       |
+| GET    | `/api/v1/admin/reports/pilot`                 | `Manager`       | Relatório agregado C-Level                     |
+| GET    | `/api/v1/admin/audit/evaluations/{id}/verify` | `Manager`       | Verificação de integridade criptográfica       |
+| DELETE | `/api/v1/admin/demo-environments/tenants/{id}`| `SuperAdmin`    | Limpeza de ambiente demo                       |
+
+#### Auth API (`auth-api/`)
+
+| Método | Rota                          | Política Mínima | Observação                                     |
+|--------|-------------------------------|-----------------|------------------------------------------------|
+| POST   | `/api/v1/auth/login`          | Público         | Retorna JWT com claim `"role"`                 |
+| POST   | `/api/v1/auth/refresh`        | Público         | Rotação de refresh token                       |
+| POST   | `/api/v1/auth/logout`         | Autenticado     | Revoga refresh token                           |
+| GET    | `/api/v1/auth/me`             | Autenticado     | Dados do usuário logado                        |
+| GET    | `/api/v1/users`               | `Manager`       | Lista usuários do tenant                       |
+| POST   | `/api/v1/users`               | `Manager`       | Cria usuário (respeitando delegação de nível)  |
+| PATCH  | `/api/v1/users/{id}`          | `Manager`       | Altera role do usuário                         |
+| PATCH  | `/api/v1/users/{id}/status`   | `Manager`       | Ativa ou desativa usuário                      |
+| POST   | `/api/v1/users/{id}/reset-password` | `Manager` | Redefine senha                                 |
+| GET    | `/api/v1/tenants`             | `SuperAdmin`    | Lista todas as corretoras                      |
+| GET    | `/api/v1/tenants/{id}`        | Autenticado     | Dados de uma corretora                         |
+
+---
+
+### 8.5 Ownership de Avaliações (Broker Isolation)
+
+Cada avaliação armazena o campo `CreatedByUserId` (UUID do usuário autenticado no momento do POST). Para usuários com role `Broker`:
+
+- `GET /evaluations` retorna **somente** avaliações criadas pelo Broker logado.
+- Registros antigos (sem `CreatedByUserId`) ficam invisíveis para Brokers, mas acessíveis para Manager+.
+
+Isso garante que corretores de uma mesma corretora não enxerguem os leads uns dos outros.
+
+---
+
+### 8.6 Credenciais de Demonstração (Ambiente Piloto)
+
+Os seguintes usuários são gerados automaticamente pelo `DemoDataSeeder` ao iniciar em ambiente de desenvolvimento:
+
+| E-mail                        | Role         | Tenant       | Senha       |
+|-------------------------------|--------------|--------------|-------------|
+| `superadmin@lifetrigger.io`   | SuperAdmin   | —            | `Super@123!`|
+| `owner@alpha.demo`            | TenantOwner  | Alpha Demo   | `Alpha@123!`|
+| `manager@alpha.demo`          | Manager      | Alpha Demo   | `Alpha@123!`|
+| `broker@alpha.demo`           | Broker       | Alpha Demo   | `Alpha@123!`|
+| `viewer@alpha.demo`           | Viewer       | Alpha Demo   | `Alpha@123!`|
+| `owner@beta.demo`             | TenantOwner  | Beta Demo    | `Beta@123!` |
+| `manager@beta.demo`           | Manager      | Beta Demo    | `Beta@123!` |
+| `broker@beta.demo`            | Broker       | Beta Demo    | `Beta@123!` |
 
 ---
 

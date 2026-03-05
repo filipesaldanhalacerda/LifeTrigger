@@ -13,8 +13,18 @@ namespace LifeTrigger.Auth.Api.Controllers;
 public class TenantsController : ControllerBase
 {
     private readonly ITenantRepository _tenants;
+    private readonly IUserRepository _users;
+    private readonly IRefreshTokenRepository _refreshTokens;
 
-    public TenantsController(ITenantRepository tenants) => _tenants = tenants;
+    public TenantsController(
+        ITenantRepository tenants,
+        IUserRepository users,
+        IRefreshTokenRepository refreshTokens)
+    {
+        _tenants       = tenants;
+        _users         = users;
+        _refreshTokens = refreshTokens;
+    }
 
     // POST /api/v1/tenants
     [HttpPost]
@@ -50,11 +60,12 @@ public class TenantsController : ControllerBase
     }
 
     // GET /api/v1/tenants/{id}
+    // Any authenticated user may read their own tenant (needed for UI display).
+    // Non-SuperAdmin users are blocked from reading any other tenant by the guard below.
     [HttpGet("{id:guid}")]
-    [Authorize(Policy = "TenantAdmin")]
     public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
     {
-        // TenantAdmin can only see their own tenant; SuperAdmin sees any
+        // Non-SuperAdmin users can only read their own tenant.
         if (!IsSuperAdmin() && GetCurrentTenantId() != id)
             return Forbid();
 
@@ -75,6 +86,17 @@ public class TenantsController : ControllerBase
 
         tenant.IsActive = request.IsActive;
         await _tenants.UpdateAsync(tenant, cancellationToken);
+
+        // When deactivating a tenant, revoke all active sessions for every user in it.
+        // This prevents users from renewing their tokens — existing access tokens
+        // will remain valid until they expire naturally (≤1 hour).
+        if (!request.IsActive)
+        {
+            var tenantUsers = await _users.GetByTenantAsync(id, cancellationToken);
+            foreach (var user in tenantUsers)
+                await _refreshTokens.RevokeAllForUserAsync(user.Id, cancellationToken);
+        }
+
         return Ok(MapTenant(tenant));
     }
 

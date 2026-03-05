@@ -16,16 +16,17 @@ import {
   type AuthUser,
 } from '../lib/api'
 
-type UserRole = 'SuperAdmin' | 'TenantAdmin' | 'Partner' | 'ReadOnly'
+export type UserRole = 'SuperAdmin' | 'TenantOwner' | 'Manager' | 'Broker' | 'Viewer'
 
 const ROLE_HIERARCHY: Record<UserRole, number> = {
-  SuperAdmin: 4,
-  TenantAdmin: 3,
-  Partner: 2,
-  ReadOnly: 1,
+  SuperAdmin:  5,
+  TenantOwner: 4,
+  Manager:     3,
+  Broker:      2,
+  Viewer:      1,
 }
 
-interface AuthContextValue {
+export interface AuthContextValue {
   user: AuthUser | null
   loading: boolean
   login: (email: string, password: string) => Promise<void>

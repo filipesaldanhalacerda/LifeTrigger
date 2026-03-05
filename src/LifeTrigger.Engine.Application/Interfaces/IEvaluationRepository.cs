@@ -11,5 +11,5 @@ public interface IEvaluationRepository
     Task SaveAsync(EvaluationRecord record, CancellationToken cancellationToken = default);
     Task<EvaluationRecord?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<int> CleanTenantAsync(Guid tenantId, CancellationToken cancellationToken = default);
-    Task<IEnumerable<EvaluationRecord>> GetByFilterAsync(Guid tenantId, DateTimeOffset? startDate = null, DateTimeOffset? endDate = null, int limit = 500, int offset = 0, CancellationToken cancellationToken = default);
+    Task<IEnumerable<EvaluationRecord>> GetByFilterAsync(Guid tenantId, DateTimeOffset? startDate = null, DateTimeOffset? endDate = null, int limit = 500, int offset = 0, Guid? createdByUserId = null, CancellationToken cancellationToken = default);
 }

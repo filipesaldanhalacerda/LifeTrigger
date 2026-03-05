@@ -46,7 +46,7 @@ export function actionColors(action: RecommendedAction): string {
     AUMENTAR: 'bg-red-50 text-red-700 ring-1 ring-red-200',
     MANTER: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200',
     REDUZIR: 'bg-sky-50 text-sky-700 ring-1 ring-sky-200',
-    REVISAR: 'bg-violet-50 text-violet-700 ring-1 ring-violet-200',
+    REVISAR: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200',
   }
   return map[action]
 }

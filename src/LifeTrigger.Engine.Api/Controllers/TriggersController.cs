@@ -24,7 +24,7 @@ public record LifeTriggerEvent(
 
 [ApiController]
 [Route("api/v1/[controller]")]
-[Authorize]
+[Authorize(Policy = "Broker")]
 [EnableRateLimiting("evaluation")]
 public class TriggersController : ControllerBase
 {

@@ -14,19 +14,34 @@ export function ScoreRing({ score, size = 120, strokeWidth = 8, label }: ScoreRi
   const offset = circumference - (progress / 100) * circumference
   const color = riskScoreStroke(score)
 
+  // Gradient ID unique per instance
+  const gradientId = `score-grad-${score}-${size}`
+
   return (
-    // Outer container: fixed dimensions + relative so children can overlay
     <div
       className="relative inline-flex shrink-0 items-center justify-center"
       style={{ width: size, height: size }}
     >
-      {/* Ring SVG — absolute so it fills the container; rotated so progress starts at top */}
       <svg
         width={size}
         height={size}
         viewBox={`0 0 ${size} ${size}`}
         className="absolute inset-0 -rotate-90"
       >
+        <defs>
+          <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor={color} stopOpacity="0.7" />
+            <stop offset="100%" stopColor={color} stopOpacity="1" />
+          </linearGradient>
+          <filter id={`glow-${gradientId}`}>
+            <feGaussianBlur stdDeviation="2" result="coloredBlur" />
+            <feMerge>
+              <feMergeNode in="coloredBlur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+
         {/* Track */}
         <circle
           cx={size / 2}
@@ -36,24 +51,24 @@ export function ScoreRing({ score, size = 120, strokeWidth = 8, label }: ScoreRi
           stroke="#e2e8f0"
           strokeWidth={strokeWidth}
         />
-        {/* Progress arc */}
+        {/* Progress arc with gradient and glow */}
         <circle
           cx={size / 2}
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke={color}
+          stroke={`url(#${gradientId})`}
           strokeWidth={strokeWidth}
           strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={offset}
+          filter={`url(#glow-${gradientId})`}
           className="transition-all duration-700 ease-out"
         />
       </svg>
 
-      {/* Centered text — relative + z-10 sits on top of the SVG */}
       <div className="relative z-10 flex flex-col items-center justify-center text-center">
-        <span className={`font-bold leading-none ${riskScoreColor(score)}`} style={{ fontSize: size * 0.22 }}>
+        <span className={`font-extrabold leading-none ${riskScoreColor(score)}`} style={{ fontSize: size * 0.24 }}>
           {score}
         </span>
         {label && (

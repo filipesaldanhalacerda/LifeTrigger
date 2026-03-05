@@ -48,6 +48,7 @@ public class EfEvaluationRepository : IEvaluationRepository
         DateTimeOffset? endDate = null,
         int limit = 500,
         int offset = 0,
+        Guid? createdByUserId = null,
         CancellationToken cancellationToken = default)
     {
         var query = _context.Evaluations
@@ -58,6 +59,10 @@ public class EfEvaluationRepository : IEvaluationRepository
 
         if (endDate.HasValue)
             query = query.Where(e => e.Timestamp <= endDate.Value);
+
+        // Broker-level ownership filter: restrict to evaluations created by this user
+        if (createdByUserId.HasValue)
+            query = query.Where(e => e.CreatedByUserId == createdByUserId.Value);
 
         return await query
             .OrderByDescending(e => e.Timestamp)

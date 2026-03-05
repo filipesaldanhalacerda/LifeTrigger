@@ -114,17 +114,17 @@ export default function TenantSettings() {
         subtitle="Parâmetros do motor de cálculo para este tenant"
       />
 
-      <div className="p-6">
+      <div className="p-6 animate-fadeIn">
         <div className="mx-auto max-w-2xl space-y-5">
 
           {/* ── Header context banner ── */}
-          <div className="flex items-start gap-3 rounded-xl border border-indigo-100 bg-gradient-to-r from-indigo-50 to-white p-5">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-600 shadow-sm">
+          <div className="flex items-start gap-3 rounded-2xl border border-brand-100 bg-gradient-to-r from-brand-50 to-white p-5">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-600 shadow-sm">
               <Settings2 className="h-5 w-5 text-white" />
             </div>
             <div>
-              <p className="text-sm font-bold text-indigo-900">Como estas configurações funcionam</p>
-              <p className="mt-1 text-xs leading-relaxed text-indigo-700">
+              <p className="text-sm font-bold text-brand-900">Como estas configurações funcionam</p>
+              <p className="mt-1 text-xs leading-relaxed text-brand-700">
                 Cada parâmetro aqui é injetado diretamente no motor determinístico antes do cálculo.
                 Eles definem <strong>os limites e multiplicadores</strong> usados nas fórmulas de reposição de renda,
                 reserva de emergência e guardrails de cobertura. Alterações entram em vigor
@@ -135,7 +135,7 @@ export default function TenantSettings() {
 
           {/* ── Saved success banner ── */}
           {saved && (
-            <div className="flex items-center gap-2.5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+            <div className="flex items-center gap-2.5 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
               <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
               <span className="font-medium">Configurações salvas com sucesso.</span>
               <span className="text-emerald-600">Todas as novas avaliações já usam os novos parâmetros.</span>
@@ -145,8 +145,8 @@ export default function TenantSettings() {
           {/* ── Section 1: Income Replacement ── */}
           <SettingsCard
             icon={TrendingUp}
-            iconColor="text-indigo-600"
-            iconBg="bg-indigo-50"
+            iconColor="text-brand-600"
+            iconBg="bg-brand-50"
             title="Reposição de Renda"
             description="Define por quantos anos a família precisaria da renda do segurado em caso de sinistro. É o principal multiplicador do capital recomendado."
           >
@@ -250,7 +250,7 @@ export default function TenantSettings() {
           </SettingsCard>
 
           {/* ── Dynamic summary ── */}
-          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
             <div className="mb-4 flex items-center justify-between">
               <div>
                 <h2 className="text-sm font-semibold text-slate-900">Simulação ao Vivo</h2>
@@ -268,13 +268,13 @@ export default function TenantSettings() {
                 label="Capital base — solteiro"
                 formula={`R$120k × ${settings.incomeReplacementYearsSingle} anos`}
                 value={brl(settings.incomeReplacementYearsSingle * 120000)}
-                color="indigo"
+                color="brand"
               />
               <SimRow
                 label="Capital base — com 2 dep."
                 formula={`R$120k × ${settings.incomeReplacementYearsWithDependents + 2} anos`}
                 value={brl((settings.incomeReplacementYearsWithDependents + 2) * 120000)}
-                color="indigo"
+                color="brand"
               />
               <SimRow
                 label="Piso garantido (guardrail)"
@@ -318,7 +318,7 @@ export default function TenantSettings() {
           )}
 
           {/* ── Actions ── */}
-          <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-xs">
+          <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-card">
             <button
               onClick={handleReset}
               className="flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
@@ -329,7 +329,7 @@ export default function TenantSettings() {
             <button
               onClick={handleSave}
               disabled={saving || settings.minCoverageAnnualIncomeMultiplier >= settings.maxTotalCoverageMultiplier}
-              className="flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+              className="flex items-center gap-2 rounded-lg bg-brand-600 px-5 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50 transition-colors"
             >
               <Save className="h-4 w-4" />
               {saving ? 'Salvando…' : 'Salvar Configurações'}
@@ -355,7 +355,7 @@ function SettingsCard({
   children: React.ReactNode
 }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white shadow-xs overflow-hidden">
+    <div className="rounded-2xl border border-slate-200 bg-white shadow-card overflow-hidden">
       {/* Card header */}
       <div className="flex items-start gap-3 border-b border-slate-100 p-5">
         <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${iconBg}`}>
@@ -404,7 +404,7 @@ function SliderField({
               Modificado
             </span>
           )}
-          <span className="rounded-lg bg-indigo-50 px-2.5 py-1 text-sm font-bold text-indigo-700 min-w-[72px] text-center">
+          <span className="rounded-lg bg-brand-50 px-2.5 py-1 text-sm font-bold text-brand-700 min-w-[72px] text-center tabular-nums">
             {value} {unit}
           </span>
         </div>
@@ -413,7 +413,7 @@ function SliderField({
       {/* Formula + effects box */}
       <div className="rounded-lg border border-slate-100 bg-slate-50 p-3 space-y-2">
         <div className="flex items-center gap-1.5">
-          <span className="rounded bg-indigo-100 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-indigo-700">
+          <span className="rounded bg-brand-100 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-brand-700">
             fórmula
           </span>
           <span className="font-mono text-[11px] text-slate-600">{formula}</span>
@@ -457,12 +457,12 @@ function SimRow({
   label: string
   formula: string
   value: string
-  color: 'indigo' | 'emerald' | 'amber'
+  color: 'brand' | 'emerald' | 'amber'
   span?: boolean
   note?: string
 }) {
   const colors = {
-    indigo:  { bg: 'bg-indigo-50',  text: 'text-indigo-700',  label: 'text-indigo-500'  },
+    brand:   { bg: 'bg-brand-50',   text: 'text-brand-700',   label: 'text-brand-500'   },
     emerald: { bg: 'bg-emerald-50', text: 'text-emerald-700', label: 'text-emerald-500' },
     amber:   { bg: 'bg-amber-50',   text: 'text-amber-700',   label: 'text-amber-500'   },
   }
@@ -470,7 +470,7 @@ function SimRow({
   return (
     <div className={`rounded-lg ${c.bg} p-3`}>
       <p className={`text-[11px] font-medium ${c.label}`}>{label}</p>
-      <p className={`mt-1 text-base font-bold ${c.text}`}>{value}</p>
+      <p className={`mt-1 text-base font-bold tabular-nums ${c.text}`}>{value}</p>
       <p className="mt-0.5 font-mono text-[10px] text-slate-400">{formula}</p>
       {note && <p className="mt-0.5 text-[10px] text-slate-400 italic">{note}</p>}
     </div>

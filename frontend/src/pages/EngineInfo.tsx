@@ -28,9 +28,9 @@ export default function EngineInfo() {
     <div>
       <TopBar title="Motor & Sistema" subtitle="Versão do motor e status operacional" onRefresh={load} isLoading={loading} />
 
-      <div className="p-6 space-y-5">
+      <div className="p-6 space-y-5 animate-fadeIn">
         {/* Health status */}
-        <div className={`flex items-center gap-3 rounded-xl border p-4 shadow-xs ${
+        <div className={`flex items-center gap-3 rounded-2xl border p-4 shadow-card ${
           health === 'healthy' ? 'border-emerald-200 bg-emerald-50' :
           health === 'unhealthy' ? 'border-red-200 bg-red-50' :
           'border-slate-200 bg-slate-50'
@@ -58,8 +58,8 @@ export default function EngineInfo() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <InfoCard
             icon={Cpu}
-            iconColor="text-indigo-600"
-            iconBg="bg-indigo-50"
+            iconColor="text-brand-600"
+            iconBg="bg-brand-50"
             label="Versão do Motor"
             value={info?.engineVersion ?? '—'}
             sub="LifeTrigger Engine"
@@ -84,14 +84,14 @@ export default function EngineInfo() {
 
         {/* Description */}
         {info?.description && (
-          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
             <h2 className="mb-2 text-sm font-semibold text-slate-900">Descrição do Motor</h2>
             <p className="text-sm text-slate-600">{info.description}</p>
           </div>
         )}
 
         {/* Architecture summary */}
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
           <h2 className="mb-4 text-sm font-semibold text-slate-900">Arquitetura</h2>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {[
@@ -111,7 +111,7 @@ export default function EngineInfo() {
         </div>
 
         {/* Endpoints reference */}
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
           <h2 className="mb-4 text-sm font-semibold text-slate-900">Endpoints Disponíveis</h2>
           <div className="space-y-1">
             {[
@@ -151,13 +151,13 @@ function InfoCard({
   icon: React.ElementType; iconColor: string; iconBg: string; label: string; value: string; sub: string
 }) {
   return (
-    <div className="flex items-start gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
+    <div className="flex items-start gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
       <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${iconBg}`}>
         <Icon className={`h-5 w-5 ${iconColor}`} />
       </div>
       <div>
         <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</p>
-        <p className="mt-1 text-xl font-bold text-slate-900">{value}</p>
+        <p className="mt-1 text-xl font-bold text-slate-900 tabular-nums">{value}</p>
         <p className="text-xs text-slate-400">{sub}</p>
       </div>
     </div>

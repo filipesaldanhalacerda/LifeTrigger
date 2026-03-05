@@ -13,7 +13,7 @@ function isValidUUID(value: string): boolean {
 
 /** Parses raw API error body (may be JSON) into a human-readable message. */
 function parseApiError(raw: string, status?: number): string {
-  if (status === 404) return 'Avaliação não encontrada. Verifique se o ID está correto e pertence a este tenant.'
+  if (status === 404) return 'Avaliacao nao encontrada. Verifique se o ID esta correto e pertence a este tenant.'
   try {
     const json = JSON.parse(raw) as {
       error_code?: string
@@ -23,9 +23,9 @@ function parseApiError(raw: string, status?: number): string {
     if (json.error_code === 'VALIDATION_ERROR') {
       const detail = json.details?.[0]?.message
       if (detail?.toLowerCase().includes('not valid')) {
-        return 'ID com formato inválido. Certifique-se de copiar o UUID completo (36 caracteres) do histórico.'
+        return 'ID com formato invalido. Certifique-se de copiar o UUID completo (36 caracteres) do historico.'
       }
-      return `Dados inválidos: ${detail ?? json.message ?? 'verifique o campo preenchido.'}`
+      return `Dados invalidos: ${detail ?? json.message ?? 'verifique o campo preenchido.'}`
     }
     return json.message ?? raw
   } catch {
@@ -92,13 +92,13 @@ export default function AuditVerify() {
     <div>
       <TopBar title="Verificação de Auditoria" subtitle="Valida a integridade criptográfica de avaliações" />
 
-      <div className="p-6">
+      <div className="p-6 animate-fadeIn">
         <div className="mx-auto max-w-xl space-y-5">
           {/* Explanation card */}
-          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
             <div className="flex items-start gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-50">
-                <Shield className="h-5 w-5 text-indigo-600" />
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-50">
+                <Shield className="h-5 w-5 text-brand-600" />
               </div>
               <div>
                 <h2 className="font-semibold text-slate-900">AuditHash SHA-256</h2>
@@ -112,7 +112,7 @@ export default function AuditVerify() {
           </div>
 
           {/* Search form */}
-          <form onSubmit={handleVerify} className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-3">
+          <form onSubmit={handleVerify} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card space-y-3">
             <h2 className="text-sm font-semibold text-slate-900">Verificar Avaliação</h2>
 
             <div className="space-y-1.5">
@@ -129,7 +129,7 @@ export default function AuditVerify() {
                         ? 'border-red-400 focus:border-red-400 focus:ring-red-100'
                         : inputIsValid
                           ? 'border-emerald-400 focus:border-emerald-400 focus:ring-emerald-100'
-                          : 'border-slate-200 focus:border-indigo-400 focus:ring-indigo-100'
+                          : 'border-slate-200 focus:border-brand-400 focus:ring-brand-100'
                     }`}
                   />
                   {/* Status indicator */}
@@ -145,7 +145,7 @@ export default function AuditVerify() {
                 <button
                   type="submit"
                   disabled={loading || !inputIsValid}
-                  className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                  className="flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50 transition-colors"
                 >
                   <Search className="h-4 w-4" />
                   {loading ? 'Verificando…' : 'Verificar'}
@@ -175,7 +175,7 @@ export default function AuditVerify() {
 
           {/* Error */}
           {error && (
-            <div className="flex items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+            <div className="flex items-start gap-2.5 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
               <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
               <div>
                 <p className="font-semibold">Não foi possível verificar</p>
@@ -186,7 +186,7 @@ export default function AuditVerify() {
 
           {/* Result */}
           {result && (
-            <div className={`rounded-xl border p-5 shadow-xs ${
+            <div className={`rounded-2xl border p-5 shadow-card ${
               result.status === 'PASS' ? 'border-emerald-200 bg-emerald-50' :
               result.status === 'FAIL' ? 'border-red-200 bg-red-50' :
               'border-slate-200 bg-slate-50'
@@ -204,7 +204,7 @@ export default function AuditVerify() {
                      result.status === 'FAIL' ? 'Adulteração Detectada' :
                      'Hash Indisponível'}
                   </p>
-                  <p className="text-xs text-slate-500 font-mono mt-0.5">{result.id}</p>
+                  <p className="text-xs text-slate-500 font-mono mt-0.5 tabular-nums">{result.id}</p>
                 </div>
               </div>
 
@@ -242,7 +242,7 @@ export default function AuditVerify() {
           )}
 
           {/* How it works */}
-          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
             <h2 className="mb-3 text-sm font-semibold text-slate-900">Como funciona?</h2>
             <ol className="space-y-2.5 text-sm text-slate-600">
               {[
@@ -252,7 +252,7 @@ export default function AuditVerify() {
                 'Se os hashes coincidem: PASS. Se divergem: FAIL — possível adulteração detectada.',
               ].map((step, i) => (
                 <li key={i} className="flex items-start gap-2.5">
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-[11px] font-bold text-indigo-600">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-100 text-[11px] font-bold text-brand-600">
                     {i + 1}
                   </span>
                   {step}
@@ -270,7 +270,7 @@ function HashRow({ label, value, match }: { label: string; value: string; match:
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-3">
       <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">{label}</p>
-      <p className={`break-all font-mono text-xs ${match ? 'text-emerald-700' : 'text-red-700'}`}>
+      <p className={`break-all font-mono text-xs tabular-nums ${match ? 'text-emerald-700' : 'text-red-700'}`}>
         {value}
       </p>
     </div>

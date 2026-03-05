@@ -14,7 +14,7 @@ export function Badge({ children, className, size = 'md' }: BadgeProps) {
   }[size]
 
   return (
-    <span className={cn('inline-flex items-center rounded-full font-medium', sizeClass, className)}>
+    <span className={cn('inline-flex items-center rounded-full font-medium transition-colors duration-200', sizeClass, className)}>
       {children}
     </span>
   )

@@ -17,17 +17,20 @@ export function MetricCard({
   value,
   subtitle,
   icon: Icon,
-  iconColor = 'text-indigo-600',
-  iconBg = 'bg-indigo-50',
+  iconColor = 'text-brand-600',
+  iconBg = 'bg-brand-50',
   trend,
   className,
 }: MetricCardProps) {
   return (
-    <div className={cn('rounded-xl border border-slate-200 bg-white p-5 shadow-xs', className)}>
+    <div className={cn(
+      'rounded-2xl border border-slate-200 bg-white p-5 shadow-card transition-all duration-200 hover:shadow-card-hover hover:-translate-y-0.5',
+      className,
+    )}>
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{title}</p>
-          <p className="mt-2 text-2xl font-bold text-slate-900">{value}</p>
+          <p className="mt-2 text-2xl font-extrabold text-slate-900 tabular-nums">{value}</p>
           {subtitle && <p className="mt-0.5 text-xs text-slate-500">{subtitle}</p>}
           {trend && (
             <p
@@ -38,7 +41,7 @@ export function MetricCard({
           )}
         </div>
         {Icon && (
-          <div className={cn('rounded-lg p-2.5', iconBg)}>
+          <div className={cn('rounded-xl p-2.5', iconBg)}>
             <Icon className={cn('h-5 w-5', iconColor)} />
           </div>
         )}

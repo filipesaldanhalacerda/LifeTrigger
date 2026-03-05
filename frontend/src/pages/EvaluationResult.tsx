@@ -32,7 +32,7 @@ const ACTION_THEME: Record<RecommendedAction, { border: string; bg: string; text
   AUMENTAR: { border: 'border-red-200',    bg: 'bg-red-50',    text: 'text-red-800',    iconColor: 'text-red-600' },
   MANTER:   { border: 'border-emerald-200', bg: 'bg-emerald-50', text: 'text-emerald-800', iconColor: 'text-emerald-600' },
   REDUZIR:  { border: 'border-sky-200',    bg: 'bg-sky-50',    text: 'text-sky-800',    iconColor: 'text-sky-600' },
-  REVISAR:  { border: 'border-violet-200', bg: 'bg-violet-50', text: 'text-violet-800', iconColor: 'text-violet-600' },
+  REVISAR:  { border: 'border-amber-200',  bg: 'bg-amber-50',  text: 'text-amber-800',  iconColor: 'text-amber-600' },
 }
 
 const ACTION_ICONS: Record<RecommendedAction, React.ElementType> = {
@@ -78,7 +78,7 @@ export default function EvaluationResult() {
   if (loading) {
     return (
       <div className="flex h-64 items-center justify-center gap-3 text-slate-500">
-        <Loader2 className="h-5 w-5 animate-spin text-indigo-500" />
+        <Loader2 className="h-5 w-5 animate-spin text-brand-500" />
         <span className="text-sm">Carregando resultado…</span>
       </div>
     )
@@ -97,7 +97,7 @@ export default function EvaluationResult() {
           </p>
           <button
             onClick={() => navigate('/evaluations/new')}
-            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors"
+            className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 transition-colors"
           >
             Nova Avaliação
           </button>
@@ -118,7 +118,7 @@ export default function EvaluationResult() {
         subtitle={id ? `ID: ${id.slice(0, 18)}…` : 'Avaliação recém-gerada'}
       />
 
-      <div className="p-6 space-y-5">
+      <div className="animate-fadeIn p-6 space-y-5">
 
         {/* Back */}
         <button
@@ -130,7 +130,7 @@ export default function EvaluationResult() {
         </button>
 
         {/* ── Diagnosis / recommendation card — always visible ── */}
-        <div className={`rounded-xl border p-5 shadow-xs ${actionTheme.border} ${actionTheme.bg}`}>
+        <div className={`rounded-2xl border p-5 shadow-card ${actionTheme.border} ${actionTheme.bg}`}>
           <div className="flex items-start gap-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/60">
               <ActionIcon className={`h-5 w-5 ${actionTheme.iconColor}`} />
@@ -158,7 +158,7 @@ export default function EvaluationResult() {
         </div>
 
         {/* ── Tab bar ── */}
-        <div className="flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-100 p-1">
+        <div className="flex items-center gap-1 rounded-2xl border border-slate-200 bg-slate-100 p-1">
           <TabButton id="resultado" active={activeTab} label="Resultado" onClick={setActiveTab} />
           <TabButton
             id="insights"
@@ -175,7 +175,7 @@ export default function EvaluationResult() {
           <div className="space-y-5">
 
             {/* Coverage gap */}
-            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
               <h2 className="text-sm font-semibold text-slate-900">Cobertura vs. Necessidade</h2>
               <p className="mt-0.5 mb-5 text-xs text-slate-500">
                 Comparativo entre a cobertura atual do cliente e o valor recomendado pelo motor.
@@ -187,7 +187,7 @@ export default function EvaluationResult() {
               <div className="mt-4 grid grid-cols-2 gap-3">
                 <div className="rounded-lg border border-slate-100 bg-slate-50 p-3">
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Gap (R$)</p>
-                  <p className={`mt-1 text-xl font-bold ${result.protectionGapAmount > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
+                  <p className={`mt-1 text-xl font-bold tabular-nums ${result.protectionGapAmount > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
                     {formatCurrency(Math.abs(result.protectionGapAmount))}
                   </p>
                   <p className="text-[11px] text-slate-400">
@@ -196,7 +196,7 @@ export default function EvaluationResult() {
                 </div>
                 <div className="rounded-lg border border-slate-100 bg-slate-50 p-3">
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Gap (%)</p>
-                  <p className={`mt-1 text-xl font-bold ${result.protectionGapPercentage > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
+                  <p className={`mt-1 text-xl font-bold tabular-nums ${result.protectionGapPercentage > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
                     {Math.abs(result.protectionGapPercentage).toFixed(1)}%
                   </p>
                   <p className="text-[11px] text-slate-400">
@@ -207,7 +207,7 @@ export default function EvaluationResult() {
             </div>
 
             {/* Scores */}
-            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
               <h2 className="text-sm font-semibold text-slate-900">Scores da Avaliação</h2>
               <p className="mt-0.5 mb-4 text-xs text-slate-500">
                 Dois indicadores calculados pelo motor a partir do perfil financeiro e familiar do cliente.
@@ -238,7 +238,7 @@ export default function EvaluationResult() {
 
             {/* Client context */}
             {req && (
-              <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
+              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
                 <h2 className="mb-1 text-sm font-semibold text-slate-900">Dados do Cliente Avaliado</h2>
                 <p className="mb-4 text-xs text-slate-500">
                   Perfil utilizado pelo motor para calcular a necessidade de cobertura.
@@ -272,14 +272,14 @@ export default function EvaluationResult() {
             <div className="flex flex-wrap gap-3">
               <button
                 onClick={() => navigate('/triggers/new')}
-                className="flex items-center gap-2 rounded-lg border border-violet-200 bg-violet-50 px-4 py-2.5 text-sm font-medium text-violet-700 hover:bg-violet-100 transition-colors"
+                className="flex items-center gap-2 rounded-lg border border-brand-200 bg-brand-50 px-4 py-2.5 text-sm font-medium text-brand-700 hover:bg-brand-100 transition-colors"
               >
                 <Zap className="h-4 w-4" />
                 Registrar Gatilho de Vida
               </button>
               <button
                 onClick={() => navigate('/evaluations/new')}
-                className="flex items-center gap-2 rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2.5 text-sm font-medium text-indigo-700 hover:bg-indigo-100 transition-colors"
+                className="flex items-center gap-2 rounded-lg border border-brand-200 bg-brand-50 px-4 py-2.5 text-sm font-medium text-brand-700 hover:bg-brand-100 transition-colors"
               >
                 Nova Avaliação
               </button>
@@ -291,14 +291,14 @@ export default function EvaluationResult() {
         {activeTab === 'insights' && (
           <div className="space-y-5">
             {insightCount > 0 ? (
-              <div className="rounded-xl border border-indigo-200 bg-gradient-to-b from-indigo-50 to-white p-5 shadow-xs">
+              <div className="rounded-2xl border border-brand-200 bg-gradient-to-b from-brand-50 to-white p-5 shadow-card">
                 <div className="mb-5 flex items-start gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-100">
-                    <Lightbulb className="h-5 w-5 text-indigo-600" />
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-100">
+                    <Lightbulb className="h-5 w-5 text-brand-600" />
                   </div>
                   <div>
-                    <h2 className="text-sm font-semibold text-indigo-900">Insights para o Corretor</h2>
-                    <p className="mt-0.5 text-xs text-indigo-600">
+                    <h2 className="text-sm font-semibold text-brand-900">Insights para o Corretor</h2>
+                    <p className="mt-0.5 text-xs text-brand-600">
                       Sugestões de abordagem geradas pelo motor com base neste resultado específico.
                       Personalizadas para o perfil, gap e contexto do cliente.
                     </p>
@@ -311,7 +311,7 @@ export default function EvaluationResult() {
                 </div>
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white py-16">
+              <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white py-16">
                 <Lightbulb className="h-8 w-8 text-slate-300" />
                 <p className="text-sm font-semibold text-slate-500">Nenhum insight disponível</p>
                 <p className="text-xs text-slate-400">Esta avaliação não gerou insights de abordagem.</p>
@@ -326,7 +326,7 @@ export default function EvaluationResult() {
 
             {/* Justifications */}
             {result.justificationsRendered?.length > 0 && (
-              <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
+              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
                 <h2 className="mb-1 text-sm font-semibold text-slate-900">Justificativas do Cálculo</h2>
                 <p className="mb-4 text-xs text-slate-500">
                   Regras aplicadas pelo motor que influenciaram este resultado.
@@ -334,7 +334,7 @@ export default function EvaluationResult() {
                 <ul className="space-y-2">
                   {result.justificationsRendered.map((text, i) => (
                     <li key={i} className="flex items-start gap-2.5 rounded-lg border border-slate-100 bg-slate-50 px-3 py-2.5">
-                      <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-indigo-500" />
+                      <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-brand-500" />
                       <span className="text-sm text-slate-700">{text}</span>
                     </li>
                   ))}
@@ -344,7 +344,7 @@ export default function EvaluationResult() {
 
             {/* Audit metadata */}
             {result.audit && (
-              <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
+              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
                 <div className="mb-4 flex items-start justify-between gap-3">
                   <div>
                     <h2 className="text-sm font-semibold text-slate-900">Metadados de Auditoria</h2>
@@ -357,7 +357,7 @@ export default function EvaluationResult() {
                       onClick={() => navigate('/audit')}
                       className="flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors"
                     >
-                      <ShieldCheck className="h-3.5 w-3.5 text-indigo-500" />
+                      <ShieldCheck className="h-3.5 w-3.5 text-brand-500" />
                       Verificar Integridade
                     </button>
                   )}
@@ -443,7 +443,7 @@ function TabButton({
       {badge !== undefined && (
         <span className={`
           flex h-4 min-w-[1rem] items-center justify-center rounded-full px-1 text-[10px] font-bold
-          ${isActive ? 'bg-indigo-600 text-white' : 'bg-slate-300 text-slate-600'}
+          ${isActive ? 'bg-brand-600 text-white' : 'bg-slate-300 text-slate-600'}
         `}>
           {badge}
         </span>
@@ -492,8 +492,8 @@ const INSIGHT_META: Record<InsightCategory, {
   PROXIMO_PASSO: {
     label: 'Próximo Passo',
     icon: ArrowRight,
-    iconBg: 'bg-indigo-50', iconColor: 'text-indigo-600',
-    borderColor: 'border-indigo-100', badgeBg: 'bg-indigo-50', badgeText: 'text-indigo-700',
+    iconBg: 'bg-brand-50', iconColor: 'text-brand-600',
+    borderColor: 'border-brand-100', badgeBg: 'bg-brand-50', badgeText: 'text-brand-700',
   },
 }
 

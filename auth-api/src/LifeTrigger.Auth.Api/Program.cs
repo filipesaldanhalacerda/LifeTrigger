@@ -20,6 +20,9 @@ var jwtSecret = builder.Configuration["JwtConfig:Secret"]
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
+        // Disable default claim type remapping so "role" stays as "role" (not ClaimTypes.Role URL).
+        // Required for RoleClaimType = "role" and policy RequireRole() to work correctly.
+        options.MapInboundClaims = false;
         options.RequireHttpsMetadata = !builder.Environment.IsDevelopment();
         options.TokenValidationParameters = new TokenValidationParameters
         {
@@ -28,15 +31,20 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuer           = false,
             ValidateAudience         = false,
             ClockSkew                = TimeSpan.FromMinutes(1),
+            RoleClaimType            = "role",
+            NameClaimType            = "sub",
         };
     });
 
 // ─── Authorization Policies ───────────────────────────────────────────────────
+// Cumulative hierarchy: each policy includes all roles above it.
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy("SuperAdmin",    p => p.RequireRole("SuperAdmin"));
-    options.AddPolicy("TenantAdmin",   p => p.RequireRole("SuperAdmin", "TenantAdmin"));
-    options.AddPolicy("Authenticated", p => p.RequireAuthenticatedUser());
+    options.AddPolicy("SuperAdmin",  p => p.RequireRole("SuperAdmin"));
+    options.AddPolicy("TenantOwner", p => p.RequireRole("SuperAdmin", "TenantOwner"));
+    options.AddPolicy("Manager",     p => p.RequireRole("SuperAdmin", "TenantOwner", "Manager"));
+    options.AddPolicy("Broker",      p => p.RequireRole("SuperAdmin", "TenantOwner", "Manager", "Broker"));
+    options.AddPolicy("Viewer",      p => p.RequireAuthenticatedUser());
 });
 
 // ─── Rate Limiting ────────────────────────────────────────────────────────────

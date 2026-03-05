@@ -63,7 +63,13 @@ public class AppDbContext : DbContext
                 .HasColumnName("TenantId")
                 .IsRequired(false);
 
+            // Identifica o corretor que criou a avaliação (filtragem por ownership)
+            entity.Property(e => e.CreatedByUserId)
+                .HasColumnName("CreatedByUserId")
+                .IsRequired(false);
+
             entity.HasIndex("TenantId").HasDatabaseName("IX_Evaluations_TenantId");
+            entity.HasIndex(e => e.CreatedByUserId).HasDatabaseName("IX_Evaluations_CreatedByUserId");
             entity.HasIndex(e => e.Timestamp).HasDatabaseName("IX_Evaluations_Timestamp");
         });
 

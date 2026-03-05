@@ -9,7 +9,7 @@ namespace LifeTrigger.Auth.Api.Controllers;
 
 [ApiController]
 [Route("api/v1/users")]
-[Authorize(Policy = "TenantAdmin")]
+[Authorize(Policy = "Manager")]
 public class UsersController : ControllerBase
 {
     private readonly IUserRepository _users;
@@ -27,8 +27,10 @@ public class UsersController : ControllerBase
         [FromBody] CreateUserRequest request,
         CancellationToken cancellationToken)
     {
-        // TenantAdmin can only create users in their own tenant
-        if (!IsSuperAdmin())
+        var callerRole = GetCurrentRole();
+
+        // Non-SuperAdmin can only create users in their own tenant
+        if (callerRole != UserRole.SuperAdmin)
         {
             var myTenantId = GetCurrentTenantId();
             if (request.TenantId != myTenantId)
@@ -39,11 +41,11 @@ public class UsersController : ControllerBase
         if (existing is not null)
             return Conflict(new { code = "EMAIL_TAKEN", message = "E-mail já cadastrado." });
 
-        if (!Enum.TryParse<UserRole>(request.Role, ignoreCase: true, out var role))
+        if (!Enum.TryParse<UserRole>(request.Role, ignoreCase: true, out var targetRole))
             return BadRequest(new { code = "INVALID_ROLE", message = $"Role '{request.Role}' inválida." });
 
-        // TenantAdmin cannot create SuperAdmin
-        if (!IsSuperAdmin() && role == UserRole.SuperAdmin)
+        // Enforce role ceiling: callers cannot create users with equal or higher privilege
+        if (!CanAssignRole(callerRole, targetRole))
             return Forbid();
 
         var user = new User
@@ -51,7 +53,7 @@ public class UsersController : ControllerBase
             Id           = Guid.NewGuid(),
             Email        = request.Email,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
-            Role         = role,
+            Role         = targetRole,
             TenantId     = request.TenantId,
             IsActive     = true,
         };
@@ -65,7 +67,7 @@ public class UsersController : ControllerBase
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
         IReadOnlyList<User> users;
-        if (IsSuperAdmin())
+        if (GetCurrentRole() == UserRole.SuperAdmin)
             users = await _users.GetAllAsync(cancellationToken);
         else
         {
@@ -101,13 +103,13 @@ public class UsersController : ControllerBase
 
         if (request.Role is not null)
         {
-            if (!Enum.TryParse<UserRole>(request.Role, ignoreCase: true, out var role))
+            if (!Enum.TryParse<UserRole>(request.Role, ignoreCase: true, out var targetRole))
                 return BadRequest(new { code = "INVALID_ROLE", message = $"Role '{request.Role}' inválida." });
 
-            if (!IsSuperAdmin() && role == UserRole.SuperAdmin)
+            if (!CanAssignRole(GetCurrentRole(), targetRole))
                 return Forbid();
 
-            user.Role = role;
+            user.Role = targetRole;
         }
 
         await _users.UpdateAsync(user, cancellationToken);
@@ -151,8 +153,13 @@ public class UsersController : ControllerBase
         return NoContent();
     }
 
-    private bool IsSuperAdmin()
-        => User.FindFirstValue("role") == nameof(UserRole.SuperAdmin);
+    // ── Helpers ──────────────────────────────────────────────────────────────
+
+    private UserRole GetCurrentRole()
+    {
+        var val = User.FindFirstValue("role");
+        return Enum.TryParse<UserRole>(val, out var role) ? role : UserRole.Viewer;
+    }
 
     private Guid? GetCurrentTenantId()
     {
@@ -162,10 +169,31 @@ public class UsersController : ControllerBase
 
     private bool CanAccessUser(User user)
     {
-        if (IsSuperAdmin()) return true;
+        if (GetCurrentRole() == UserRole.SuperAdmin) return true;
         var myTenantId = GetCurrentTenantId();
         return user.TenantId.HasValue && user.TenantId == myTenantId;
     }
+
+    /// <summary>
+    /// A caller can only assign roles strictly below their own level.
+    /// SuperAdmin=5, TenantOwner=4, Manager=3, Broker=2, Viewer=1
+    /// </summary>
+    private static bool CanAssignRole(UserRole callerRole, UserRole targetRole)
+    {
+        int callerLevel = RoleLevel(callerRole);
+        int targetLevel = RoleLevel(targetRole);
+        return callerLevel > targetLevel;
+    }
+
+    private static int RoleLevel(UserRole role) => role switch
+    {
+        UserRole.SuperAdmin  => 5,
+        UserRole.TenantOwner => 4,
+        UserRole.Manager     => 3,
+        UserRole.Broker      => 2,
+        UserRole.Viewer      => 1,
+        _                    => 0,
+    };
 
     private static object MapUser(User u) => new
     {

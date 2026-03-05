@@ -42,11 +42,12 @@ public class AuthController : ControllerBase
         var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
         var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
-        // O Claim do TenantId é injetado no token
+        // Claims: tenantId, role (defaults to Broker for dev testing), and jti
         var claims = new[]
         {
             new Claim("tenantId", request.TenantId),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString("N"))
+            new Claim("role", string.IsNullOrWhiteSpace(request.Role) ? "Broker" : request.Role),
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString("N")),
         };
 
         var token = new JwtSecurityToken(
@@ -67,4 +68,7 @@ public class AuthController : ControllerBase
 public class MockTokenRequest
 {
     public string TenantId { get; set; } = string.Empty;
+
+    /// <summary>Role to embed in the token. Defaults to "Broker" if empty.</summary>
+    public string? Role { get; set; }
 }

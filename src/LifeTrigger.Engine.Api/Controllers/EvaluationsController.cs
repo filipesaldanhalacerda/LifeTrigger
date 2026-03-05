@@ -64,6 +64,7 @@ public class EvaluationsController : ControllerBase
     /// <param name="request">Payload contendo os dados Pessoais, Financeiros e Familiares.</param>
     /// <returns>Resultado analítico detalhado do risco e ações a tomar.</returns>
     [HttpPost]
+    [Authorize(Policy = "Broker")]
     [TypeFilter(typeof(IdempotencyFilterAttribute))]
     [ProducesResponseType(typeof(LifeInsuranceAssessmentResult), 200)]
     [ProducesResponseType(typeof(object), 400)]
@@ -112,13 +113,17 @@ public class EvaluationsController : ControllerBase
                 .AsReadOnly()
         };
 
+        // Capture the authenticated user's ID for ownership tracking
+        var callerUserId = GetUserIdFromJwt();
+
         var record = new EvaluationRecord(
             Id: Guid.NewGuid(),
             Timestamp: DateTimeOffset.UtcNow,
             EngineVersion: _engineContext.EngineVersion,
             RuleSetVersion: _engineContext.RuleSetVersion,
             Request: request,
-            Result: renderedResult
+            Result: renderedResult,
+            CreatedByUserId: callerUserId
         );
 
         record = record with { AuditHash = _auditLogger.CalculateAuditHash(record) };
@@ -155,18 +160,25 @@ public class EvaluationsController : ControllerBase
         if (effectiveTenant is null)
             return BadRequest(new { Message = "tenantId é obrigatório para SuperAdmin." });
 
+        // Broker role: restrict list to their own evaluations only
+        var callerRole    = GetRoleFromJwt();
+        var ownershipFilter = callerRole == "Broker" ? GetUserIdFromJwt() : (Guid?)null;
+
         var evaluations = await _repository.GetByFilterAsync(
-            effectiveTenant.Value, startDate, endDate, limit, offset, cancellationToken);
+            effectiveTenant.Value, startDate, endDate, limit, offset,
+            createdByUserId: ownershipFilter, cancellationToken);
 
         var items = evaluations.Select(e => new
         {
-            id        = e.Id,
-            timestamp = e.Timestamp,
-            action    = e.Result.RecommendedAction.ToString(),
-            risk      = e.Result.RiskClassification.ToString(),
-            score     = e.Result.CoverageEfficiencyScore,
-            gapPct    = e.Result.ProtectionGapPercentage,
-            channel   = e.Request.OperationalData.OriginChannel,
+            id               = e.Id,
+            timestamp        = e.Timestamp,
+            action           = e.Result.RecommendedAction.ToString(),
+            risk             = e.Result.RiskClassification.ToString(),
+            score            = e.Result.CoverageEfficiencyScore,
+            gapPct           = e.Result.ProtectionGapPercentage,
+            channel          = e.Request.OperationalData.OriginChannel,
+            createdByUserId  = e.CreatedByUserId,
+            consentId        = e.Request.OperationalData.ConsentId,
         }).ToList();
 
         return Ok(new { total = items.Count, items });
@@ -225,6 +237,7 @@ public class EvaluationsController : ControllerBase
     /// <param name="id">O ID da avaliação a ser periciada.</param>
     /// <returns>PASS ou FAIL denotando integridade inquebrável.</returns>
     [HttpGet("/api/v1/admin/audit/evaluations/{id}/verify")]
+    [Authorize(Policy = "Manager")]
     [ProducesResponseType(typeof(object), 200)]
     [ProducesResponseType(404)]
     public async Task<IActionResult> VerifyEvaluationIntegrity(Guid id, CancellationToken cancellationToken)
@@ -260,6 +273,7 @@ public class EvaluationsController : ControllerBase
     /// <param name="tenantId">UUID do ambiente Demo a ser deletado.</param>
     /// <returns>Quantidade de registros apagados.</returns>
     [HttpDelete("/api/v1/admin/demo-environments/tenants/{tenantId}")]
+    [Authorize(Policy = "SuperAdmin")]
     [ProducesResponseType(typeof(object), 200)]
     public async Task<IActionResult> CleanDemoTenant(Guid tenantId, CancellationToken cancellationToken)
     {
@@ -294,6 +308,7 @@ public class EvaluationsController : ControllerBase
     /// <param name="offset">Deslocamento para paginação (padrão: 0).</param>
     /// <returns>Grupos Agregados de Venda (AUMENTAR/MANTER)</returns>
     [HttpGet("/api/v1/admin/reports/pilot")]
+    [Authorize(Policy = "Manager")]
     [ProducesResponseType(typeof(object), 200)]
     public async Task<IActionResult> GetPilotReport(
         [FromQuery] Guid tenantId,
@@ -309,7 +324,7 @@ public class EvaluationsController : ControllerBase
         if (offset < 0)
             return BadRequest(new { Message = "O parâmetro 'offset' deve ser maior ou igual a zero." });
 
-        var evaluations = await _repository.GetByFilterAsync(tenantId, startDate, endDate, limit, offset, cancellationToken);
+        var evaluations = await _repository.GetByFilterAsync(tenantId, startDate, endDate, limit, offset, cancellationToken: cancellationToken);
 
         var total = evaluations.Count();
         if (total == 0)
@@ -347,14 +362,20 @@ public class EvaluationsController : ControllerBase
         });
     }
 
-    /// <summary>
-    /// Extrai o tenantId do claim JWT. Retorna null se o token não contém esse claim (ex: SuperAdmin).
-    /// </summary>
     private Guid? GetTenantIdFromJwt()
     {
         var value = User.FindFirstValue("tenantId");
         return Guid.TryParse(value, out var id) ? id : null;
     }
+
+    private Guid? GetUserIdFromJwt()
+    {
+        var value = User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier)
+                 ?? User.FindFirstValue("sub");
+        return Guid.TryParse(value, out var id) ? id : null;
+    }
+
+    private string? GetRoleFromJwt() => User.FindFirstValue("role");
 
     private static int RecalculateEfficiencyScore(decimal currentCoverage, decimal recommendedCoverage)
     {

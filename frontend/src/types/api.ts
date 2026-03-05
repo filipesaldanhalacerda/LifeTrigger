@@ -1,3 +1,22 @@
+export type UserRole = 'SuperAdmin' | 'TenantOwner' | 'Manager' | 'Broker' | 'Viewer'
+
+export interface UserRecord {
+  id: string
+  email: string
+  role: UserRole
+  tenantId: string | null
+  isActive: boolean
+  createdAt: string
+  lastLoginAt: string | null
+}
+
+export interface CreateUserPayload {
+  email: string
+  password: string
+  role: UserRole
+  tenantId: string | null
+}
+
 export type MaritalStatus = 'SOLTEIRO' | 'CASADO' | 'DIVORCIADO' | 'VIUVO'
 export type ProfessionRiskLevel = 'BAIXO' | 'MEDIO' | 'ALTO' | 'MUITO_ALTO'
 export type PolicyType = 'TEMPORARIO' | 'VIDA_INTEIRA' | 'ACIDENTES_PESSOAIS' | 'DESCONHECIDO'
@@ -161,6 +180,8 @@ export interface EvaluationSummary {
   score: number
   gapPct: number
   channel: string
+  createdByUserId?: string
+  consentId?: string
 }
 
 export interface EvaluationListResponse {

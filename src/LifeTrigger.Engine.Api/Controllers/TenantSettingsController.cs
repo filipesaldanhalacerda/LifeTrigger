@@ -12,7 +12,6 @@ namespace LifeTrigger.Engine.Api.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/v1/admin/tenants/{tenantId}/settings")]
-[Authorize]
 public class TenantSettingsController : ControllerBase
 {
     private readonly ITenantSettingsRepository _repository;
@@ -28,6 +27,7 @@ public class TenantSettingsController : ControllerBase
     /// <param name="tenantId">UUID do Tenant.</param>
     /// <returns>Objeto de configurações.</returns>
     [HttpGet]
+    [Authorize(Policy = "Manager")]
     [ProducesResponseType(typeof(TenantSettings), 200)]
     public async Task<IActionResult> GetSettings(Guid tenantId)
     {
@@ -46,6 +46,7 @@ public class TenantSettingsController : ControllerBase
     /// <param name="tenantId">UUID do Tenant.</param>
     /// <param name="settings">Configurações com os multiplicadores alterados.</param>
     [HttpPut]
+    [Authorize(Policy = "TenantOwner")]
     [ProducesResponseType(typeof(TenantSettings), 200)]
     public async Task<IActionResult> UpdateSettings(Guid tenantId, [FromBody] TenantSettings settings)
     {

@@ -9,6 +9,8 @@ import type {
   AuditVerifyResult,
   EngineVersionInfo,
   Tenant,
+  UserRecord,
+  CreateUserPayload,
 } from '../types/api'
 
 // ── Config ───────────────────────────────────────────────────────
@@ -53,7 +55,7 @@ export function setActiveTenantId(id: string): void {
 export interface AuthUser {
   id: string
   email: string
-  role: 'SuperAdmin' | 'TenantAdmin' | 'Partner' | 'ReadOnly'
+  role: 'SuperAdmin' | 'TenantOwner' | 'Manager' | 'Broker' | 'Viewer'
   tenantId: string | null
   isActive: boolean
   lastLoginAt: string | null
@@ -193,6 +195,22 @@ export async function getTenant(id: string): Promise<Tenant> {
   return request<Tenant>(`/tenants/${id}`)
 }
 
+/** Cria um novo tenant (SuperAdmin). */
+export async function createTenant(name: string, slug: string): Promise<Tenant> {
+  return request<Tenant>('/tenants', {
+    method: 'POST',
+    body: JSON.stringify({ name, slug }),
+  })
+}
+
+/** Ativa ou desativa um tenant (SuperAdmin). */
+export async function updateTenantStatus(id: string, isActive: boolean): Promise<Tenant> {
+  return request<Tenant>(`/tenants/${id}/status`, {
+    method: 'PATCH',
+    body: JSON.stringify({ isActive }),
+  })
+}
+
 // ── Engine ───────────────────────────────────────────────────────
 export async function fetchEngineVersions(): Promise<EngineVersionInfo> {
   return request<EngineVersionInfo>('/engine/versions')
@@ -271,6 +289,39 @@ export async function putTenantSettings(settings: TenantSettings): Promise<Tenan
   return request<TenantSettings>(`/admin/tenants/${settings.tenantId}/settings`, {
     method: 'PUT',
     body: JSON.stringify(settings),
+  })
+}
+
+// ── Team / Users ─────────────────────────────────────────────────
+export async function getUsers(): Promise<UserRecord[]> {
+  return request<UserRecord[]>('/users')
+}
+
+export async function createUser(payload: CreateUserPayload): Promise<UserRecord> {
+  return request<UserRecord>('/users', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+}
+
+export async function updateUserRole(id: string, role: string): Promise<UserRecord> {
+  return request<UserRecord>(`/users/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ role }),
+  })
+}
+
+export async function updateUserStatus(id: string, isActive: boolean): Promise<UserRecord> {
+  return request<UserRecord>(`/users/${id}/status`, {
+    method: 'PATCH',
+    body: JSON.stringify({ isActive }),
+  })
+}
+
+export async function resetUserPassword(id: string, newPassword: string): Promise<void> {
+  return request<void>(`/users/${id}/reset-password`, {
+    method: 'POST',
+    body: JSON.stringify({ newPassword }),
   })
 }
 

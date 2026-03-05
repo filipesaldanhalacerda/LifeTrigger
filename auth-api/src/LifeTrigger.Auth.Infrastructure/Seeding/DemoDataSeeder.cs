@@ -12,70 +12,95 @@ public static class DemoDataSeeder
     private static readonly Guid AlphaTenantId = Guid.Parse("A1A1A1A1-A1A1-A1A1-A1A1-A1A1A1A1A1A1");
     private static readonly Guid BetaTenantId  = Guid.Parse("B2B2B2B2-B2B2-B2B2-B2B2-B2B2B2B2B2B2");
 
+    // Canonical demo users — checked individually by email for idempotency
+    private static readonly (string Email, string Password, UserRole Role, Guid? TenantId)[] DemoUsers =
+    [
+        ("superadmin@lifetrigger.io", "Super@123!", UserRole.SuperAdmin,  null),
+        ("owner@alpha.demo",          "Alpha@123!", UserRole.TenantOwner, AlphaTenantId),
+        ("manager@alpha.demo",        "Alpha@123!", UserRole.Manager,     AlphaTenantId),
+        ("broker@alpha.demo",         "Alpha@123!", UserRole.Broker,      AlphaTenantId),
+        ("viewer@alpha.demo",         "Alpha@123!", UserRole.Viewer,      AlphaTenantId),
+        ("owner@beta.demo",           "Beta@123!",  UserRole.TenantOwner, BetaTenantId),
+        ("manager@beta.demo",         "Beta@123!",  UserRole.Manager,     BetaTenantId),
+        ("broker@beta.demo",          "Beta@123!",  UserRole.Broker,      BetaTenantId),
+    ];
+
+    // Emails that belong exclusively to demo tenants — any others are stale and must be removed
+    private static readonly HashSet<string> CanonicalEmails =
+        new(DemoUsers.Select(u => u.Email), StringComparer.OrdinalIgnoreCase);
+
     public static async Task SeedAsync(AuthDbContext context, ILogger logger)
     {
-        // Idempotency guard — skip if any user already exists
-        if (await context.Users.AnyAsync())
-        {
-            logger.LogInformation("Auth demo data already seeded, skipping.");
-            return;
-        }
+        // ─── Tenants — upsert by ID ──────────────────────────────────────────────
+        var existingTenantIds = await context.Tenants
+            .Select(t => t.Id)
+            .ToListAsync();
 
-        // ─── Tenants ────────────────────────────────────────────────────────────
-        var alpha = new Tenant { Id = AlphaTenantId, Name = "DEMO_CORRETORA_ALPHA", Slug = "demo-alpha" };
-        var beta  = new Tenant { Id = BetaTenantId,  Name = "DEMO_EMPRESA_BETA",    Slug = "demo-beta"  };
-        context.Tenants.AddRange(alpha, beta);
+        if (!existingTenantIds.Contains(AlphaTenantId))
+            context.Tenants.Add(new Tenant { Id = AlphaTenantId, Name = "DEMO_CORRETORA_ALPHA", Slug = "demo-alpha" });
 
-        // ─── SuperAdmin ─────────────────────────────────────────────────────────
-        var superAdmin = new User
-        {
-            Id           = Guid.NewGuid(),
-            Email        = "superadmin@lifetrigger.io",
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword("Super@123!"),
-            Role         = UserRole.SuperAdmin,
-            TenantId     = null,
-        };
+        if (!existingTenantIds.Contains(BetaTenantId))
+            context.Tenants.Add(new Tenant { Id = BetaTenantId, Name = "DEMO_EMPRESA_BETA", Slug = "demo-beta" });
 
-        // ─── Alpha users ────────────────────────────────────────────────────────
-        var alphaAdmin = new User
-        {
-            Id           = Guid.NewGuid(),
-            Email        = "admin@alpha.demo",
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword("Alpha@123!"),
-            Role         = UserRole.TenantAdmin,
-            TenantId     = AlphaTenantId,
-        };
-        var alphaPartner = new User
-        {
-            Id           = Guid.NewGuid(),
-            Email        = "partner@alpha.demo",
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword("Alpha@123!"),
-            Role         = UserRole.Partner,
-            TenantId     = AlphaTenantId,
-        };
-
-        // ─── Beta users ─────────────────────────────────────────────────────────
-        var betaAdmin = new User
-        {
-            Id           = Guid.NewGuid(),
-            Email        = "admin@beta.demo",
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword("Beta@123!"),
-            Role         = UserRole.TenantAdmin,
-            TenantId     = BetaTenantId,
-        };
-        var betaPartner = new User
-        {
-            Id           = Guid.NewGuid(),
-            Email        = "partner@beta.demo",
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword("Beta@123!"),
-            Role         = UserRole.Partner,
-            TenantId     = BetaTenantId,
-        };
-
-        context.Users.AddRange(superAdmin, alphaAdmin, alphaPartner, betaAdmin, betaPartner);
         await context.SaveChangesAsync();
 
-        logger.LogInformation(
-            "Auth demo data seeded: 2 tenants, 5 users (1 SuperAdmin, 2 TenantAdmin, 2 Partner).");
+        // ─── Remove stale demo users — scoped to demo tenant IDs only ────────────
+        // Any user belonging to Alpha/Beta demo that is NOT in the canonical list
+        // (e.g. admin@alpha.demo, partner@alpha.demo) is a leftover from a previous
+        // role naming scheme and must be deleted.
+        var stale = await context.Users
+            .Where(u => (u.TenantId == AlphaTenantId || u.TenantId == BetaTenantId)
+                        && !CanonicalEmails.Contains(u.Email))
+            .ToListAsync();
+
+        // Also remove a stale superadmin with an unexpected email (safety net)
+        var staleSuperAdmin = await context.Users
+            .Where(u => u.TenantId == null
+                        && u.Role == UserRole.SuperAdmin
+                        && !CanonicalEmails.Contains(u.Email))
+            .ToListAsync();
+
+        var toDelete = stale.Concat(staleSuperAdmin).ToList();
+        if (toDelete.Count > 0)
+        {
+            context.Users.RemoveRange(toDelete);
+            await context.SaveChangesAsync();
+            logger.LogInformation(
+                "Auth demo cleanup: {Count} stale user(s) removed ({Emails}).",
+                toDelete.Count,
+                string.Join(", ", toDelete.Select(u => u.Email)));
+        }
+
+        // ─── Create missing canonical users ──────────────────────────────────────
+        var existingEmails = await context.Users
+            .Select(u => u.Email)
+            .ToListAsync();
+
+        int created = 0;
+        foreach (var (email, password, role, tenantId) in DemoUsers)
+        {
+            if (existingEmails.Contains(email))
+                continue;
+
+            context.Users.Add(new User
+            {
+                Id           = Guid.NewGuid(),
+                Email        = email,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
+                Role         = role,
+                TenantId     = tenantId,
+            });
+            created++;
+        }
+
+        if (created > 0)
+        {
+            await context.SaveChangesAsync();
+            logger.LogInformation("Auth demo data seeded: {Count} new user(s) created.", created);
+        }
+        else
+        {
+            logger.LogInformation("Auth demo data already up to date, no new users created.");
+        }
     }
 }

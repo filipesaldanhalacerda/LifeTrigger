@@ -11,6 +11,14 @@ import NewTrigger from './pages/NewTrigger'
 import TenantSettings from './pages/TenantSettings'
 import AuditVerify from './pages/AuditVerify'
 import EngineInfo from './pages/EngineInfo'
+import TeamManagement from './pages/TeamManagement'
+import UserProfile from './pages/UserProfile'
+import Reports from './pages/Reports'
+import TenantManagement from './pages/TenantManagement'
+import PlatformOverview from './pages/PlatformOverview'
+import ClientHistory from './pages/ClientHistory'
+import Billing from './pages/Billing'
+import GlobalUsers from './pages/GlobalUsers'
 
 export default function App() {
   return (
@@ -23,30 +31,53 @@ export default function App() {
           {/* Protected — require authentication */}
           <Route element={<ProtectedRoute />}>
             <Route element={<AppLayout />}>
-              <Route index element={<Dashboard />} />
 
-              {/* Evaluations */}
-              <Route path="evaluations">
-                <Route index element={<EvaluationHistory />} />
-                {/* Partner+ can create new evaluations */}
-                <Route element={<ProtectedRoute minRole="Partner" />}>
-                  <Route path="new" element={<NewEvaluation />} />
+              {/* ── Tenant-required routes ──────────────────────────────────────
+                  SuperAdmin has no tenantId → redirected to /admin/tenants.
+                  All operational screens (evaluations, team, billing…) live here. */}
+              <Route element={<ProtectedRoute tenantRequired />}>
+                <Route index element={<Dashboard />} />
+
+                {/* Evaluations */}
+                <Route path="evaluations">
+                  <Route index element={<EvaluationHistory />} />
+                  <Route element={<ProtectedRoute minRole="Broker" />}>
+                    <Route path="new" element={<NewEvaluation />} />
+                  </Route>
+                  <Route path="result" element={<EvaluationResult />} />
+                  <Route path=":id" element={<EvaluationResult />} />
                 </Route>
-                <Route path="result" element={<EvaluationResult />} />
-                <Route path=":id" element={<EvaluationResult />} />
+
+                {/* Broker+ */}
+                <Route element={<ProtectedRoute minRole="Broker" />}>
+                  <Route path="triggers/new" element={<NewTrigger />} />
+                  <Route path="clients" element={<ClientHistory />} />
+                </Route>
+
+                {/* Manager+ */}
+                <Route element={<ProtectedRoute minRole="Manager" />}>
+                  <Route path="team" element={<TeamManagement />} />
+                  <Route path="reports" element={<Reports />} />
+                  <Route path="audit" element={<AuditVerify />} />
+                  <Route path="engine" element={<EngineInfo />} />
+                </Route>
+
+                {/* TenantOwner+ */}
+                <Route element={<ProtectedRoute minRole="TenantOwner" />}>
+                  <Route path="settings" element={<TenantSettings />} />
+                  <Route path="billing" element={<Billing />} />
+                </Route>
               </Route>
 
-              {/* Triggers — Partner+ */}
-              <Route element={<ProtectedRoute minRole="Partner" />}>
-                <Route path="triggers/new" element={<NewTrigger />} />
+              {/* ── SuperAdmin routes ────────────────────────────────────────── */}
+              <Route element={<ProtectedRoute minRole="SuperAdmin" />}>
+                <Route path="admin/tenants" element={<TenantManagement />} />
+                <Route path="admin/platform" element={<PlatformOverview />} />
+                <Route path="admin/users" element={<GlobalUsers />} />
               </Route>
 
-              {/* Admin section — TenantAdmin+ */}
-              <Route element={<ProtectedRoute minRole="TenantAdmin" />}>
-                <Route path="settings" element={<TenantSettings />} />
-                <Route path="audit" element={<AuditVerify />} />
-                <Route path="engine" element={<EngineInfo />} />
-              </Route>
+              {/* All authenticated users */}
+              <Route path="profile" element={<UserProfile />} />
 
               {/* Fallback */}
               <Route path="*" element={<Navigate to="/" replace />} />

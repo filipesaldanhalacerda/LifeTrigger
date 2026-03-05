@@ -49,10 +49,10 @@ const TRIGGER_TYPES = [
     label: 'Aquisição de Imóvel',
     desc: 'Compra, financiamento ou permuta',
     icon: Home,
-    color: 'text-indigo-600',
-    bg: 'bg-indigo-50',
-    border: 'border-indigo-300',
-    ring: 'ring-indigo-300',
+    color: 'text-brand-600',
+    bg: 'bg-brand-50',
+    border: 'border-brand-300',
+    ring: 'ring-brand-300',
     effect: 'Financiamentos são somados ao capital necessário — em caso de sinistro o imóvel precisa ser quitado.',
   },
   {
@@ -229,17 +229,17 @@ export default function NewTrigger() {
         subtitle="Registre um evento e receba novo diagnóstico de proteção"
       />
 
-      <div className="p-6">
+      <div className="p-6 animate-fadeIn">
         <div className="mx-auto max-w-2xl space-y-5">
 
           {/* ── Explainer banner ── */}
-          <div className="flex items-start gap-3 rounded-xl border border-indigo-100 bg-gradient-to-r from-indigo-50 to-white p-5">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-600 shadow-sm">
+          <div className="flex items-start gap-3 rounded-2xl border border-brand-100 bg-gradient-to-r from-brand-50 to-white p-5">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-600 shadow-sm">
               <Zap className="h-5 w-5 text-white" />
             </div>
             <div>
-              <p className="text-sm font-bold text-indigo-900">O que são Gatilhos de Vida?</p>
-              <p className="mt-1 text-xs leading-relaxed text-indigo-700">
+              <p className="text-sm font-bold text-brand-900">O que são Gatilhos de Vida?</p>
+              <p className="mt-1 text-xs leading-relaxed text-brand-700">
                 Grandes eventos mudam instantaneamente a necessidade de proteção de uma pessoa —
                 um casamento, um filho, a compra de um imóvel ou uma promoção criam novos riscos financeiros.
                 Ao registrar o evento aqui, o motor recalcula automaticamente o capital segurado ideal
@@ -251,7 +251,7 @@ export default function NewTrigger() {
           <form onSubmit={handleSubmit} className="space-y-5">
 
             {/* ── Trigger type grid ── */}
-            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-sm font-semibold text-slate-900">Tipo de Evento de Vida</h2>
                 <span className="text-xs text-slate-400">Selecione o gatilho</span>
@@ -296,7 +296,7 @@ export default function NewTrigger() {
             </div>
 
             {/* ── Event details ── */}
-            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-4">
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card space-y-4">
               <h2 className="text-sm font-semibold text-slate-900">Detalhes do Evento</h2>
               <div className="grid grid-cols-2 gap-4">
                 <Field
@@ -327,7 +327,7 @@ export default function NewTrigger() {
             </div>
 
             {/* ── Client context ── */}
-            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-5">
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card space-y-5">
               <div>
                 <h2 className="text-sm font-semibold text-slate-900">Dados Atuais do Cliente</h2>
                 <p className="mt-1 text-xs text-slate-500">
@@ -379,7 +379,7 @@ export default function NewTrigger() {
                   >
                     −
                   </button>
-                  <div className="flex h-10 w-20 items-center justify-center rounded-xl border-2 border-indigo-200 bg-indigo-50 text-xl font-bold text-indigo-700">
+                  <div className="flex h-10 w-20 items-center justify-center rounded-xl border-2 border-brand-200 bg-brand-50 text-xl font-bold tabular-nums text-brand-700">
                     {dependentsCount}
                   </div>
                   <button
@@ -451,13 +451,13 @@ export default function NewTrigger() {
                       onClick={() => setProfessionRisk(opt.value)}
                       className={`rounded-xl border p-3 text-left transition-all ${
                         professionRisk === opt.value
-                          ? 'border-indigo-400 bg-indigo-50 ring-1 ring-indigo-400'
+                          ? 'border-brand-400 bg-brand-50 ring-1 ring-brand-400'
                           : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                       }`}
                     >
                       <div className="flex items-center gap-1.5 mb-1">
                         <div className={`h-2 w-2 rounded-full ${opt.dot}`} />
-                        <p className={`text-xs font-semibold ${professionRisk === opt.value ? 'text-indigo-700' : 'text-slate-700'}`}>
+                        <p className={`text-xs font-semibold ${professionRisk === opt.value ? 'text-brand-700' : 'text-slate-700'}`}>
                           {opt.label}
                         </p>
                       </div>
@@ -497,7 +497,7 @@ export default function NewTrigger() {
                   type="checkbox"
                   checked={isSmoker}
                   onChange={(e) => setIsSmoker(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 rounded border-slate-300 text-indigo-600"
+                  className="mt-0.5 h-4 w-4 rounded border-slate-300 text-brand-600"
                 />
                 <div>
                   <p className={`text-sm font-semibold ${isSmoker ? 'text-amber-800' : 'text-slate-700'}`}>
@@ -511,7 +511,7 @@ export default function NewTrigger() {
             </div>
 
             {/* ── Consent ── */}
-            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
               <h2 className="mb-3 text-sm font-semibold text-slate-900">Consentimento LGPD</h2>
               <label className={`flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition-all ${
                 consent
@@ -524,7 +524,7 @@ export default function NewTrigger() {
                   type="checkbox"
                   checked={consent}
                   onChange={(e) => { setConsent(e.target.checked); clearError('consent') }}
-                  className="mt-0.5 h-4 w-4 rounded border-slate-300 text-indigo-600"
+                  className="mt-0.5 h-4 w-4 rounded border-slate-300 text-brand-600"
                 />
                 <div className="flex-1">
                   <p className={`text-sm font-semibold ${
@@ -551,7 +551,7 @@ export default function NewTrigger() {
               </div>
             )}
 
-            <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
+            <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-4 shadow-card">
               <div className="flex items-center gap-2.5">
                 <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${activeTrigger.bg}`}>
                   {(() => { const Icon = activeTrigger.icon; return <Icon className={`h-5 w-5 ${activeTrigger.color}`} /> })()}
@@ -564,7 +564,7 @@ export default function NewTrigger() {
               <button
                 type="submit"
                 disabled={loading}
-                className="flex items-center gap-2 rounded-xl bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                className="flex items-center gap-2 rounded-xl bg-brand-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-700 disabled:opacity-50 transition-colors"
               >
                 {loading && (
                   <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
@@ -594,8 +594,8 @@ function cls(hasError = false) {
   return `w-full rounded-lg border ${
     hasError
       ? 'border-red-400 focus:border-red-400 focus:ring-red-100'
-      : 'border-slate-200 focus:border-indigo-400 focus:ring-indigo-100'
-  } bg-white px-3 py-2.5 text-sm text-slate-900 shadow-xs placeholder:text-slate-400 focus:outline-none focus:ring-2 transition-colors`
+      : 'border-slate-200 focus:border-brand-400 focus:ring-brand-100'
+  } bg-white px-3 py-2.5 text-sm text-slate-900 shadow-card placeholder:text-slate-400 focus:outline-none focus:ring-2 transition-colors`
 }
 
 function Field({

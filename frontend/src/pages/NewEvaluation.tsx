@@ -202,37 +202,46 @@ export default function NewEvaluation() {
     <div>
       <TopBar title="Nova Avaliação" subtitle="Diagnóstico de necessidade de proteção de vida" />
 
-      <div className="p-6">
+      <div className="p-6 animate-fadeIn">
         <div className="mx-auto max-w-2xl space-y-5">
 
           {/* ── Stepper ── */}
-          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
             <div className="mb-4 flex items-center justify-between text-xs text-slate-500">
               <span className="font-medium">Progresso</span>
               <span>Passo {step + 1} de {STEPS.length}</span>
             </div>
             <div className="mb-5 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
               <div
-                className="h-1.5 rounded-full bg-indigo-600 transition-all duration-500"
+                className="h-1.5 rounded-full bg-brand-600 transition-all duration-500"
                 style={{ width: step === 0 ? '8%' : `${progress}%` }}
               />
             </div>
-            <div className="flex items-start justify-between">
+            <div className="relative flex items-start justify-between">
+              {/* Connecting line between step circles */}
+              <div className="absolute top-[18px] left-0 right-0 mx-auto h-0.5 bg-slate-200" style={{ left: '12.5%', right: '12.5%' }} />
+              <div
+                className="absolute top-[18px] h-0.5 bg-brand-600 transition-all duration-500"
+                style={{
+                  left: '12.5%',
+                  width: step === 0 ? '0%' : `${(step / (STEPS.length - 1)) * 75}%`,
+                }}
+              />
               {STEPS.map((s, i) => {
                 const Icon = s.icon
                 const done = i < step
                 const active = i === step
                 return (
-                  <div key={i} className="flex flex-col items-center gap-2 flex-1">
+                  <div key={i} className="relative z-10 flex flex-col items-center gap-2 flex-1">
                     <div className={`flex h-9 w-9 items-center justify-center rounded-full border-2 text-sm font-bold transition-all ${
-                      done   ? 'border-indigo-600 bg-indigo-600 text-white' :
-                      active ? 'border-indigo-600 bg-white text-indigo-600 shadow-sm' :
+                      done   ? 'border-brand-600 bg-brand-600 text-white' :
+                      active ? 'border-brand-600 bg-white text-brand-600 shadow-sm' :
                                'border-slate-200 bg-slate-50 text-slate-400'
                     }`}>
                       {done ? '✓' : <Icon className="h-4 w-4" />}
                     </div>
                     <span className={`text-center text-[11px] font-medium leading-tight ${
-                      active ? 'text-indigo-700' : done ? 'text-slate-600' : 'text-slate-400'
+                      active ? 'text-brand-700' : done ? 'text-slate-600' : 'text-slate-400'
                     }`}>
                       {s.label}
                     </span>
@@ -243,18 +252,18 @@ export default function NewEvaluation() {
           </div>
 
           {/* ── Step header ── */}
-          <div className="flex items-center gap-3 rounded-xl border border-indigo-100 bg-gradient-to-r from-indigo-50 to-white px-5 py-4">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-600 shadow-sm">
+          <div className="flex items-center gap-3 rounded-2xl border border-brand-100 bg-gradient-to-r from-brand-50 to-white px-5 py-4">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-600 shadow-sm">
               <StepIcon className="h-5 w-5 text-white" />
             </div>
             <div>
-              <p className="text-sm font-bold text-indigo-900">{STEPS[step].label}</p>
-              <p className="text-xs text-indigo-600">{STEPS[step].description}</p>
+              <p className="text-sm font-bold text-brand-900">{STEPS[step].label}</p>
+              <p className="text-xs text-brand-600">{STEPS[step].description}</p>
             </div>
           </div>
 
           {/* ── Form card ── */}
-          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs">
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-card">
 
             {/* ── Step 0: Personal ── */}
             {step === 0 && (
@@ -299,13 +308,13 @@ export default function NewEvaluation() {
                         onClick={() => setProfessionRisk(opt.value)}
                         className={`rounded-xl border p-3.5 text-left transition-all ${
                           professionRisk === opt.value
-                            ? 'border-indigo-400 bg-indigo-50 ring-1 ring-indigo-400'
+                            ? 'border-brand-400 bg-brand-50 ring-1 ring-brand-400'
                             : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                         }`}
                       >
                         <div className="flex items-center gap-2 mb-1">
                           <div className={`h-2 w-2 rounded-full ${opt.dot}`} />
-                          <p className={`text-xs font-semibold ${professionRisk === opt.value ? 'text-indigo-700' : 'text-slate-700'}`}>
+                          <p className={`text-xs font-semibold ${professionRisk === opt.value ? 'text-brand-700' : 'text-slate-700'}`}>
                             {opt.label}
                           </p>
                         </div>
@@ -322,7 +331,7 @@ export default function NewEvaluation() {
                     type="checkbox"
                     checked={isSmoker}
                     onChange={(e) => setIsSmoker(e.target.checked)}
-                    className="mt-0.5 h-4 w-4 rounded border-slate-300 text-indigo-600"
+                    className="mt-0.5 h-4 w-4 rounded border-slate-300 text-brand-600"
                   />
                   <div>
                     <p className={`text-sm font-semibold ${isSmoker ? 'text-amber-800' : 'text-slate-700'}`}>
@@ -442,7 +451,7 @@ export default function NewEvaluation() {
                       onClick={() => setDepCount(-1)}
                       className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-xl font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
                     >−</button>
-                    <div className="flex h-11 w-24 items-center justify-center rounded-xl border-2 border-indigo-200 bg-indigo-50 text-2xl font-bold text-indigo-700">
+                    <div className="flex h-11 w-24 items-center justify-center rounded-xl border-2 border-brand-200 bg-brand-50 text-2xl font-bold text-brand-700">
                       {dependentsCount}
                     </div>
                     <button
@@ -500,12 +509,12 @@ export default function NewEvaluation() {
                 <div className={`rounded-xl border p-4 ${
                   Number(dependentsCount) === 0
                     ? 'border-slate-200 bg-slate-50'
-                    : 'border-indigo-100 bg-indigo-50'
+                    : 'border-brand-100 bg-brand-50'
                 }`}>
-                  <p className={`mb-2 text-xs font-semibold ${Number(dependentsCount) === 0 ? 'text-slate-600' : 'text-indigo-800'}`}>
+                  <p className={`mb-2 text-xs font-semibold ${Number(dependentsCount) === 0 ? 'text-slate-600' : 'text-brand-800'}`}>
                     Como isso afeta o diagnóstico
                   </p>
-                  <ul className={`space-y-1.5 text-xs ${Number(dependentsCount) === 0 ? 'text-slate-500' : 'text-indigo-700'}`}>
+                  <ul className={`space-y-1.5 text-xs ${Number(dependentsCount) === 0 ? 'text-slate-500' : 'text-brand-700'}`}>
                     {Number(dependentsCount) === 0 ? (
                       <>
                         <li>• Motor usa multiplicador base para segurados sem dependentes.</li>
@@ -578,7 +587,7 @@ export default function NewEvaluation() {
                       type="checkbox"
                       checked={consent}
                       onChange={(e) => { setConsent(e.target.checked); clearError('consent') }}
-                      className="mt-0.5 h-4 w-4 rounded border-slate-300 text-indigo-600"
+                      className="mt-0.5 h-4 w-4 rounded border-slate-300 text-brand-600"
                     />
                     <div className="flex-1">
                       <p className={`text-sm font-semibold ${
@@ -603,7 +612,7 @@ export default function NewEvaluation() {
                       type="checkbox"
                       checked={hasUnconfirmed}
                       onChange={(e) => setHasUnconfirmed(e.target.checked)}
-                      className="mt-0.5 h-4 w-4 rounded border-slate-300 text-indigo-600"
+                      className="mt-0.5 h-4 w-4 rounded border-slate-300 text-brand-600"
                     />
                     <div>
                       <p className={`text-sm font-medium ${hasUnconfirmed ? 'text-amber-800' : 'text-slate-700'}`}>
@@ -642,7 +651,7 @@ export default function NewEvaluation() {
               {step < STEPS.length - 1 ? (
                 <button
                   onClick={handleNext}
-                  className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 transition-colors"
+                  className="flex items-center gap-1.5 rounded-xl bg-brand-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-700 transition-colors"
                 >
                   Próximo
                   <ChevronRight className="h-4 w-4" />
@@ -651,7 +660,7 @@ export default function NewEvaluation() {
                 <button
                   onClick={handleSubmit}
                   disabled={loading}
-                  className="flex items-center gap-2 rounded-xl bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                  className="flex items-center gap-2 rounded-xl bg-brand-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-700 disabled:opacity-50 transition-colors"
                 >
                   {loading && <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />}
                   {loading ? 'Calculando…' : 'Gerar Diagnóstico'}
@@ -679,7 +688,7 @@ function cls(hasError = false) {
   return `w-full rounded-lg border ${
     hasError
       ? 'border-red-400 focus:border-red-400 focus:ring-red-100'
-      : 'border-slate-200 focus:border-indigo-400 focus:ring-indigo-100'
+      : 'border-slate-200 focus:border-brand-400 focus:ring-brand-100'
   } bg-white px-3 py-2.5 text-sm text-slate-900 shadow-xs placeholder:text-slate-400 focus:outline-none focus:ring-2 transition-colors`
 }
 

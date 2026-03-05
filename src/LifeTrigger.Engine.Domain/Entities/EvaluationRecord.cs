@@ -10,5 +10,6 @@ public record EvaluationRecord(
     string RuleSetVersion,
     LifeInsuranceAssessmentRequest Request,
     LifeInsuranceAssessmentResult Result,
-    string? AuditHash = null
+    string? AuditHash = null,
+    Guid? CreatedByUserId = null
 );

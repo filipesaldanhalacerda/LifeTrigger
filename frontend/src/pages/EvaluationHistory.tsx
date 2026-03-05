@@ -2,14 +2,15 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Search, Filter, TrendingUp, TrendingDown, Minus, RotateCcw,
-  Loader2, AlertCircle, ChevronRight, RefreshCw, Users,
+  AlertCircle, ChevronRight, RefreshCw, Users,
   ShieldAlert, ShieldCheck, ShieldQuestion, Copy, Check,
 } from 'lucide-react'
 import { TopBar } from '../components/layout/TopBar'
 import { Badge } from '../components/ui/Badge'
 import { actionColors, actionLabel, riskColors, riskLabel, formatDate, riskScoreColor } from '../lib/utils'
-import { getEvaluations, getActiveTenantId } from '../lib/api'
-import type { EvaluationSummary, RecommendedAction } from '../types/api'
+import { getEvaluations, getUsers, getActiveTenantId } from '../lib/api'
+import { useAuth } from '../contexts/AuthContext'
+import type { EvaluationSummary, RecommendedAction, UserRecord } from '../types/api'
 
 const ACTION_ICONS: Record<RecommendedAction, React.ElementType> = {
   AUMENTAR: TrendingUp,
@@ -47,9 +48,9 @@ function SummaryCard({ label, value, icon: Icon, iconBg, iconColor, hint, active
     <button
       type="button"
       onClick={onClick}
-      className={`w-full rounded-xl border p-4 text-left shadow-xs transition-all ${
+      className={`w-full rounded-2xl border p-4 text-left shadow-card transition-all ${
         active
-          ? 'border-indigo-300 bg-indigo-50 ring-2 ring-indigo-100'
+          ? 'border-brand-300 bg-brand-50 ring-2 ring-brand-100'
           : onClick
             ? 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm cursor-pointer'
             : 'border-slate-200 bg-white cursor-default'
@@ -60,12 +61,12 @@ function SummaryCard({ label, value, icon: Icon, iconBg, iconColor, hint, active
           <Icon className={`h-4 w-4 ${iconColor}`} />
         </div>
         {active && (
-          <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-semibold text-indigo-600">
+          <span className="rounded-full bg-brand-100 px-2 py-0.5 text-[10px] font-semibold text-brand-600">
             Filtrado
           </span>
         )}
       </div>
-      <p className="text-xl font-bold text-slate-900">{value}</p>
+      <p className="text-xl font-bold tabular-nums text-slate-900">{value}</p>
       <p className="text-xs font-semibold text-slate-700">{label}</p>
       <p className="mt-0.5 text-[11px] text-slate-400">{hint}</p>
     </button>
@@ -75,13 +76,18 @@ function SummaryCard({ label, value, icon: Icon, iconBg, iconColor, hint, active
 // ── Main component ─────────────────────────────────────────────────
 export default function EvaluationHistory() {
   const navigate = useNavigate()
+  const { hasRole } = useAuth()
+  const isManagerPlus = hasRole('Manager')
+
   const [items, setItems]               = useState<EvaluationSummary[]>([])
   const [loading, setLoading]           = useState(true)
   const [error, setError]               = useState<string | null>(null)
   const [search, setSearch]             = useState('')
   const [filterAction, setFilterAction] = useState<string>('')
   const [filterRisk, setFilterRisk]     = useState<string>('')
+  const [filterUser, setFilterUser]     = useState<string>('')
   const [copiedId, setCopiedId]         = useState<string | null>(null)
+  const [users, setUsers]               = useState<UserRecord[]>([])
 
   function load() {
     setLoading(true)
@@ -93,6 +99,12 @@ export default function EvaluationHistory() {
   }
 
   useEffect(() => { load() }, [])
+
+  useEffect(() => {
+    if (isManagerPlus) {
+      getUsers().then(setUsers).catch(() => { /* best-effort */ })
+    }
+  }, [isManagerPlus])
 
   function copyId(e: React.MouseEvent, id: string) {
     e.stopPropagation()
@@ -106,6 +118,7 @@ export default function EvaluationHistory() {
     setSearch('')
     setFilterAction('')
     setFilterRisk('')
+    setFilterUser('')
   }
 
   const filtered = items.filter((ev) => {
@@ -113,6 +126,7 @@ export default function EvaluationHistory() {
     if (q && !ev.id.toLowerCase().includes(q) && !ev.channel.toLowerCase().includes(q)) return false
     if (filterAction && ev.action !== filterAction) return false
     if (filterRisk && ev.risk !== filterRisk) return false
+    if (filterUser && ev.createdByUserId !== filterUser) return false
     return true
   })
 
@@ -122,7 +136,14 @@ export default function EvaluationHistory() {
     adequado: items.filter((e) => e.risk === 'ADEQUADO').length,
   }
 
-  const hasActiveFilters = !!(search || filterAction || filterRisk)
+  const hasActiveFilters = !!(search || filterAction || filterRisk || filterUser)
+
+  // Helper: email curto do corretor por userId
+  function brokerLabel(userId?: string): string {
+    if (!userId) return '—'
+    const u = users.find((u) => u.id === userId)
+    return u ? u.email.split('@')[0] : userId.slice(0, 8) + '…'
+  }
 
   return (
     <div>
@@ -131,7 +152,7 @@ export default function EvaluationHistory() {
         subtitle={loading ? 'Carregando…' : `${filtered.length} de ${items.length} registros`}
       />
 
-      <div className="p-6 space-y-5">
+      <div className="p-6 space-y-5 animate-fadeIn">
 
         {/* Summary cards */}
         {!loading && !error && items.length > 0 && (
@@ -186,15 +207,15 @@ export default function EvaluationHistory() {
               placeholder="Buscar por ID ou canal…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm shadow-xs focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+              className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm shadow-card focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100"
             />
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-            <Filter className={`h-4 w-4 ${hasActiveFilters ? 'text-indigo-500' : 'text-slate-400'}`} />
+            <Filter className={`h-4 w-4 ${hasActiveFilters ? 'text-brand-500' : 'text-slate-400'}`} />
             <select
               value={filterAction}
               onChange={(e) => setFilterAction(e.target.value)}
-              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-xs focus:border-indigo-400 focus:outline-none"
+              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-card focus:border-brand-400 focus:outline-none"
             >
               <option value="">Todas as ações</option>
               <option value="AUMENTAR">Aumentar cobertura</option>
@@ -205,17 +226,29 @@ export default function EvaluationHistory() {
             <select
               value={filterRisk}
               onChange={(e) => setFilterRisk(e.target.value)}
-              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-xs focus:border-indigo-400 focus:outline-none"
+              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-card focus:border-brand-400 focus:outline-none"
             >
               <option value="">Todos os riscos</option>
               <option value="CRITICO">Risco Crítico</option>
               <option value="MODERADO">Risco Moderado</option>
               <option value="ADEQUADO">Risco Adequado</option>
             </select>
+            {isManagerPlus && users.length > 0 && (
+              <select
+                value={filterUser}
+                onChange={(e) => setFilterUser(e.target.value)}
+                className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-card focus:border-brand-400 focus:outline-none"
+              >
+                <option value="">Todos os corretores</option>
+                {users.filter((u) => u.role === 'Broker').map((u) => (
+                  <option key={u.id} value={u.id}>{u.email.split('@')[0]}</option>
+                ))}
+              </select>
+            )}
             {hasActiveFilters && (
               <button
                 onClick={clearFilters}
-                className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-500 shadow-xs hover:text-slate-700 hover:bg-slate-50 transition-colors"
+                className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-500 shadow-card hover:text-slate-700 hover:bg-slate-50 transition-colors"
               >
                 Limpar filtros
               </button>
@@ -224,24 +257,27 @@ export default function EvaluationHistory() {
           <button
             onClick={load}
             disabled={loading}
-            className="ml-auto flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600 shadow-xs hover:bg-slate-50 transition-colors disabled:opacity-50"
+            className="ml-auto flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600 shadow-card hover:bg-slate-50 transition-colors disabled:opacity-50"
           >
             <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
             Atualizar
           </button>
         </div>
 
-        {/* Loading */}
+        {/* Loading — skeleton rows */}
         {loading && (
-          <div className="flex items-center justify-center gap-3 py-20 text-slate-500">
-            <Loader2 className="h-6 w-6 animate-spin text-indigo-500" />
-            <span className="text-sm">Carregando histórico…</span>
+          <div className="space-y-2">
+            <div className="skeleton h-14 w-full rounded-xl" />
+            <div className="skeleton h-14 w-full rounded-xl" />
+            <div className="skeleton h-14 w-full rounded-xl" />
+            <div className="skeleton h-14 w-full rounded-xl" />
+            <div className="skeleton h-14 w-full rounded-xl" />
           </div>
         )}
 
         {/* Error */}
         {!loading && error && (
-          <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          <div className="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
             <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
             <div>
               <p className="font-semibold">Não foi possível carregar</p>
@@ -252,13 +288,13 @@ export default function EvaluationHistory() {
 
         {/* Table */}
         {!loading && !error && (
-          <div className="rounded-xl border border-slate-200 bg-white shadow-xs overflow-hidden">
+          <div className="rounded-2xl border border-slate-200 bg-white shadow-card overflow-hidden">
 
             {/* Table hint */}
             {filtered.length > 0 && (
               <div className="border-b border-slate-100 bg-slate-50 px-4 py-2">
                 <p className="text-[11px] text-slate-500">
-                  <span className="font-semibold text-slate-700">{filtered.length}</span>{' '}
+                  <span className="font-semibold tabular-nums text-slate-700">{filtered.length}</span>{' '}
                   avaliação{filtered.length !== 1 ? 'ões' : ''} — clique em uma linha para ver o resultado completo. Use os cards acima para filtrar por risco.
                 </p>
               </div>
@@ -288,6 +324,11 @@ export default function EvaluationHistory() {
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                     Canal
                   </th>
+                  {isManagerPlus && (
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      Corretor
+                    </th>
+                  )}
                   <th className="px-4 py-3 w-8" />
                 </tr>
               </thead>
@@ -371,6 +412,15 @@ export default function EvaluationHistory() {
                         </span>
                       </td>
 
+                      {/* Broker (Manager+ only) */}
+                      {isManagerPlus && (
+                        <td className="px-4 py-3">
+                          <span className="text-xs text-slate-500">
+                            {brokerLabel(ev.createdByUserId)}
+                          </span>
+                        </td>
+                      )}
+
                       {/* Arrow */}
                       <td className="px-4 py-3 text-right">
                         <ChevronRight className="h-4 w-4 text-slate-300 group-hover:text-slate-500 transition-colors" />
@@ -392,7 +442,7 @@ export default function EvaluationHistory() {
                     </p>
                     <button
                       onClick={() => navigate('/evaluations/new')}
-                      className="mt-4 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors"
+                      className="mt-4 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 transition-colors"
                     >
                       Nova Avaliação
                     </button>

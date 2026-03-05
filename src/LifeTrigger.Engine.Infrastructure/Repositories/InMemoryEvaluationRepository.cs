@@ -45,6 +45,7 @@ public class InMemoryEvaluationRepository : IEvaluationRepository
         DateTimeOffset? endDate = null,
         int limit = 500,
         int offset = 0,
+        Guid? createdByUserId = null,
         CancellationToken cancellationToken = default)
     {
         var result = _store.Values.Where(v => v.Request?.OperationalData?.TenantId == tenantId);
@@ -54,6 +55,9 @@ public class InMemoryEvaluationRepository : IEvaluationRepository
 
         if (endDate.HasValue)
             result = result.Where(v => v.Timestamp <= endDate.Value);
+
+        if (createdByUserId.HasValue)
+            result = result.Where(v => v.CreatedByUserId == createdByUserId.Value);
 
         result = result.OrderByDescending(v => v.Timestamp).Skip(offset).Take(limit);
 

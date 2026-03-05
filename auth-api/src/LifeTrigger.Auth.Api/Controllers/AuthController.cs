@@ -16,15 +16,18 @@ public class AuthController : ControllerBase
     private readonly IUserRepository _users;
     private readonly IRefreshTokenRepository _refreshTokens;
     private readonly ITokenService _tokenService;
+    private readonly ITenantRepository _tenants;
 
     public AuthController(
         IUserRepository users,
         IRefreshTokenRepository refreshTokens,
-        ITokenService tokenService)
+        ITokenService tokenService,
+        ITenantRepository tenants)
     {
         _users         = users;
         _refreshTokens = refreshTokens;
         _tokenService  = tokenService;
+        _tenants       = tenants;
     }
 
     // POST /api/v1/auth/login
@@ -37,6 +40,14 @@ public class AuthController : ControllerBase
         var user = await _users.GetByEmailAsync(request.Email, cancellationToken);
         if (user is null || !user.IsActive || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
             return Unauthorized(new { code = "INVALID_CREDENTIALS", message = "E-mail ou senha inválidos." });
+
+        // Check if the user's tenant is still active
+        if (user.TenantId.HasValue)
+        {
+            var tenant = await _tenants.GetByIdAsync(user.TenantId.Value, cancellationToken);
+            if (tenant is null || !tenant.IsActive)
+                return Unauthorized(new { code = "TENANT_INACTIVE", message = "Sua organização foi desativada. Entre em contato com o suporte LifeTrigger." });
+        }
 
         var accessToken = _tokenService.GenerateAccessToken(user);
         var (rawRefresh, refreshHash) = _tokenService.GenerateRefreshToken();
@@ -83,6 +94,14 @@ public class AuthController : ControllerBase
         var user = stored.User;
         if (!user.IsActive)
             return Unauthorized(new { code = "USER_INACTIVE", message = "Usuário inativo." });
+
+        // Check if the user's tenant is still active
+        if (user.TenantId.HasValue)
+        {
+            var tenant = await _tenants.GetByIdAsync(user.TenantId.Value, cancellationToken);
+            if (tenant is null || !tenant.IsActive)
+                return Unauthorized(new { code = "TENANT_INACTIVE", message = "Organização inativa." });
+        }
 
         var newAccessToken = _tokenService.GenerateAccessToken(user);
         var (newRawRefresh, newRefreshHash) = _tokenService.GenerateRefreshToken();
@@ -138,6 +157,14 @@ public class AuthController : ControllerBase
         var user = await _users.GetByIdAsync(userId, cancellationToken);
         if (user is null || !user.IsActive)
             return Unauthorized();
+
+        // If user's tenant was deactivated, invalidate the session
+        if (user.TenantId.HasValue)
+        {
+            var tenant = await _tenants.GetByIdAsync(user.TenantId.Value, cancellationToken);
+            if (tenant is null || !tenant.IsActive)
+                return Unauthorized();
+        }
 
         return Ok(MapUser(user));
     }

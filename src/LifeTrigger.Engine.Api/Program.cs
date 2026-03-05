@@ -94,15 +94,31 @@ builder.Services.AddAuthentication(x =>
 })
 .AddJwtBearer(x =>
 {
+    // Disable default claim type remapping so "role" stays as "role" (not ClaimTypes.Role URL).
+    // Required for RoleClaimType = "role" and policy RequireRole() to work correctly.
+    x.MapInboundClaims = false;
     x.RequireHttpsMetadata = false;
     x.SaveToken = true;
     x.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuerSigningKey = true,
         IssuerSigningKey = new SymmetricSecurityKey(key),
-        ValidateIssuer = false, // Simplified for Local Dev
-        ValidateAudience = false
+        ValidateIssuer = false,
+        ValidateAudience = false,
+        RoleClaimType = "role",
+        NameClaimType = "sub",
     };
+});
+
+// ─── Authorization Policies ───────────────────────────────────────────────────
+// Cumulative hierarchy: each policy includes all roles above it.
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("SuperAdmin",  p => p.RequireRole("SuperAdmin"));
+    options.AddPolicy("TenantOwner", p => p.RequireRole("SuperAdmin", "TenantOwner"));
+    options.AddPolicy("Manager",     p => p.RequireRole("SuperAdmin", "TenantOwner", "Manager"));
+    options.AddPolicy("Broker",      p => p.RequireRole("SuperAdmin", "TenantOwner", "Manager", "Broker"));
+    options.AddPolicy("Viewer",      p => p.RequireAuthenticatedUser());
 });
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
