@@ -238,19 +238,19 @@ export default function Login() {
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {[
-                  { role: 'Admin',        email: 'superadmin@lifetrigger.io', password: 'Super@123!',  color: 'bg-red-500' },
-                  { role: 'Proprietario', email: 'owner@alpha.demo',          password: 'Alpha@123!',  color: 'bg-purple-500' },
-                  { role: 'Gerente',      email: 'manager@alpha.demo',        password: 'Alpha@123!',  color: 'bg-blue-500' },
-                  { role: 'Corretor',     email: 'broker@alpha.demo',         password: 'Alpha@123!',  color: 'bg-emerald-500' },
-                  { role: 'Observador',   email: 'viewer@alpha.demo',         password: 'Alpha@123!',  color: 'bg-slate-500' },
-                ].map(({ role, email: demoEmail, password: demoPw, color }) => (
+                  { role: 'Admin',        email: 'superadmin@lifetrigger.io', password: 'Super@123!' },
+                  { role: 'Proprietario', email: 'owner@alpha.demo',          password: 'Alpha@123!' },
+                  { role: 'Gerente',      email: 'manager@alpha.demo',        password: 'Alpha@123!' },
+                  { role: 'Corretor',     email: 'broker@alpha.demo',         password: 'Alpha@123!' },
+                  { role: 'Observador',   email: 'viewer@alpha.demo',         password: 'Alpha@123!' },
+                ].map(({ role, email: demoEmail, password: demoPw }) => (
                   <button
                     key={demoEmail}
                     type="button"
                     onClick={() => { setEmail(demoEmail); setPassword(demoPw) }}
-                    className={`rounded-full px-2.5 py-1 text-[10px] font-bold text-white ${color} hover:opacity-80 transition-opacity`}
+                    className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-700 hover:border-brand-400 hover:bg-brand-50 hover:text-brand-700 transition-all"
                   >
-                    {role}
+                    Entrar como {role}
                   </button>
                 ))}
               </div>
