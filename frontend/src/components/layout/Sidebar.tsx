@@ -16,6 +16,7 @@ import {
   Globe,
   PanelLeftClose,
   PanelLeftOpen,
+  BookOpen,
 } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { useAuth } from '../../contexts/AuthContext'
@@ -42,6 +43,7 @@ const mainItems: NavItemDef[] = [
   { to: '/triggers/new',  label: 'Gatilhos de Vida', icon: Zap,             minRole: 'Broker', tenantOnly: true },
   { to: '/evaluations',   label: 'Histórico',        icon: History,         end: true,    tenantOnly: true },
   { to: '/clients',       label: 'Meus Clientes',    icon: UserCheck,       minRole: 'Broker', tenantOnly: true },
+  { to: '/guide',          label: 'Guia do Sistema',   icon: BookOpen },
 ]
 
 const adminItems: NavItemDef[] = [

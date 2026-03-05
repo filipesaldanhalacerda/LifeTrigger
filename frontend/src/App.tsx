@@ -19,6 +19,7 @@ import PlatformOverview from './pages/PlatformOverview'
 import ClientHistory from './pages/ClientHistory'
 import Billing from './pages/Billing'
 import GlobalUsers from './pages/GlobalUsers'
+import SystemGuide from './pages/SystemGuide'
 
 export default function App() {
   return (
@@ -77,6 +78,7 @@ export default function App() {
               </Route>
 
               {/* All authenticated users */}
+              <Route path="guide" element={<SystemGuide />} />
               <Route path="profile" element={<UserProfile />} />
 
               {/* Fallback */}
