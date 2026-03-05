@@ -5,6 +5,7 @@ import {
   Lightbulb, DollarSign, ClipboardCheck, Activity, Eye,
   UserCheck, Settings, CreditCard, Building2, Globe,
   Lock, Hash, Layers, GitBranch, ShieldCheck, Database,
+  Phone, Filter, Send, CalendarClock, Rocket,
 } from 'lucide-react'
 import { TopBar } from '../components/layout/TopBar'
 
@@ -773,6 +774,152 @@ export default function SystemGuide() {
                   de score e a barra de gap — dados concretos vendem mais que argumentos abstratos.
                 </p>
               </div>
+            </div>
+          </div>
+        </Accordion>
+
+        {/* ── Estrategias de venda e recontato ── */}
+        <Accordion id="sales" title="Estrategias de venda, recontato e captacao de leads" icon={Rocket} openId={openId} onToggle={toggle}>
+          <div className="space-y-5">
+            <p className="text-sm text-slate-600 leading-relaxed">
+              O LifeTrigger nao e apenas um motor de avaliacao — e uma <strong>plataforma de inteligencia comercial</strong> que
+              ajuda o corretor a vender mais, no momento certo, com os argumentos certos.
+            </p>
+
+            {/* 1. Gatilhos para retorno de contato */}
+            <div>
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-brand-600">1. Gatilhos para Retornar Contato</p>
+              <div className="space-y-3">
+                <div className="flex gap-3 rounded-xl border border-brand-100 bg-brand-50 p-4">
+                  <Phone className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
+                  <div>
+                    <p className="text-sm font-semibold text-slate-800">Eventos de vida como gatilho de recontato</p>
+                    <p className="mt-1 text-xs text-slate-500 leading-relaxed">
+                      O sistema permite registrar <strong>7 tipos de gatilhos de vida</strong> (casamento, novo filho, imovel,
+                      aumento de salario, divorcio, aposentadoria e eventos personalizados). Cada gatilho gera automaticamente
+                      uma nova avaliacao com o diagnostico atualizado — criando um <strong>motivo concreto e natural para retomar
+                      o contato</strong> com o cliente. O corretor nao precisa inventar desculpas para ligar: o evento de vida
+                      e o novo diagnostico sao a razao da abordagem.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-3 rounded-xl border border-brand-100 bg-brand-50 p-4">
+                  <CalendarClock className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
+                  <div>
+                    <p className="text-sm font-semibold text-slate-800">Revisao anual automatica como oportunidade</p>
+                    <p className="mt-1 text-xs text-slate-500 leading-relaxed">
+                      O motor identifica avaliacoes com mais de 12 meses sem revisao e aplica automaticamente a acao <strong>REVISAR</strong>,
+                      gerando um insight de proximo passo que orienta o corretor a agendar revisao anual. O insight PROXIMO_PASSO
+                      para clientes com acao MANTER sugere explicitamente: registrar lembrete de revisao em 12 meses, perguntar
+                      sobre mudancas de vida esperadas e pedir indicacoes.
+                    </p>
+                  </div>
+                </div>
+                <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+                  <div className="flex gap-2">
+                    <Rocket className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+                    <div>
+                      <p className="text-xs font-semibold text-amber-800">Em breve no roadmap</p>
+                      <p className="mt-1 text-xs text-amber-700 leading-relaxed">
+                        Notificacoes automaticas por email/push quando uma avaliacao completar 12 meses sem revisao,
+                        lembretes programados para datas de gatilhos futuros (ex: aniversario do cliente, vencimento de apolice),
+                        e alerta proativo quando o score da carteira cair abaixo de um limite configuravel.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 2. Disparo de questionario */}
+            <div>
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-brand-600">2. Questionario de Atualizacao para o Cliente</p>
+              <div className="space-y-3">
+                <div className="flex gap-3 rounded-xl border border-slate-200 bg-white p-4">
+                  <ClipboardCheck className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
+                  <div>
+                    <p className="text-sm font-semibold text-slate-800">Formulario completo de avaliacao</p>
+                    <p className="mt-1 text-xs text-slate-500 leading-relaxed">
+                      O sistema oferece um <strong>formulario guiado em 4 etapas</strong> (Pessoal, Financeiro, Familia, Operacional)
+                      com validacao em tempo real, formatacao automatica de valores e indicador de progresso. O corretor pode
+                      preencher junto com o cliente em atendimento presencial ou por telefone, coletando os dados
+                      necessarios para gerar o diagnostico completo em segundos.
+                    </p>
+                  </div>
+                </div>
+                <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+                  <div className="flex gap-2">
+                    <Send className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+                    <div>
+                      <p className="text-xs font-semibold text-amber-800">Em breve no roadmap</p>
+                      <p className="mt-1 text-xs text-amber-700 leading-relaxed">
+                        Link compartilhavel por WhatsApp/email para que o <strong>proprio cliente preencha</strong> o questionario
+                        de atualizacao de dados, sem precisar do corretor presente. O formulario publico sera vinculado
+                        ao consentId do cliente, nao exigira login, e ao ser preenchido disparara automaticamente uma nova
+                        avaliacao — gerando uma notificacao para o corretor com o diagnostico atualizado pronto para acao.
+                        Isso transforma a atualizacao de dados em uma <strong>maquina de oportunidades de venda recorrente</strong>.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 3. Filtrar leads e insights para vender */}
+            <div>
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-brand-600">3. Filtragem de Leads e Insights de Venda</p>
+              <div className="space-y-3">
+                <div className="flex gap-3 rounded-xl border border-brand-100 bg-brand-50 p-4">
+                  <Filter className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
+                  <div>
+                    <p className="text-sm font-semibold text-slate-800">Identifique oportunidades na sua carteira</p>
+                    <p className="mt-1 text-xs text-slate-500 leading-relaxed">
+                      A tela <strong>Meus Clientes</strong> agrupa todas as avaliacoes por consentId (cliente), mostrando para cada um:
+                      classificacao de risco atual (Critico, Moderado, Adequado), acao recomendada (Aumentar, Manter, Reduzir, Revisar)
+                      e score de protecao. Com busca por consentId, voce localiza rapidamente qualquer cliente. O <strong>Dashboard</strong> mostra
+                      a distribuicao consolidada de risco e acoes da carteira inteira — permitindo identificar de imediato quantos
+                      clientes precisam de atencao.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-3 rounded-xl border border-brand-100 bg-brand-50 p-4">
+                  <Lightbulb className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
+                  <div>
+                    <p className="text-sm font-semibold text-slate-800">5 insights personalizados por avaliacao</p>
+                    <p className="mt-1 text-xs text-slate-500 leading-relaxed">
+                      Cada avaliacao gera automaticamente <strong>5 insights prontos para uso comercial</strong>: abertura de conversa,
+                      argumento principal, objecao prevista (com contra-argumento), produto sugerido e proximo passo.
+                      Esses insights sao personalizados com base no perfil completo do cliente — idade, renda, dependentes,
+                      dividas, risco profissional e resultado da avaliacao. Nao sao textos genericos: sao argumentos
+                      tecnicos calibrados para <strong>maximizar a conversao</strong> de cada perfil especifico.
+                    </p>
+                  </div>
+                </div>
+                <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+                  <div className="flex gap-2">
+                    <TrendingUp className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+                    <div>
+                      <p className="text-xs font-semibold text-amber-800">Em breve no roadmap</p>
+                      <p className="mt-1 text-xs text-amber-700 leading-relaxed">
+                        Filtros avancados por acao recomendada, faixa de score e classificacao de risco na tela de Clientes
+                        (ex: "mostre todos os clientes com acao AUMENTAR e risco CRITICO" — seus leads mais quentes).
+                        Ranking automatico de oportunidades de venda por potencial de conversao.
+                        Painel de "leads quentes" no Dashboard com os clientes que mais precisam de atencao imediata.
+                        Exportacao da lista de leads filtrada para CRM externo.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-brand-200 bg-brand-50 p-4">
+              <p className="text-xs text-brand-800 leading-relaxed">
+                <strong>Resumo:</strong> o LifeTrigger ja oferece gatilhos de vida como motivo de recontato, revisao anual automatica,
+                formulario completo de avaliacao, visao por cliente com classificacao de risco, e 5 insights personalizados por avaliacao.
+                As funcionalidades marcadas como <strong>"Em breve"</strong> estao no roadmap e serao implementadas nas proximas versoes,
+                expandindo a plataforma de motor de avaliacao para uma <strong>central completa de inteligencia comercial</strong>.
+              </p>
             </div>
           </div>
         </Accordion>
