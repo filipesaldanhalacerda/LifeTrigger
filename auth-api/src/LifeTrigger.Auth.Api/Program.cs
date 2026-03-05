@@ -129,10 +129,8 @@ if (!app.Environment.IsEnvironment("Testing"))
     {
         await db.Database.MigrateAsync();
 
-        if (app.Environment.IsDevelopment())
-        {
-            await DemoDataSeeder.SeedAsync(db, startLogger);
-        }
+        // Always seed demo users — this is a demo/showcase deployment
+        await DemoDataSeeder.SeedAsync(db, startLogger);
     }
     catch (Exception ex)
     {
