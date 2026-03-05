@@ -229,35 +229,28 @@ export default function Login() {
 
           {/* Demo credentials */}
           <div className="mt-4 animate-fadeIn" style={{ animationDelay: '220ms' }}>
-            <div className="rounded-xl border border-amber-200 bg-amber-50/50 px-4 py-3 shadow-sm">
-              <div className="flex items-center gap-2 mb-2.5">
-                <FlaskConical className="h-3.5 w-3.5 text-amber-500" />
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-600">
-                  Usuarios Demo — clique para preencher
+            <div className="rounded-xl border border-amber-200 bg-amber-50/50 px-4 py-2.5 shadow-sm">
+              <div className="flex items-center gap-2 mb-1.5">
+                <FlaskConical className="h-3 w-3 text-amber-500" />
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-600">
+                  Usuarios Demo — clique para entrar
                 </p>
               </div>
-              <p className="mb-3 text-[10px] text-amber-600/80 leading-relaxed">
-                Cada perfil tem permissoes diferentes. Teste todos para conhecer a plataforma completa.
-              </p>
-              <div className="space-y-1 rounded-lg bg-white/80 border border-amber-100 p-1.5">
+              <div className="flex flex-wrap gap-1.5">
                 {[
-                  { role: 'Super Admin',  email: 'superadmin@lifetrigger.io', password: 'Super@123!',  color: 'text-red-500',     desc: 'Acesso total a plataforma' },
-                  { role: 'Proprietario', email: 'owner@alpha.demo',          password: 'Alpha@123!',  color: 'text-purple-500',  desc: 'Dono da corretora' },
-                  { role: 'Gerente',      email: 'manager@alpha.demo',        password: 'Alpha@123!',  color: 'text-blue-500',    desc: 'Gestao de equipe' },
-                  { role: 'Corretor',     email: 'broker@alpha.demo',         password: 'Alpha@123!',  color: 'text-emerald-500', desc: 'Operacao do dia a dia' },
-                  { role: 'Observador',   email: 'viewer@alpha.demo',         password: 'Alpha@123!',  color: 'text-slate-500',   desc: 'Somente visualizacao' },
-                ].map(({ role, email: demoEmail, password: demoPw, color, desc }) => (
+                  { role: 'Admin',        email: 'superadmin@lifetrigger.io', password: 'Super@123!',  color: 'bg-red-500' },
+                  { role: 'Proprietario', email: 'owner@alpha.demo',          password: 'Alpha@123!',  color: 'bg-purple-500' },
+                  { role: 'Gerente',      email: 'manager@alpha.demo',        password: 'Alpha@123!',  color: 'bg-blue-500' },
+                  { role: 'Corretor',     email: 'broker@alpha.demo',         password: 'Alpha@123!',  color: 'bg-emerald-500' },
+                  { role: 'Observador',   email: 'viewer@alpha.demo',         password: 'Alpha@123!',  color: 'bg-slate-500' },
+                ].map(({ role, email: demoEmail, password: demoPw, color }) => (
                   <button
                     key={demoEmail}
                     type="button"
                     onClick={() => { setEmail(demoEmail); setPassword(demoPw) }}
-                    className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left hover:bg-amber-50 transition-colors group"
+                    className={`rounded-full px-2.5 py-1 text-[10px] font-bold text-white ${color} hover:opacity-80 transition-opacity`}
                   >
-                    <span className={`w-20 shrink-0 text-[10px] font-bold ${color}`}>{role}</span>
-                    <span className="flex-1 min-w-0">
-                      <span className="block font-mono text-[11px] text-slate-600 group-hover:text-slate-800 transition-colors truncate">{demoEmail}</span>
-                      <span className="block text-[9px] text-slate-400">{desc}</span>
-                    </span>
+                    {role}
                   </button>
                 ))}
               </div>
