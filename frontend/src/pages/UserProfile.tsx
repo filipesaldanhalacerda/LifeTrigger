@@ -1,4 +1,4 @@
-import { User, KeyRound, CheckCircle, Lock } from 'lucide-react'
+import { User, CheckCircle, Lock } from 'lucide-react'
 import { useAuth, type UserRole } from '../contexts/AuthContext'
 
 // ── Role appearance (matches TeamManagement) ─────────────────────────────────

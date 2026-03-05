@@ -2,13 +2,13 @@ import { useState, useEffect, useCallback } from 'react'
 import {
   Users, UserPlus, KeyRound, Loader2, X,
   AlertCircle, CheckCircle, Search, Filter,
-  RefreshCw, UserCheck, UserX, ChevronDown, Lock,
+  RefreshCw, ChevronDown, Lock,
 } from 'lucide-react'
 import { TopBar } from '../components/layout/TopBar'
 import { useAuth, type UserRole } from '../contexts/AuthContext'
 import {
   getUsers, createUser, updateUserRole,
-  updateUserStatus, resetUserPassword, ApiError,
+  resetUserPassword, ApiError,
 } from '../lib/api'
 import { formatDate } from '../lib/utils'
 import type { UserRecord, CreateUserPayload } from '../types/api'
@@ -403,7 +403,6 @@ export default function TeamManagement() {
   const [search,       setSearch]       = useState('')
   const [filterRole,   setFilterRole]   = useState<string>('')
   const [filterStatus, setFilterStatus] = useState<string>('')
-  const [togglingId,   setTogglingId]   = useState<string | null>(null)
   const [successId,    setSuccessId]    = useState<string | null>(null)
 
   const callerRole = (me?.role ?? 'Viewer') as UserRole
@@ -425,20 +424,6 @@ export default function TeamManagement() {
   }, [])
 
   useEffect(() => { void load() }, [load])
-
-  async function handleToggleStatus(target: UserRecord) {
-    setTogglingId(target.id)
-    try {
-      const updated = await updateUserStatus(target.id, !target.isActive)
-      setUsers(prev => prev.map(u => u.id === updated.id ? updated : u))
-      setSuccessId(target.id)
-      setTimeout(() => setSuccessId(null), 2500)
-    } catch {
-      // silently ignore
-    } finally {
-      setTogglingId(null)
-    }
-  }
 
   async function handleChangeRole(target: UserRecord, newRole: UserRole) {
     try {
@@ -680,7 +665,6 @@ export default function TeamManagement() {
                 <tbody className="divide-y divide-slate-100">
                   {filtered.map(u => {
                     const canManage = ROLE_LEVEL[callerRole] > ROLE_LEVEL[u.role as UserRole]
-                    const isToggling = togglingId === u.id
                     const isSuccess  = successId  === u.id
 
                     return (
