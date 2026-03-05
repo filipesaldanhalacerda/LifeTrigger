@@ -1,0 +1,10 @@
+**/bin/
+**/obj/
+**/node_modules/
+frontend/
+auth-api/
+tests/
+docs/
+.git/
+.claude/
+*.md

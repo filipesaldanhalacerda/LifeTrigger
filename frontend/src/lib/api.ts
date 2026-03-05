@@ -14,9 +14,10 @@ import type {
 } from '../types/api'
 
 // ── Config ───────────────────────────────────────────────────────
-// Vite proxy routes /api/v1/auth, /api/v1/tenants, /api/v1/users → Auth API (5086)
-// Vite proxy routes /api/v1/* (remaining) → Engine API (5001)
-const BASE_URL = '/api/v1'
+// Dev: Vite proxy handles routing to Auth API (5086) and Engine API (5001)
+// Prod: Vercel rewrites proxy to the deployed API URLs
+const AUTH_BASE   = import.meta.env.VITE_AUTH_API_URL   || '/api/v1'
+const ENGINE_BASE = import.meta.env.VITE_ENGINE_API_URL || '/api/v1'
 
 const TOKEN_KEY         = 'lt_access_token'
 const REFRESH_TOKEN_KEY = 'lt_refresh_token'
@@ -70,11 +71,18 @@ export interface LoginResponse {
 }
 
 // ── HTTP base ────────────────────────────────────────────────────
+type ApiTarget = 'auth' | 'engine'
+
+function baseFor(target: ApiTarget): string {
+  return target === 'auth' ? AUTH_BASE : ENGINE_BASE
+}
+
 async function request<T>(
   path: string,
   options: RequestInit = {},
   idempotencyKey?: string,
   _retry = true,
+  target: ApiTarget = 'engine',
 ): Promise<T> {
   const token = getToken()
   const headers: Record<string, string> = {
@@ -83,14 +91,14 @@ async function request<T>(
     ...(idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}),
     ...(options.headers as Record<string, string> | undefined),
   }
-  const res = await fetch(`${BASE_URL}${path}`, { ...options, headers })
+  const res = await fetch(`${baseFor(target)}${path}`, { ...options, headers })
 
   // ── Token expirado: tenta refresh automático (uma única vez) ──
   if (res.status === 401 && _retry) {
     const newToken = await refreshAccessToken()
     if (newToken) {
       // Retry the original request with the fresh token
-      return request<T>(path, options, idempotencyKey, false)
+      return request<T>(path, options, idempotencyKey, false, target)
     }
     // Refresh also failed — session is gone
     clearTokens()
@@ -120,7 +128,7 @@ export class ApiError extends Error {
 
 /** Login na Auth API — armazena access token + refresh token. */
 export async function login(email: string, password: string): Promise<LoginResponse> {
-  const res = await fetch(`${BASE_URL}/auth/login`, {
+  const res = await fetch(`${AUTH_BASE}/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),
@@ -141,7 +149,7 @@ export async function refreshAccessToken(): Promise<string | null> {
   const refreshToken = getRefreshToken()
   if (!refreshToken) return null
   try {
-    const res = await fetch(`${BASE_URL}/auth/refresh`, {
+    const res = await fetch(`${AUTH_BASE}/auth/refresh`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refreshToken }),
@@ -162,7 +170,7 @@ export async function logout(): Promise<void> {
   const refreshToken = getRefreshToken()
   const accessToken  = getToken()
   if (refreshToken && accessToken) {
-    await fetch(`${BASE_URL}/auth/logout`, {
+    await fetch(`${AUTH_BASE}/auth/logout`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -176,7 +184,7 @@ export async function logout(): Promise<void> {
 
 /** Retorna dados do usuário autenticado atual. */
 export async function getMe(): Promise<AuthUser> {
-  const res = await fetch(`${BASE_URL}/auth/me`, {
+  const res = await fetch(`${AUTH_BASE}/auth/me`, {
     headers: { Authorization: `Bearer ${getToken() ?? ''}` },
   })
   if (!res.ok) throw new ApiError(res.status, 'Não autenticado')
@@ -187,12 +195,12 @@ export async function getMe(): Promise<AuthUser> {
 
 /** Lista todos os tenants (SuperAdmin). */
 export async function getTenants(): Promise<Tenant[]> {
-  return request<Tenant[]>('/tenants')
+  return request<Tenant[]>('/tenants', {}, undefined, true, 'auth')
 }
 
 /** Retorna um tenant pelo ID. */
 export async function getTenant(id: string): Promise<Tenant> {
-  return request<Tenant>(`/tenants/${id}`)
+  return request<Tenant>(`/tenants/${id}`, {}, undefined, true, 'auth')
 }
 
 /** Cria um novo tenant (SuperAdmin). */
@@ -200,7 +208,7 @@ export async function createTenant(name: string, slug: string): Promise<Tenant> 
   return request<Tenant>('/tenants', {
     method: 'POST',
     body: JSON.stringify({ name, slug }),
-  })
+  }, undefined, true, 'auth')
 }
 
 /** Ativa ou desativa um tenant (SuperAdmin). */
@@ -208,7 +216,7 @@ export async function updateTenantStatus(id: string, isActive: boolean): Promise
   return request<Tenant>(`/tenants/${id}/status`, {
     method: 'PATCH',
     body: JSON.stringify({ isActive }),
-  })
+  }, undefined, true, 'auth')
 }
 
 // ── Engine ───────────────────────────────────────────────────────
@@ -294,40 +302,40 @@ export async function putTenantSettings(settings: TenantSettings): Promise<Tenan
 
 // ── Team / Users ─────────────────────────────────────────────────
 export async function getUsers(): Promise<UserRecord[]> {
-  return request<UserRecord[]>('/users')
+  return request<UserRecord[]>('/users', {}, undefined, true, 'auth')
 }
 
 export async function createUser(payload: CreateUserPayload): Promise<UserRecord> {
   return request<UserRecord>('/users', {
     method: 'POST',
     body: JSON.stringify(payload),
-  })
+  }, undefined, true, 'auth')
 }
 
 export async function updateUserRole(id: string, role: string): Promise<UserRecord> {
   return request<UserRecord>(`/users/${id}`, {
     method: 'PATCH',
     body: JSON.stringify({ role }),
-  })
+  }, undefined, true, 'auth')
 }
 
 export async function updateUserStatus(id: string, isActive: boolean): Promise<UserRecord> {
   return request<UserRecord>(`/users/${id}/status`, {
     method: 'PATCH',
     body: JSON.stringify({ isActive }),
-  })
+  }, undefined, true, 'auth')
 }
 
 export async function resetUserPassword(id: string, newPassword: string): Promise<void> {
   return request<void>(`/users/${id}/reset-password`, {
     method: 'POST',
     body: JSON.stringify({ newPassword }),
-  })
+  }, undefined, true, 'auth')
 }
 
 // ── Health ───────────────────────────────────────────────────────
 export async function fetchHealth(): Promise<{ status: string }> {
-  const res = await fetch('/health')
+  const res = await fetch(`${ENGINE_BASE.replace('/api/v1', '')}/health`)
   if (!res.ok) return { status: 'Unhealthy' }
   const text = await res.text()
   return { status: text.trim() }

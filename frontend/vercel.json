@@ -1,0 +1,19 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "framework": "vite",
+  "rewrites": [
+    {
+      "source": "/api/auth/:path*",
+      "destination": "https://your-auth-api.railway.app/api/v1/:path*"
+    },
+    {
+      "source": "/api/engine/:path*",
+      "destination": "https://your-engine-api.railway.app/api/v1/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
