@@ -122,9 +122,8 @@ export default function Login() {
             <p className="text-xs font-medium text-brand-300/50 uppercase tracking-wider">Usado por corretoras que vendem mais</p>
             <div className="h-px flex-1 bg-white/10" />
           </div>
-          <p className="mt-4 text-sm text-brand-200/50 leading-relaxed max-w-lg">
-            Cada avaliação gera um registro auditável que comprova sua recomendação técnica.
-            Seus clientes recebem proteção adequada. Você constrói credibilidade e fecha mais negócios.
+          <p className="mt-4 text-sm text-brand-200/50 leading-relaxed max-w-sm">
+            Registro auditável a cada avaliação. Proteção adequada para seus clientes. Credibilidade que fecha negócios.
           </p>
         </div>
 
