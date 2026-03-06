@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 using LifeTrigger.Auth.Application.Interfaces;
 using LifeTrigger.Auth.Domain.Entities;
+using LifeTrigger.Auth.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -17,17 +18,20 @@ public class AuthController : ControllerBase
     private readonly IRefreshTokenRepository _refreshTokens;
     private readonly ITokenService _tokenService;
     private readonly ITenantRepository _tenants;
+    private readonly AuthDbContext _db;
 
     public AuthController(
         IUserRepository users,
         IRefreshTokenRepository refreshTokens,
         ITokenService tokenService,
-        ITenantRepository tenants)
+        ITenantRepository tenants,
+        AuthDbContext db)
     {
         _users         = users;
         _refreshTokens = refreshTokens;
         _tokenService  = tokenService;
         _tenants       = tenants;
+        _db            = db;
     }
 
     // POST /api/v1/auth/login
@@ -37,17 +41,69 @@ public class AuthController : ControllerBase
         [FromBody] LoginRequest request,
         CancellationToken cancellationToken)
     {
+        var ip        = HttpContext.Connection.RemoteIpAddress?.ToString();
+        var userAgent = HttpContext.Request.Headers.UserAgent.ToString();
+        if (userAgent?.Length > 512) userAgent = userAgent[..512];
+
         var user = await _users.GetByEmailAsync(request.Email, cancellationToken);
         if (user is null || !user.IsActive || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+        {
+            // Record failed login (only if user exists)
+            if (user is not null)
+            {
+                _db.LoginEvents.Add(new LoginEvent
+                {
+                    Id         = Guid.NewGuid(),
+                    UserId     = user.Id,
+                    Email      = user.Email,
+                    Role       = user.Role.ToString(),
+                    TenantId   = user.TenantId,
+                    Success    = false,
+                    FailReason = "INVALID_CREDENTIALS",
+                    IpAddress  = ip,
+                    UserAgent  = userAgent,
+                });
+                await _db.SaveChangesAsync(cancellationToken);
+            }
             return Unauthorized(new { code = "INVALID_CREDENTIALS", message = "E-mail ou senha inválidos." });
+        }
 
         // Check if the user's tenant is still active
         if (user.TenantId.HasValue)
         {
             var tenant = await _tenants.GetByIdAsync(user.TenantId.Value, cancellationToken);
             if (tenant is null || !tenant.IsActive)
+            {
+                _db.LoginEvents.Add(new LoginEvent
+                {
+                    Id         = Guid.NewGuid(),
+                    UserId     = user.Id,
+                    Email      = user.Email,
+                    Role       = user.Role.ToString(),
+                    TenantId   = user.TenantId,
+                    Success    = false,
+                    FailReason = "TENANT_INACTIVE",
+                    IpAddress  = ip,
+                    UserAgent  = userAgent,
+                });
+                await _db.SaveChangesAsync(cancellationToken);
                 return Unauthorized(new { code = "TENANT_INACTIVE", message = "Sua organização foi desativada. Entre em contato com o suporte LifeTrigger." });
+            }
         }
+
+        // Record successful login
+        _db.LoginEvents.Add(new LoginEvent
+        {
+            Id        = Guid.NewGuid(),
+            UserId    = user.Id,
+            Email     = user.Email,
+            Role      = user.Role.ToString(),
+            TenantId  = user.TenantId,
+            Success   = true,
+            IpAddress = ip,
+            UserAgent = userAgent,
+        });
+        await _db.SaveChangesAsync(cancellationToken);
 
         var accessToken = _tokenService.GenerateAccessToken(user);
         var (rawRefresh, refreshHash) = _tokenService.GenerateRefreshToken();
@@ -58,7 +114,7 @@ public class AuthController : ControllerBase
             UserId    = user.Id,
             TokenHash = refreshHash,
             ExpiresAt = DateTimeOffset.UtcNow.AddDays(30),
-            IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
+            IpAddress = ip,
         };
 
         await _refreshTokens.AddAsync(refreshToken, cancellationToken);

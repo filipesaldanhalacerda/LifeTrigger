@@ -18,6 +18,7 @@ import {
   PanelLeftOpen,
   X,
   BookOpen,
+  Eye,
 } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { useAuth } from '../../contexts/AuthContext'
@@ -84,6 +85,7 @@ const sections: NavSection[] = [
       { to: '/admin/tenants',  label: 'Corretoras',       icon: Building2, minRole: 'SuperAdmin' },
       { to: '/admin/platform', label: 'Visão Global',     icon: Globe,     minRole: 'SuperAdmin' },
       { to: '/admin/users',    label: 'Usuários Globais', icon: Users,     minRole: 'SuperAdmin' },
+      { to: '/admin/access',   label: 'Monitor de Acessos', icon: Eye,     minRole: 'SuperAdmin' },
     ],
   },
   {

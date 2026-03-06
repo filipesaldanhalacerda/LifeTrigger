@@ -11,6 +11,7 @@ public class AuthDbContext : DbContext
     public DbSet<Tenant> Tenants => Set<Tenant>();
     public DbSet<User> Users => Set<User>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<LoginEvent> LoginEvents => Set<LoginEvent>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -72,6 +73,28 @@ public class AuthDbContext : DbContext
             b.HasOne(r => r.User)
                 .WithMany(u => u.RefreshTokens)
                 .HasForeignKey(r => r.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<LoginEvent>(b =>
+        {
+            b.ToTable("login_events");
+            b.HasKey(e => e.Id);
+            b.Property(e => e.Id).ValueGeneratedOnAdd();
+            b.Property(e => e.UserId).IsRequired();
+            b.Property(e => e.Email).HasMaxLength(255).IsRequired();
+            b.Property(e => e.Role).HasMaxLength(50).IsRequired();
+            b.Property(e => e.TenantId);
+            b.Property(e => e.Success).IsRequired();
+            b.Property(e => e.FailReason).HasMaxLength(255);
+            b.Property(e => e.IpAddress).HasMaxLength(45);
+            b.Property(e => e.UserAgent).HasMaxLength(512);
+            b.Property(e => e.Timestamp).IsRequired();
+            b.HasIndex(e => e.Timestamp);
+            b.HasIndex(e => e.UserId);
+            b.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
     }

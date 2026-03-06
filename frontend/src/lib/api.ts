@@ -333,6 +333,41 @@ export async function resetUserPassword(id: string, newPassword: string): Promis
   }, undefined, true, 'auth')
 }
 
+// ── Login Events (Access Monitor) ────────────────────────────────
+export interface LoginEventRecord {
+  id: string
+  userId: string
+  email: string
+  role: string
+  tenantId: string | null
+  success: boolean
+  failReason: string | null
+  ipAddress: string | null
+  userAgent: string | null
+  timestamp: string
+}
+
+export interface LoginEventsSummary {
+  totalLogins: number
+  successfulLogins: number
+  failedLogins: number
+  uniqueUsers: number
+  uniqueIps: number
+  activeSessions: number
+  periodDays: number
+}
+
+export interface LoginEventsResponse {
+  summary: LoginEventsSummary
+  loginsPerDay: { date: string; count: number }[]
+  topUsers: { email: string; role: string; count: number; lastLogin: string }[]
+  events: LoginEventRecord[]
+}
+
+export async function getLoginEvents(days = 7): Promise<LoginEventsResponse> {
+  return request<LoginEventsResponse>(`/login-events?days=${days}&limit=500`, {}, undefined, true, 'auth')
+}
+
 // ── Health ───────────────────────────────────────────────────────
 export async function fetchHealth(): Promise<{ status: string }> {
   const res = await fetch(`${ENGINE_BASE.replace('/api/v1', '')}/health`)

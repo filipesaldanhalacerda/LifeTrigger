@@ -20,6 +20,7 @@ import ClientHistory from './pages/ClientHistory'
 import Billing from './pages/Billing'
 import GlobalUsers from './pages/GlobalUsers'
 import SystemGuide from './pages/SystemGuide'
+import AccessMonitor from './pages/AccessMonitor'
 
 export default function App() {
   return (
@@ -75,6 +76,7 @@ export default function App() {
                 <Route path="admin/tenants" element={<TenantManagement />} />
                 <Route path="admin/platform" element={<PlatformOverview />} />
                 <Route path="admin/users" element={<GlobalUsers />} />
+                <Route path="admin/access" element={<AccessMonitor />} />
               </Route>
 
               {/* All authenticated users */}
