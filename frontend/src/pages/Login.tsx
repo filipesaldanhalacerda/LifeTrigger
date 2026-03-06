@@ -237,7 +237,6 @@ export default function Login() {
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {[
-                  { role: 'Proprietario', email: 'owner@alpha.demo',          password: 'Alpha@123!' },
                   { role: 'Gerente',      email: 'manager@alpha.demo',        password: 'Alpha@123!' },
                   { role: 'Corretor',     email: 'broker@alpha.demo',         password: 'Alpha@123!' },
                   { role: 'Observador',   email: 'viewer@alpha.demo',         password: 'Alpha@123!' },
