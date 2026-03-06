@@ -318,55 +318,48 @@ public class EvaluationsController : ControllerBase
         [FromQuery] int offset = 0,
         CancellationToken cancellationToken = default)
     {
-        try
+        if (limit < 1 || limit > 1000)
+            return BadRequest(new { Message = "O parâmetro 'limit' deve estar entre 1 e 1000." });
+
+        if (offset < 0)
+            return BadRequest(new { Message = "O parâmetro 'offset' deve ser maior ou igual a zero." });
+
+        var evaluations = (await _repository.GetByFilterAsync(tenantId, startDate, endDate, limit, offset, cancellationToken: cancellationToken)).ToList();
+
+        var total = evaluations.Count;
+        if (total == 0)
         {
-            if (limit < 1 || limit > 1000)
-                return BadRequest(new { Message = "O parâmetro 'limit' deve estar entre 1 e 1000." });
-
-            if (offset < 0)
-                return BadRequest(new { Message = "O parâmetro 'offset' deve ser maior ou igual a zero." });
-
-            var evaluations = (await _repository.GetByFilterAsync(tenantId, startDate, endDate, limit, offset, cancellationToken: cancellationToken)).ToList();
-
-            var total = evaluations.Count;
-            if (total == 0)
-            {
-                return Ok(new
-                {
-                    totalEvaluations   = 0,
-                    riskDistribution   = new { critico = 0, moderado = 0, adequado = 0 },
-                    actionDistribution = new { aumentar = 0, manter = 0, reduzir = 0, revisar = 0 },
-                    triggerCount       = 0,
-                });
-            }
-
-            var riskDist     = evaluations.GroupBy(e => e.Result.RiskClassification).ToDictionary(g => g.Key, g => g.Count());
-            var actionDist   = evaluations.GroupBy(e => e.Result.RecommendedAction).ToDictionary(g => g.Key, g => g.Count());
-            var triggerCount = evaluations.Count(e => e.Request?.OperationalData?.RecentLifeTrigger == true);
-
             return Ok(new
             {
-                totalEvaluations = total,
-                riskDistribution = new
-                {
-                    critico  = riskDist.GetValueOrDefault(RiskClassification.CRITICO,  0),
-                    moderado = riskDist.GetValueOrDefault(RiskClassification.MODERADO, 0),
-                    adequado = riskDist.GetValueOrDefault(RiskClassification.ADEQUADO, 0),
-                },
-                actionDistribution = new
-                {
-                    aumentar = actionDist.GetValueOrDefault(RecommendedAction.AUMENTAR, 0),
-                    manter   = actionDist.GetValueOrDefault(RecommendedAction.MANTER,   0),
-                    reduzir  = actionDist.GetValueOrDefault(RecommendedAction.REDUZIR,  0),
-                    revisar  = actionDist.GetValueOrDefault(RecommendedAction.REVISAR,  0),
-                },
-                triggerCount,
+                totalEvaluations   = 0,
+                riskDistribution   = new { critico = 0, moderado = 0, adequado = 0 },
+                actionDistribution = new { aumentar = 0, manter = 0, reduzir = 0, revisar = 0 },
+                triggerCount       = 0,
             });
         }
-        catch (Exception ex)
+
+        var riskDist     = evaluations.GroupBy(e => e.Result.RiskClassification).ToDictionary(g => g.Key, g => g.Count());
+        var actionDist   = evaluations.GroupBy(e => e.Result.RecommendedAction).ToDictionary(g => g.Key, g => g.Count());
+        var triggerCount = evaluations.Count(e => e.Request?.OperationalData?.RecentLifeTrigger == true);
+
+        return Ok(new
         {
-            return StatusCode(500, new { title = "Erro no relatório", detail = ex.ToString() });
-        }
+            totalEvaluations = total,
+            riskDistribution = new
+            {
+                critico  = riskDist.GetValueOrDefault(RiskClassification.CRITICO,  0),
+                moderado = riskDist.GetValueOrDefault(RiskClassification.MODERADO, 0),
+                adequado = riskDist.GetValueOrDefault(RiskClassification.ADEQUADO, 0),
+            },
+            actionDistribution = new
+            {
+                aumentar = actionDist.GetValueOrDefault(RecommendedAction.AUMENTAR, 0),
+                manter   = actionDist.GetValueOrDefault(RecommendedAction.MANTER,   0),
+                reduzir  = actionDist.GetValueOrDefault(RecommendedAction.REDUZIR,  0),
+                revisar  = actionDist.GetValueOrDefault(RecommendedAction.REVISAR,  0),
+            },
+            triggerCount,
+        });
     }
 
     private Guid? GetTenantIdFromJwt()

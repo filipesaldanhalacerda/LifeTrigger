@@ -55,10 +55,10 @@ public class EfEvaluationRepository : IEvaluationRepository
             .Where(e => EF.Property<Guid?>(e, "TenantId") == tenantId);
 
         if (startDate.HasValue)
-            query = query.Where(e => e.Timestamp >= startDate.Value);
+            query = query.Where(e => e.Timestamp >= startDate.Value.ToUniversalTime());
 
         if (endDate.HasValue)
-            query = query.Where(e => e.Timestamp <= endDate.Value);
+            query = query.Where(e => e.Timestamp <= endDate.Value.ToUniversalTime());
 
         // Broker-level ownership filter: restrict to evaluations created by this user
         if (createdByUserId.HasValue)
