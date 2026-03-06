@@ -2,9 +2,10 @@ import { useEffect, useState, useCallback } from 'react'
 import {
   TrendingUp,
   BarChart2, Users, AlertTriangle, Zap,
-  Loader2, RefreshCw, Download, Calendar,
+  Loader2, RefreshCw, Download,
 } from 'lucide-react'
 import { TopBar } from '../components/layout/TopBar'
+import { DateRangePicker } from '../components/ui/DateRangePicker'
 import { getPilotReport, getEvaluations, getUsers, getActiveTenantId } from '../lib/api'
 import { actionLabel, riskLabel, formatDate } from '../lib/utils'
 import type { PilotReport, EvaluationSummary, UserRecord } from '../types/api'
@@ -242,25 +243,12 @@ export default function Reports() {
 
         {/* ── Date range + actions ── */}
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-card">
-            <Calendar className="h-4 w-4 text-slate-400" />
-            <input
-              type="date"
-              value={startDate}
-              max={endDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="text-sm text-slate-700 focus:outline-none bg-transparent"
-            />
-            <span className="text-slate-400 text-xs">→</span>
-            <input
-              type="date"
-              value={endDate}
-              min={startDate}
-              max={today()}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="text-sm text-slate-700 focus:outline-none bg-transparent"
-            />
-          </div>
+          <DateRangePicker
+            startDate={startDate}
+            endDate={endDate}
+            maxDate={today()}
+            onChange={(s, e) => { setStartDate(s); setEndDate(e) }}
+          />
           <button
             onClick={() => void load()}
             disabled={loading}

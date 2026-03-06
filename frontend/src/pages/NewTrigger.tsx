@@ -5,6 +5,7 @@ import {
   Scissors, Sunset, Pencil, Info, Zap,
 } from 'lucide-react'
 import { TopBar } from '../components/layout/TopBar'
+import { DatePicker } from '../components/ui/DateRangePicker'
 import { postTrigger, getActiveTenantId } from '../lib/api'
 import { generateIdempotencyKey } from '../lib/utils'
 import type { LifeTriggerEvent } from '../types/api'
@@ -304,11 +305,11 @@ export default function NewTrigger() {
                   hint="Quando o evento ocorreu ou ocorrerá. Registrada no histórico do diagnóstico."
                   error={fieldErrors.eventDate}
                 >
-                  <input
-                    type="date"
+                  <DatePicker
                     value={eventDate}
-                    onChange={(e) => { setEventDate(e.target.value); clearError('eventDate') }}
-                    className={cls(!!fieldErrors.eventDate)}
+                    onChange={(d) => { setEventDate(d); clearError('eventDate') }}
+                    placeholder="Selecione a data"
+                    error={!!fieldErrors.eventDate}
                   />
                 </Field>
                 <Field
