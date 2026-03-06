@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import {
-  Search, Filter, UserCheck, UserX, CheckCircle,
-  Loader2, RefreshCw, AlertCircle, Building2,
+  Search, Filter, CheckCircle,
+  Loader2, RefreshCw, AlertCircle, Building2, Lock,
 } from 'lucide-react'
 import { TopBar } from '../components/layout/TopBar'
-import { getUsers, getTenants, updateUserStatus } from '../lib/api'
+import { getUsers, getTenants } from '../lib/api'
 import { formatDate } from '../lib/utils'
 import type { UserRecord, Tenant } from '../types/api'
 
@@ -36,8 +36,7 @@ export default function GlobalUsers() {
   const [filterRole, setFilterRole] = useState<string>('')
   const [filterTenant, setFilterTenant] = useState<string>('')
   const [filterStatus, setFilterStatus] = useState<string>('')
-  const [togglingId, setTogglingId] = useState<string | null>(null)
-  const [successId,  setSuccessId]  = useState<string | null>(null)
+  const [successId]  = useState<string | null>(null)
 
   async function load() {
     setLoading(true)
@@ -53,20 +52,6 @@ export default function GlobalUsers() {
   }
 
   useEffect(() => { void load() }, [])
-
-  async function toggleStatus(user: UserRecord) {
-    setTogglingId(user.id)
-    try {
-      const updated = await updateUserStatus(user.id, !user.isActive)
-      setUsers((prev) => prev.map((u) => u.id === updated.id ? updated : u))
-      setSuccessId(user.id)
-      setTimeout(() => setSuccessId(null), 2000)
-    } catch {
-      // silently fail
-    } finally {
-      setTogglingId(null)
-    }
-  }
 
   // Build tenant name map
   const tenantMap = new Map(tenants.map((t) => [t.id, t.name]))
@@ -295,27 +280,15 @@ export default function GlobalUsers() {
                           )}
                         </td>
 
-                        {/* Action */}
+                        {/* Action — disabled in demo */}
                         <td className="px-4 py-3 text-right">
-                          <button
-                            onClick={() => toggleStatus(user)}
-                            disabled={togglingId === user.id || user.role === 'SuperAdmin'}
-                            title={user.role === 'SuperAdmin' ? 'SuperAdmins não podem ser desativados aqui' : undefined}
-                            className={`flex items-center gap-1.5 ml-auto rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors disabled:opacity-40 ${
-                              user.isActive
-                                ? 'border-red-200 bg-red-50 text-red-700 hover:bg-red-100'
-                                : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
-                            }`}
+                          <span
+                            title="Indisponível na versão de demonstração"
+                            className="flex items-center gap-1.5 ml-auto rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-600 cursor-not-allowed opacity-60"
                           >
-                            {togglingId === user.id ? (
-                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                            ) : user.isActive ? (
-                              <UserX className="h-3.5 w-3.5" />
-                            ) : (
-                              <UserCheck className="h-3.5 w-3.5" />
-                            )}
-                            {user.isActive ? 'Desativar' : 'Ativar'}
-                          </button>
+                            <Lock className="h-3.5 w-3.5" />
+                            Demo
+                          </span>
                         </td>
                       </tr>
                     ))}
