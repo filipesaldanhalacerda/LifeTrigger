@@ -28,7 +28,7 @@ export default function EngineInfo() {
     <div>
       <TopBar title="Motor & Sistema" subtitle="Versão do motor e status operacional" />
 
-      <div className="p-6 space-y-5 animate-fadeIn">
+      <div className="p-4 sm:p-6 space-y-4 sm:space-y-5 animate-fadeIn">
         {/* Health status */}
         <div className={`flex items-center gap-3 rounded-2xl border p-4 shadow-card ${
           health === 'healthy' ? 'border-emerald-200 bg-emerald-50' :
@@ -55,7 +55,7 @@ export default function EngineInfo() {
         </div>
 
         {/* Version cards */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <InfoCard
             icon={Cpu}
             iconColor="text-brand-600"
@@ -84,14 +84,14 @@ export default function EngineInfo() {
 
         {/* Description */}
         {info?.description && (
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-card">
             <h2 className="mb-2 text-sm font-semibold text-slate-900">Descrição do Motor</h2>
             <p className="text-sm text-slate-600">{info.description}</p>
           </div>
         )}
 
         {/* Architecture summary */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-card">
           <h2 className="mb-4 text-sm font-semibold text-slate-900">Arquitetura</h2>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {[
@@ -111,7 +111,7 @@ export default function EngineInfo() {
         </div>
 
         {/* Endpoints reference */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-card">
           <h2 className="mb-4 text-sm font-semibold text-slate-900">Endpoints Disponíveis</h2>
           <div className="space-y-1">
             {[
@@ -151,7 +151,7 @@ function InfoCard({
   icon: React.ElementType; iconColor: string; iconBg: string; label: string; value: string; sub: string
 }) {
   return (
-    <div className="flex items-start gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
+    <div className="flex items-start gap-4 rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-card">
       <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${iconBg}`}>
         <Icon className={`h-5 w-5 ${iconColor}`} />
       </div>

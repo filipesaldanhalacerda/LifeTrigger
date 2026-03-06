@@ -162,12 +162,12 @@ export default function PlatformOverview() {
         subtitle={loading ? 'Carregando…' : `${rows.length} corretora${rows.length !== 1 ? 's' : ''} · ${totalEvals.toLocaleString('pt-BR')} avaliações`}
       />
 
-      <div className="p-6 space-y-5 animate-fadeIn">
+      <div className="p-4 sm:p-6 space-y-4 sm:space-y-5 animate-fadeIn">
 
         {/* ── Summary cards ── */}
         {!loading && (
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:grid-cols-4">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-card">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Corretoras</p>
@@ -179,7 +179,7 @@ export default function PlatformOverview() {
                 </div>
               </div>
             </div>
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-card">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Avaliações Totais</p>
@@ -191,7 +191,7 @@ export default function PlatformOverview() {
                 </div>
               </div>
             </div>
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-card">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Risco Crítico Global</p>
@@ -205,7 +205,7 @@ export default function PlatformOverview() {
                 </div>
               </div>
             </div>
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-card">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Gatilhos de Vida</p>

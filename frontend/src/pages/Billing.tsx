@@ -43,7 +43,7 @@ function UsageBar({
   const barColor = isCritical ? 'bg-red-500' : isWarning ? 'bg-amber-500' : 'bg-brand-500'
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
+    <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-card">
       <div className="flex items-center justify-between gap-3 mb-4">
         <div className="flex items-center gap-3">
           <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${iconBg}`}>
@@ -124,7 +124,7 @@ export default function Billing() {
         subtitle="Consumo e informações do plano ativo"
       />
 
-      <div className="p-6 space-y-5 animate-fadeIn">
+      <div className="p-4 sm:p-6 space-y-4 sm:space-y-5 animate-fadeIn">
 
         {loading && (
           <div className="flex items-center justify-center gap-2 py-20 text-slate-400">
@@ -136,7 +136,7 @@ export default function Billing() {
         {!loading && (
           <>
             {/* ── Plan card ── */}
-            <div className="rounded-2xl border border-brand-200 bg-gradient-to-br from-brand-50 to-white p-6 shadow-card">
+            <div className="rounded-2xl border border-brand-200 bg-gradient-to-br from-brand-50 to-white p-4 sm:p-6 shadow-card">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-2 mb-2">
@@ -200,7 +200,7 @@ export default function Billing() {
             </div>
 
             {/* ── Info card ── */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-card">
               <h3 className="mb-3 text-sm font-bold text-slate-900">Informações de Cobrança</h3>
               <div className="space-y-3">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">

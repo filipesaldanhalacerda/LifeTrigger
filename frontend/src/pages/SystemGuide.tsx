@@ -25,7 +25,7 @@ function Accordion({ id, title, icon: Icon, children, openId, onToggle }: {
     <div className="rounded-2xl border border-slate-200 bg-white shadow-card overflow-hidden">
       <button
         onClick={() => onToggle(id)}
-        className="flex w-full items-center gap-3 px-6 py-4 text-left hover:bg-slate-50 transition-colors"
+        className="flex w-full items-center gap-3 px-4 sm:px-6 py-4 text-left hover:bg-slate-50 transition-colors"
       >
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-50">
           <Icon className="h-4.5 w-4.5 text-brand-600" />
@@ -33,7 +33,7 @@ function Accordion({ id, title, icon: Icon, children, openId, onToggle }: {
         <span className="flex-1 text-sm font-semibold text-slate-900">{title}</span>
         {open ? <ChevronUp className="h-4 w-4 text-slate-400" /> : <ChevronDown className="h-4 w-4 text-slate-400" />}
       </button>
-      {open && <div className="border-t border-slate-100 px-6 py-5">{children}</div>}
+      {open && <div className="border-t border-slate-100 px-4 sm:px-6 py-4 sm:py-5">{children}</div>}
     </div>
   )
 }
@@ -156,10 +156,10 @@ export default function SystemGuide() {
     <div>
       <TopBar title="Guia do Sistema" subtitle="Entenda o que o LifeTrigger faz e como usar cada funcionalidade" />
 
-      <div className="p-6 space-y-5 animate-fadeIn max-w-4xl">
+      <div className="p-4 sm:p-6 space-y-4 sm:space-y-5 animate-fadeIn max-w-4xl">
 
         {/* ── Hero ── */}
-        <div className="rounded-2xl border border-brand-200 bg-gradient-to-br from-brand-50 to-white p-6 shadow-card">
+        <div className="rounded-2xl border border-brand-200 bg-gradient-to-br from-brand-50 to-white p-4 sm:p-6 shadow-card">
           <div className="flex items-start gap-4">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-600 shadow-lg shadow-brand-900/20">
               <Activity className="h-6 w-6 text-white" />
@@ -668,7 +668,7 @@ export default function SystemGuide() {
             {/* Caracteristicas tecnicas */}
             <div>
               <SectionLabel>Caracteristicas Tecnicas</SectionLabel>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 {[
                   { icon: FileJson,   title: 'REST + JSON',         desc: 'Qualquer linguagem: Python, Node, Java, PHP, no-code', bg: 'bg-brand-600' },
                   { icon: Lock,       title: 'JWT Auth',            desc: 'Todas as rotas protegidas. Refresh automatico',        bg: 'bg-violet-600' },
@@ -727,7 +727,7 @@ export default function SystemGuide() {
         </Accordion>
 
         {/* Footer */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card text-center">
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-card text-center">
           <p className="text-sm font-semibold text-slate-700">LifeTrigger Engine v1.0.0</p>
           <p className="mt-1 text-xs text-slate-400">Motor de Inteligencia de Protecao de Vida · B2B SaaS</p>
         </div>

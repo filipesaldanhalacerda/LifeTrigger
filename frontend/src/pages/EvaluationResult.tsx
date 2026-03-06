@@ -118,7 +118,7 @@ export default function EvaluationResult() {
         subtitle={id ? `ID: ${id.slice(0, 18)}…` : 'Avaliação recém-gerada'}
       />
 
-      <div className="animate-fadeIn p-6 space-y-5">
+      <div className="animate-fadeIn p-4 sm:p-6 space-y-4 sm:space-y-5">
 
         {/* Back */}
         <button
@@ -130,7 +130,7 @@ export default function EvaluationResult() {
         </button>
 
         {/* ── Diagnosis / recommendation card — always visible ── */}
-        <div className={`rounded-2xl border p-5 shadow-card ${actionTheme.border} ${actionTheme.bg}`}>
+        <div className={`rounded-2xl border p-4 sm:p-5 shadow-card ${actionTheme.border} ${actionTheme.bg}`}>
           <div className="flex items-start gap-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/60">
               <ActionIcon className={`h-5 w-5 ${actionTheme.iconColor}`} />
@@ -175,7 +175,7 @@ export default function EvaluationResult() {
           <div className="space-y-5">
 
             {/* Coverage gap */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-card">
               <h2 className="text-sm font-semibold text-slate-900">Cobertura vs. Necessidade</h2>
               <p className="mt-0.5 mb-5 text-xs text-slate-500">
                 Comparativo entre a cobertura atual do cliente e o valor recomendado pelo motor.
@@ -207,7 +207,7 @@ export default function EvaluationResult() {
             </div>
 
             {/* Scores */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-card">
               <h2 className="text-sm font-semibold text-slate-900">Scores da Avaliação</h2>
               <p className="mt-0.5 mb-4 text-xs text-slate-500">
                 Dois indicadores calculados pelo motor a partir do perfil financeiro e familiar do cliente.
@@ -238,12 +238,12 @@ export default function EvaluationResult() {
 
             {/* Client context */}
             {req && (
-              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-card">
                 <h2 className="mb-1 text-sm font-semibold text-slate-900">Dados do Cliente Avaliado</h2>
                 <p className="mb-4 text-xs text-slate-500">
                   Perfil utilizado pelo motor para calcular a necessidade de cobertura.
                 </p>
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
                   <ContextCard icon={User} label="Idade" value={`${req.personalContext.age} anos`} />
                   <ContextCard
                     icon={DollarSign}
@@ -291,7 +291,7 @@ export default function EvaluationResult() {
         {activeTab === 'insights' && (
           <div className="space-y-5">
             {insightCount > 0 ? (
-              <div className="rounded-2xl border border-brand-200 bg-gradient-to-b from-brand-50 to-white p-5 shadow-card">
+              <div className="rounded-2xl border border-brand-200 bg-gradient-to-b from-brand-50 to-white p-4 sm:p-5 shadow-card">
                 <div className="mb-5 flex items-start gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-100">
                     <Lightbulb className="h-5 w-5 text-brand-600" />
@@ -326,7 +326,7 @@ export default function EvaluationResult() {
 
             {/* Justifications */}
             {result.justificationsRendered?.length > 0 && (
-              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-card">
                 <h2 className="mb-1 text-sm font-semibold text-slate-900">Justificativas do Cálculo</h2>
                 <p className="mb-4 text-xs text-slate-500">
                   Regras aplicadas pelo motor que influenciaram este resultado.
@@ -344,7 +344,7 @@ export default function EvaluationResult() {
 
             {/* Audit metadata */}
             {result.audit && (
-              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-card">
                 <div className="mb-4 flex items-start justify-between gap-3">
                   <div>
                     <h2 className="text-sm font-semibold text-slate-900">Metadados de Auditoria</h2>
@@ -363,7 +363,7 @@ export default function EvaluationResult() {
                   )}
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 mb-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
                   <AuditRow label="Versão do Motor"   value={result.audit.engineVersion} />
                   <AuditRow label="Versão do Ruleset" value={result.audit.ruleSetVersion} />
                   <AuditRow label="Consent ID"        value={result.audit.consentId} />
