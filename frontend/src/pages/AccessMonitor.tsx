@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import {
   Activity, Users, Globe, Shield, AlertTriangle,
-  CheckCircle, XCircle, Loader2, RefreshCw, Monitor,
+  CheckCircle, XCircle, Loader2, Monitor,
   Smartphone, Clock,
 } from 'lucide-react'
 import { TopBar } from '../components/layout/TopBar'
@@ -89,22 +89,13 @@ export default function AccessMonitor() {
 
       <div className="p-4 sm:p-6 space-y-4 sm:space-y-5 animate-fadeIn">
 
-        {/* Period selector + refresh */}
-        <div className="flex flex-wrap items-center gap-3">
-          <DateRangePicker
-            startDate={startDate}
-            endDate={endDate}
-            maxDate={today()}
-            onChange={(s, e) => { setStartDate(s); setEndDate(e) }}
-          />
-          <button
-            onClick={() => void load(startDate, endDate)}
-            className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600 hover:bg-slate-50 transition-colors"
-          >
-            <RefreshCw className="h-3 w-3" />
-            Atualizar
-          </button>
-        </div>
+        {/* Period selector */}
+        <DateRangePicker
+          startDate={startDate}
+          endDate={endDate}
+          maxDate={today()}
+          onChange={(s, e) => { setStartDate(s); setEndDate(e) }}
+        />
 
         {/* Loading */}
         {loading && (
