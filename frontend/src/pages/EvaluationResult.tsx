@@ -504,7 +504,7 @@ const PRIORITY_BADGE: Record<string, { label: string; className: string }> = {
 }
 
 function InsightCard({ insight }: { insight: BrokerInsight }) {
-  const [open, setOpen] = React.useState(false)
+  const [open, setOpen] = React.useState(true)
   const meta     = INSIGHT_META[insight.category]
   const priority = PRIORITY_BADGE[insight.priority]
   const Icon = meta.icon
