@@ -86,7 +86,7 @@ public static class DemoDataSeeder
             {
                 Id           = Guid.NewGuid(),
                 Email        = email,
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(password, workFactor: 4),
                 Role         = role,
                 TenantId     = tenantId,
             });
