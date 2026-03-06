@@ -565,11 +565,11 @@ function ScoreRow({
 }) {
   const barColor = score < 30 ? 'bg-red-500' : score < 70 ? 'bg-amber-500' : 'bg-emerald-500'
   return (
-    <div className="flex items-center gap-4 rounded-lg border border-slate-100 bg-slate-50 p-4">
+    <div className="flex flex-col items-center gap-4 rounded-lg border border-slate-100 bg-slate-50 p-4 sm:flex-row sm:items-center">
       {/* Ring */}
       <ScoreRing score={score} size={88} strokeWidth={7} />
       {/* Text */}
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 text-center sm:text-left">
         <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
           <p className="text-sm font-bold text-slate-900">{nameLocal}</p>
           <p className="font-mono text-[11px] text-slate-400">{nameTech}</p>

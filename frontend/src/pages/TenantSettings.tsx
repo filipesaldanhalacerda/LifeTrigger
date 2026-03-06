@@ -318,10 +318,10 @@ export default function TenantSettings() {
           )}
 
           {/* ── Actions ── */}
-          <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 sm:px-5 py-4 shadow-card">
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between rounded-2xl border border-slate-200 bg-white px-4 sm:px-5 py-4 shadow-card">
             <button
               onClick={handleReset}
-              className="flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+              className="flex items-center justify-center gap-2 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors sm:py-2"
             >
               <RotateCcw className="h-4 w-4" />
               Restaurar padrões
@@ -329,7 +329,7 @@ export default function TenantSettings() {
             <button
               onClick={handleSave}
               disabled={saving || settings.minCoverageAnnualIncomeMultiplier >= settings.maxTotalCoverageMultiplier}
-              className="flex items-center gap-2 rounded-lg bg-brand-600 px-5 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50 transition-colors"
+              className="flex items-center justify-center gap-2 rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50 transition-colors sm:py-2"
             >
               <Save className="h-4 w-4" />
               {saving ? 'Salvando…' : 'Salvar Configurações'}

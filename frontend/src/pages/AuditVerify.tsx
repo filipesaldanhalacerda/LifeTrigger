@@ -116,7 +116,7 @@ export default function AuditVerify() {
             <h2 className="text-sm font-semibold text-slate-900">Verificar Avaliação</h2>
 
             <div className="space-y-1.5">
-              <div className="flex gap-2">
+              <div className="flex flex-col gap-2 sm:flex-row">
                 <div className="relative flex-1">
                   <input
                     type="text"
@@ -145,7 +145,7 @@ export default function AuditVerify() {
                 <button
                   type="submit"
                   disabled={loading || !inputIsValid}
-                  className="flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50 transition-colors"
+                  className="flex items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50 transition-colors sm:py-2"
                 >
                   <Search className="h-4 w-4" />
                   {loading ? 'Verificando…' : 'Verificar'}

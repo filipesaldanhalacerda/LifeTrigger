@@ -552,9 +552,9 @@ export default function NewTrigger() {
               </div>
             )}
 
-            <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-4 shadow-card">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-2xl border border-slate-200 bg-white p-4 shadow-card">
               <div className="flex items-center gap-2.5">
-                <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${activeTrigger.bg}`}>
+                <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${activeTrigger.bg}`}>
                   {(() => { const Icon = activeTrigger.icon; return <Icon className={`h-5 w-5 ${activeTrigger.color}`} /> })()}
                 </div>
                 <div>
@@ -565,7 +565,7 @@ export default function NewTrigger() {
               <button
                 type="submit"
                 disabled={loading}
-                className="flex items-center gap-2 rounded-xl bg-brand-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-700 disabled:opacity-50 transition-colors"
+                className="flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-700 disabled:opacity-50 transition-colors w-full sm:w-auto"
               >
                 {loading && (
                   <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />

@@ -116,6 +116,94 @@ function TenantRow({ row }: { row: TenantWithStats }) {
   )
 }
 
+function TenantCard({ row }: { row: TenantWithStats }) {
+  const { tenant, report, loadingReport } = row
+  const total    = report?.totalEvaluations ?? 0
+  const critPct  = pct(report?.riskDistribution.critico ?? 0, total)
+  const adePct   = pct(report?.riskDistribution.adequado ?? 0, total)
+
+  return (
+    <div className="p-4 space-y-3">
+      <div className="flex items-center gap-3">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-50">
+          <Building2 className="h-4 w-4 text-brand-600" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="font-semibold text-slate-800 truncate">{tenant.name}</p>
+          <p className="text-[11px] font-mono text-slate-400">{tenant.slug}</p>
+        </div>
+        {tenant.isActive ? (
+          <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700">
+            <span className="h-2 w-2 rounded-full bg-emerald-500" />
+            Ativa
+          </span>
+        ) : (
+          <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-400">
+            <span className="h-2 w-2 rounded-full bg-slate-300" />
+            Inativa
+          </span>
+        )}
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 text-xs">
+        <div>
+          <p className="text-slate-400">Criada</p>
+          <p className="font-medium text-slate-600">{formatDate(tenant.createdAt)}</p>
+        </div>
+        <div>
+          <p className="text-slate-400">Avaliações</p>
+          {loadingReport ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-300" />
+          ) : (
+            <p className="font-bold text-slate-800 tabular-nums">{total.toLocaleString('pt-BR')}</p>
+          )}
+        </div>
+        <div>
+          <p className="text-slate-400">% Crítico</p>
+          {loadingReport ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-300" />
+          ) : total === 0 ? (
+            <p className="text-slate-300">—</p>
+          ) : (
+            <div className="flex items-center gap-2">
+              <div className="h-1.5 w-12 overflow-hidden rounded-full bg-slate-100">
+                <div className="h-1.5 rounded-full bg-red-500" style={{ width: `${critPct}%` }} />
+              </div>
+              <span className={`font-semibold tabular-nums ${critPct > 40 ? 'text-red-600' : 'text-slate-500'}`}>
+                {critPct}%
+              </span>
+            </div>
+          )}
+        </div>
+        <div>
+          <p className="text-slate-400">% Adequado</p>
+          {loadingReport ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-300" />
+          ) : total === 0 ? (
+            <p className="text-slate-300">—</p>
+          ) : (
+            <div className="flex items-center gap-2">
+              <div className="h-1.5 w-12 overflow-hidden rounded-full bg-slate-100">
+                <div className="h-1.5 rounded-full bg-emerald-500" style={{ width: `${adePct}%` }} />
+              </div>
+              <span className="font-semibold tabular-nums text-slate-500">{adePct}%</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between text-xs">
+        <span className="text-slate-400">Gatilhos</span>
+        {loadingReport ? (
+          <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-300" />
+        ) : (
+          <span className="font-semibold text-slate-600 tabular-nums">{report?.triggerCount ?? 0}</span>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ── Main component ─────────────────────────────────────────────────
 export default function PlatformOverview() {
   const [rows,    setRows]    = useState<TenantWithStats[]>([])
@@ -251,26 +339,35 @@ export default function PlatformOverview() {
                 <p className="mt-1 text-xs text-slate-400">Acesse Corretoras para cadastrar a primeira.</p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-slate-100 bg-slate-50">
-                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Corretora</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Status</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Criada</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Avaliações</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">% Crítico</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">% Adequado</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Gatilhos</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rows.map((row) => (
-                      <TenantRow key={row.tenant.id} row={row} />
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <>
+                {/* Mobile cards */}
+                <div className="divide-y divide-slate-100 sm:hidden">
+                  {rows.map((row) => (
+                    <TenantCard key={row.tenant.id} row={row} />
+                  ))}
+                </div>
+                {/* Desktop table */}
+                <div className="hidden sm:block overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-slate-100 bg-slate-50">
+                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Corretora</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Status</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Criada</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Avaliações</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">% Crítico</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">% Adequado</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Gatilhos</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rows.map((row) => (
+                        <TenantRow key={row.tenant.id} row={row} />
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             )}
           </div>
         )}
