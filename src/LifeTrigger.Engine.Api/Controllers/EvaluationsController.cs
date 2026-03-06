@@ -324,9 +324,9 @@ public class EvaluationsController : ControllerBase
         if (offset < 0)
             return BadRequest(new { Message = "O parâmetro 'offset' deve ser maior ou igual a zero." });
 
-        var evaluations = await _repository.GetByFilterAsync(tenantId, startDate, endDate, limit, offset, cancellationToken: cancellationToken);
+        var evaluations = (await _repository.GetByFilterAsync(tenantId, startDate, endDate, limit, offset, cancellationToken: cancellationToken)).ToList();
 
-        var total = evaluations.Count();
+        var total = evaluations.Count;
         if (total == 0)
         {
             return Ok(new
@@ -340,7 +340,7 @@ public class EvaluationsController : ControllerBase
 
         var riskDist     = evaluations.GroupBy(e => e.Result.RiskClassification).ToDictionary(g => g.Key, g => g.Count());
         var actionDist   = evaluations.GroupBy(e => e.Result.RecommendedAction).ToDictionary(g => g.Key, g => g.Count());
-        var triggerCount = evaluations.Count(e => e.Request.OperationalData.RecentLifeTrigger);
+        var triggerCount = evaluations.Count(e => e.Request?.OperationalData?.RecentLifeTrigger == true);
 
         return Ok(new
         {
