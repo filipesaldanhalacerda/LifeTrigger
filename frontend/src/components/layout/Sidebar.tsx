@@ -18,6 +18,8 @@ import {
   X,
   BookOpen,
   Eye,
+  HeartPulse,
+  BarChart3,
 } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { useAuth } from '../../contexts/AuthContext'
@@ -82,7 +84,9 @@ const sections: NavSection[] = [
     items: [
       { to: '/admin/tenants',  label: 'Corretoras',         icon: Building2, minRole: 'SuperAdmin' },
       { to: '/admin/users',    label: 'Usuários Globais',   icon: Users,     minRole: 'SuperAdmin' },
-      { to: '/admin/access',   label: 'Monitor de Acessos', icon: Eye,       minRole: 'SuperAdmin' },
+      { to: '/admin/access',     label: 'Monitor de Acessos', icon: Eye,        minRole: 'SuperAdmin' },
+      { to: '/admin/analytics',  label: 'Análise do Motor',   icon: BarChart3,  minRole: 'SuperAdmin' },
+      { to: '/admin/health',     label: 'Saúde da Plataforma', icon: HeartPulse, minRole: 'SuperAdmin' },
     ],
   },
   {

@@ -320,104 +320,69 @@ function LoginChart({ data }: { data: { date: string; count: number }[] }) {
   const [hover, setHover] = useState<number | null>(null)
 
   const max = Math.max(...data.map((d) => d.count), 1)
-  const step = max <= 5 ? 1 : max <= 20 ? 5 : max <= 50 ? 10 : max <= 200 ? 25 : 50
-  const ceil = Math.ceil(max / step) * step || 1
-  const gridCount = 4
-  const gridLines = Array.from({ length: gridCount }, (_, i) => Math.round((ceil / gridCount) * (gridCount - i)))
-
-  const W = 500
-  const H = 160
-  const ML = 30 // margin left for Y labels
-  const MR = 8
-  const MT = 8
-  const MB = 20 // margin bottom for X labels
-
-  const chartW = W - ML - MR
-  const chartH = H - MT - MB
-  const n = data.length
-
-  const points = data.map((d, i) => ({
-    x: ML + (n > 1 ? (i / (n - 1)) * chartW : chartW / 2),
-    y: MT + chartH - (d.count / ceil) * chartH,
-    ...d,
-  }))
-
-  const line = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ')
-  const area = `${line} L${points[points.length - 1].x},${MT + chartH} L${points[0].x},${MT + chartH} Z`
-
-  const labelEvery = Math.max(1, Math.ceil(n / 8))
   const total = data.reduce((s, d) => s + d.count, 0)
-  const avg = n > 0 ? (total / n).toFixed(1) : '0'
+  const avg = data.length > 0 ? (total / data.length).toFixed(1) : '0'
+  const labelEvery = Math.max(1, Math.ceil(data.length / 10))
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-white shadow-card overflow-hidden">
-      <div className="flex items-center justify-between px-4 sm:px-5 pt-4 sm:pt-5 pb-1">
+      <div className="flex items-center justify-between px-4 sm:px-5 pt-4 sm:pt-5 pb-3">
         <div>
           <h2 className="text-sm font-bold text-slate-900">Logins por Dia</h2>
-          <p className="mt-0.5 text-xs text-slate-400">{data.length} dias · média {avg}/dia</p>
+          <p className="mt-0.5 text-xs text-slate-400">{data.length} dias · média {avg}/dia · total {total}</p>
         </div>
         {hover !== null && (
           <div className="text-right animate-fadeIn">
-            <p className="text-lg font-bold tabular-nums text-brand-700">{points[hover].count}</p>
-            <p className="text-[11px] text-slate-400">{formatDateBR(points[hover].date)}</p>
+            <p className="text-lg font-bold tabular-nums text-brand-700">{data[hover].count}</p>
+            <p className="text-[11px] text-slate-400">{formatDateBR(data[hover].date)}</p>
           </div>
         )}
       </div>
 
-      <div className="px-2 sm:px-3 pb-3" onMouseLeave={() => setHover(null)}>
-        <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ maxHeight: 180 }}>
-          {/* Grid lines + Y labels */}
-          {gridLines.map((v) => {
-            const y = MT + chartH - (v / ceil) * chartH
+      <div
+        className="px-4 sm:px-5 pb-4 sm:pb-5"
+        onMouseLeave={() => setHover(null)}
+      >
+        {/* Bar chart */}
+        <div className="flex items-end justify-center gap-[3px] sm:gap-1.5" style={{ height: 180 }}>
+          {data.map((d, i) => {
+            const pct = max > 0 ? (d.count / max) * 100 : 0
+            const isHovered = hover === i
             return (
-              <g key={v}>
-                <line x1={ML} y1={y} x2={W - MR} y2={y} stroke="#f1f5f9" strokeWidth="1" />
-                <text x={ML - 6} y={y + 3.5} fontSize="9" fill="#94a3b8" textAnchor="end" fontFamily="system-ui">{v}</text>
-              </g>
+              <div
+                key={d.date}
+                className="flex flex-col items-center justify-end h-full relative"
+                onMouseEnter={() => setHover(i)}
+                style={{ cursor: 'pointer', width: `${Math.min(100 / data.length, 12)}%`, maxWidth: 48 }}
+              >
+                {/* Tooltip */}
+                {isHovered && (
+                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[11px] px-2 py-1 rounded-lg whitespace-nowrap z-10 shadow-lg pointer-events-none">
+                    <span className="font-semibold">{d.count}</span> logins
+                  </div>
+                )}
+                {/* Bar */}
+                <div
+                  className="w-full rounded-t transition-all duration-200"
+                  style={{
+                    height: `${Math.max(pct, 2)}%`,
+                    minHeight: d.count > 0 ? 4 : 1,
+                    background: isHovered
+                      ? 'var(--color-brand-600)'
+                      : 'var(--color-brand-400)',
+                    opacity: hover !== null && !isHovered ? 0.45 : 1,
+                  }}
+                />
+                {/* X label */}
+                {i % labelEvery === 0 && (
+                  <span className="text-[10px] text-slate-400 leading-none mt-1.5 whitespace-nowrap">
+                    {formatDateBR(d.date)}
+                  </span>
+                )}
+              </div>
             )
           })}
-          <line x1={ML} y1={MT + chartH} x2={W - MR} y2={MT + chartH} stroke="#e2e8f0" strokeWidth="1" />
-          <text x={ML - 6} y={MT + chartH + 3.5} fontSize="9" fill="#94a3b8" textAnchor="end" fontFamily="system-ui">0</text>
-
-          {/* Area gradient */}
-          <defs>
-            <linearGradient id="loginArea" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="var(--color-brand-500)" stopOpacity="0.15" />
-              <stop offset="100%" stopColor="var(--color-brand-500)" stopOpacity="0.01" />
-            </linearGradient>
-          </defs>
-          <path d={area} fill="url(#loginArea)" />
-          <path d={line} fill="none" stroke="var(--color-brand-500)" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
-
-          {/* Data points + hover */}
-          {points.map((p, i) => (
-            <g key={p.date}>
-              <rect
-                x={p.x - chartW / n / 2}
-                y={0}
-                width={chartW / n}
-                height={H}
-                fill="transparent"
-                onMouseEnter={() => setHover(i)}
-                style={{ cursor: 'pointer' }}
-              />
-              {hover === i && (
-                <line x1={p.x} y1={MT} x2={p.x} y2={MT + chartH} stroke="var(--color-brand-300)" strokeWidth="1" strokeDasharray="4,3" />
-              )}
-              <circle
-                cx={p.x} cy={p.y}
-                r={hover === i ? 5 : 2.5}
-                fill={hover === i ? 'var(--color-brand-600)' : 'var(--color-brand-500)'}
-                stroke="white" strokeWidth={hover === i ? 2 : 0}
-              />
-              {i % labelEvery === 0 && (
-                <text x={p.x} y={H - 4} fontSize="9" fill="#94a3b8" textAnchor="middle" fontFamily="system-ui">
-                  {formatDateBR(p.date)}
-                </text>
-              )}
-            </g>
-          ))}
-        </svg>
+        </div>
       </div>
     </div>
   )

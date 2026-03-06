@@ -375,3 +375,44 @@ export async function fetchHealth(): Promise<{ status: string }> {
   const text = await res.text()
   return { status: text.trim() }
 }
+
+// ── Diagnostics ──────────────────────────────────────────────────
+export interface ServiceDiagnostics {
+  service: string
+  status: string
+  timestamp: string
+  database: {
+    connected: boolean
+    error: string | null
+    sizeBytes: number | null
+    sizeHuman: string | null
+    activeConnections: number | null
+    maxConnections: number | null
+  }
+  tables: Record<string, number>
+}
+
+export async function getAuthDiagnostics(): Promise<ServiceDiagnostics> {
+  return request<ServiceDiagnostics>('/diagnostics', {}, undefined, true, 'auth')
+}
+
+export async function getEngineDiagnostics(): Promise<ServiceDiagnostics> {
+  return request<ServiceDiagnostics>('/engine-diagnostics', {}, undefined, true, 'engine')
+}
+
+// ── Evaluation Analytics ─────────────────────────────────────────
+export interface EvaluationAnalytics {
+  periodDays: number
+  total: number
+  avgScore: number
+  avgGap: number
+  perDay: { date: string; count: number }[]
+  perTenant: { tenantId: string; count: number; lastEvaluation: string }[]
+  perUser: { userId: string; count: number; lastEvaluation: string }[]
+  riskDistribution: { risk: string; count: number }[]
+  actionDistribution: { action: string; count: number }[]
+}
+
+export async function getEvaluationAnalytics(startDate: string, endDate: string): Promise<EvaluationAnalytics> {
+  return request<EvaluationAnalytics>(`/analytics/evaluations?startDate=${startDate}&endDate=${endDate}`, {}, undefined, true, 'engine')
+}

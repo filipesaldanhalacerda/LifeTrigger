@@ -20,6 +20,8 @@ import Billing from './pages/Billing'
 import GlobalUsers from './pages/GlobalUsers'
 import SystemGuide from './pages/SystemGuide'
 import AccessMonitor from './pages/AccessMonitor'
+import PlatformHealth from './pages/PlatformHealth'
+import EngineAnalytics from './pages/EngineAnalytics'
 
 export default function App() {
   return (
@@ -75,6 +77,8 @@ export default function App() {
                 <Route path="admin/tenants" element={<TenantManagement />} />
                 <Route path="admin/users" element={<GlobalUsers />} />
                 <Route path="admin/access" element={<AccessMonitor />} />
+                <Route path="admin/health" element={<PlatformHealth />} />
+                <Route path="admin/analytics" element={<EngineAnalytics />} />
               </Route>
 
               {/* All authenticated users */}
