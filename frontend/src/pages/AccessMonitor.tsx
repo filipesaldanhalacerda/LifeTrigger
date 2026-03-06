@@ -365,7 +365,7 @@ function LoginChart({ data }: { data: { date: string; count: number }[] }) {
       </div>
 
       <div className="px-2 sm:px-3 pb-3" onMouseLeave={() => setHover(null)}>
-        <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto">
+        <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ maxHeight: 180 }}>
           {/* Grid lines + Y labels */}
           {gridLines.map((v) => {
             const y = MT + chartH - (v / ceil) * chartH
