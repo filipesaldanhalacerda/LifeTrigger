@@ -88,9 +88,9 @@ function CalendarMonth({
         }
       </div>
 
-      <div className="grid grid-cols-7 gap-1">
+      <div className="grid grid-cols-7 gap-0">
         {WEEKDAYS.map((w) => (
-          <div key={w} className="py-1 text-center text-[10px] font-semibold uppercase tracking-wider text-slate-400">{w}</div>
+          <div key={w} className="py-1.5 text-center text-[10px] font-semibold uppercase tracking-wider text-slate-400">{w}</div>
         ))}
         {cells.map((day, i) => {
           if (!day) return <div key={`e-${i}`} />
@@ -101,7 +101,7 @@ function CalendarMonth({
           const isMid = rangeStart && effectiveEnd && !isStart && !isEnd && inRange(day, rangeStart, effectiveEnd)
           const isToday = sameDay(day, new Date())
 
-          let cls = 'relative h-9 w-9 flex items-center justify-center text-[13px] rounded-full transition-all duration-100 '
+          let cls = 'relative h-8 w-8 flex items-center justify-center text-xs rounded-full transition-all duration-100 '
           if (isDisabled) {
             cls += 'text-slate-300 cursor-not-allowed'
           } else if (isStart || isEnd) {
@@ -278,8 +278,8 @@ export function DateRangePicker({ startDate, endDate, onChange, maxDate }: DateR
           </div>
 
           {/* Calendars */}
-          <div className="p-5">
-            <div className="flex gap-8">
+          <div className="p-4">
+            <div className="flex gap-6">
               <CalendarMonth
                 year={leftYear}
                 month={leftMonth}
