@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronDown, LogOut, Building2, Check, User, Menu } from 'lucide-react'
-import { getActiveTenantId, setActiveTenantId, getTenants, getTenant } from '../../lib/api'
+import { ChevronDown, LogOut, Building2, User, Menu } from 'lucide-react'
+import { getTenant } from '../../lib/api'
 import { useAuth } from '../../contexts/AuthContext'
 import { useMobileMenu } from '../../contexts/MobileMenuContext'
 import type { Tenant } from '../../types/api'
@@ -36,44 +36,28 @@ const ROLE_LABEL: Record<string, string> = {
 }
 
 export function TopBar({ title, subtitle }: TopBarProps) {
-  const { user, logout, hasRole } = useAuth()
+  const { user, logout } = useAuth()
   const navigate = useNavigate()
   const mobileMenu = useMobileMenu()
 
-  const [tenants, setTenants] = useState<Tenant[]>([])
   const [activeTenant, setActiveTenant] = useState<Tenant | null>(null)
-  const [tenantMenuOpen, setTenantMenuOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
 
-  const tenantRef = useRef<HTMLDivElement>(null)
-  const userRef   = useRef<HTMLDivElement>(null)
+  const userRef = useRef<HTMLDivElement>(null)
+
+  const isSuperAdmin = user?.role === 'SuperAdmin'
 
   useEffect(() => {
     if (!user) return
-    if (hasRole('SuperAdmin')) {
-      getTenants()
-        .then((list) => {
-          setTenants(list)
-          const activeId = getActiveTenantId()
-          const found = list.find((t) => t.id === activeId) ?? list[0] ?? null
-          if (found) {
-            setActiveTenantId(found.id)
-            setActiveTenant(found)
-          }
-        })
-        .catch(() => {})
-    } else if (user.tenantId) {
+    if (!isSuperAdmin && user.tenantId) {
       getTenant(user.tenantId)
         .then((t) => setActiveTenant(t))
         .catch(() => {})
     }
-  }, [user, hasRole])
+  }, [user, isSuperAdmin])
 
   useEffect(() => {
     function onMouseDown(e: MouseEvent) {
-      if (tenantRef.current && !tenantRef.current.contains(e.target as Node)) {
-        setTenantMenuOpen(false)
-      }
       if (userRef.current && !userRef.current.contains(e.target as Node)) {
         setUserMenuOpen(false)
       }
@@ -81,13 +65,6 @@ export function TopBar({ title, subtitle }: TopBarProps) {
     document.addEventListener('mousedown', onMouseDown)
     return () => document.removeEventListener('mousedown', onMouseDown)
   }, [])
-
-  function handleTenantSelect(t: Tenant) {
-    setActiveTenantId(t.id)
-    setActiveTenant(t)
-    setTenantMenuOpen(false)
-    window.location.href = '/'
-  }
 
   async function handleLogout() {
     setUserMenuOpen(false)
@@ -126,85 +103,8 @@ export function TopBar({ title, subtitle }: TopBarProps) {
       {/* Right: controls */}
       <div className="flex items-center gap-1.5 sm:gap-2 ml-2 shrink-0">
 
-        {/* Tenant: SuperAdmin gets a dropdown switcher */}
-        {hasRole('SuperAdmin') ? (
-          <div className="relative" ref={tenantRef}>
-            <button
-              onClick={() => setTenantMenuOpen((v) => !v)}
-              className={`flex items-center gap-1.5 sm:gap-2 rounded-lg border px-2 sm:px-3 py-1.5 sm:py-2 text-xs transition-colors ${
-                tenantMenuOpen
-                  ? 'border-brand-300 bg-brand-50 text-brand-700'
-                  : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-slate-300 hover:bg-white'
-              }`}
-            >
-              <Building2 className="h-3.5 w-3.5 shrink-0 text-slate-400" />
-              <div className="text-left hidden sm:block">
-                <p className="text-xs font-semibold leading-none">
-                  {activeTenant?.name ?? 'Selecionar…'}
-                </p>
-                {activeTenant && (
-                  <p className="mt-0.5 font-mono text-[10px] leading-none text-slate-400">
-                    /{activeTenant.slug}
-                  </p>
-                )}
-              </div>
-              <ChevronDown
-                className={`h-3.5 w-3.5 text-slate-400 transition-transform ${tenantMenuOpen ? 'rotate-180' : ''}`}
-              />
-            </button>
-
-            {tenantMenuOpen && (
-              <div className="absolute right-0 mt-2 w-72 rounded-xl border border-slate-200 bg-white shadow-elevated ring-1 ring-black/5 overflow-hidden animate-scaleIn">
-                <div className="border-b border-slate-100 px-4 py-2.5">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                    Corretoras disponíveis
-                  </p>
-                </div>
-                <div className="max-h-64 overflow-y-auto py-1">
-                  {tenants.map((t) => {
-                    const isSelected = t.id === activeTenant?.id
-                    return (
-                      <button
-                        key={t.id}
-                        onClick={() => handleTenantSelect(t)}
-                        className={`flex w-full items-center gap-3 px-4 py-2.5 transition-colors ${
-                          isSelected ? 'bg-brand-50' : 'hover:bg-slate-50'
-                        }`}
-                      >
-                        <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
-                          isSelected ? 'bg-brand-600' : 'bg-slate-100'
-                        }`}>
-                          <Building2 className={`h-4 w-4 ${isSelected ? 'text-white' : 'text-slate-400'}`} />
-                        </div>
-                        <div className="flex-1 min-w-0 text-left">
-                          <div className="flex items-center gap-1.5">
-                            <p className={`text-sm font-medium truncate ${isSelected ? 'text-brand-700' : 'text-slate-700'}`}>
-                              {t.name}
-                            </p>
-                            <span
-                              title={t.isActive ? 'Ativa' : 'Inativa'}
-                              className={`inline-block h-1.5 w-1.5 shrink-0 rounded-full ${
-                                t.isActive ? 'bg-emerald-400' : 'bg-red-400'
-                              }`}
-                            />
-                          </div>
-                          <p className="font-mono text-[11px] text-slate-400">/{t.slug}</p>
-                        </div>
-                        {isSelected && <Check className="h-4 w-4 text-brand-600 shrink-0" />}
-                      </button>
-                    )
-                  })}
-                  {tenants.length === 0 && (
-                    <p className="px-4 py-3 text-sm text-slate-400 text-center">
-                      Nenhuma corretora encontrada.
-                    </p>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-
-        ) : activeTenant ? (
+        {/* Tenant info (hidden for SuperAdmin) */}
+        {!isSuperAdmin && activeTenant ? (
           <div className="hidden sm:flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
             <Building2 className="h-3.5 w-3.5 shrink-0 text-slate-400" />
             <div>
@@ -258,7 +158,7 @@ export function TopBar({ title, subtitle }: TopBarProps) {
                   </div>
                 </div>
 
-                {activeTenant && (
+                {!isSuperAdmin && activeTenant && (
                   <div className="flex items-center gap-2.5 px-4 py-2.5 border-b border-slate-100">
                     <Building2 className="h-3.5 w-3.5 shrink-0 text-slate-400" />
                     <div className="min-w-0">

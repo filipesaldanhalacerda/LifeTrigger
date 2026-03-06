@@ -1,7 +1,6 @@
 import { Navigate, Outlet } from 'react-router-dom'
 import { Activity } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
-import { getActiveTenantId } from '../../lib/api'
 import type { UserRole } from '../../contexts/AuthContext'
 
 interface ProtectedRouteProps {
@@ -36,14 +35,9 @@ export function ProtectedRoute({ minRole, tenantRequired }: ProtectedRouteProps)
     return <Navigate to="/" replace />
   }
 
-  // SuperAdmin has no tenantId in JWT, but can select a tenant via dropdown.
-  // Allow access to tenant routes if they have a selected tenant in localStorage.
+  // SuperAdmin has no tenantId — always redirect to platform admin
   if (tenantRequired && !user.tenantId) {
-    const isSuperAdmin = user.role === 'SuperAdmin'
-    const hasSelectedTenant = !!getActiveTenantId()
-    if (!isSuperAdmin || !hasSelectedTenant) {
-      return <Navigate to="/admin/tenants" replace />
-    }
+    return <Navigate to="/admin/tenants" replace />
   }
 
   return <Outlet />
