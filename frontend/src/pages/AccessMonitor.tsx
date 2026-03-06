@@ -18,8 +18,6 @@ function daysAgo(n: number): string {
   d.setDate(d.getDate() - n)
   return d.toISOString().slice(0, 10)
 }
-
-// ── Helpers ───────────────────────────────────────────────────────
 function parseUA(ua: string | null): { browser: string; os: string; isMobile: boolean } {
   if (!ua) return { browser: 'Desconhecido', os: 'Desconhecido', isMobile: false }
   const isMobile = /Mobile|Android|iPhone|iPad/i.test(ua)
@@ -92,32 +90,16 @@ export default function AccessMonitor() {
       <div className="p-4 sm:p-6 space-y-4 sm:space-y-5 animate-fadeIn">
 
         {/* Period selector + refresh */}
-        <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <DateRangePicker
             startDate={startDate}
             endDate={endDate}
             maxDate={today()}
             onChange={(s, e) => { setStartDate(s); setEndDate(e) }}
           />
-          <div className="flex items-center gap-2">
-            {[
-              { label: 'Hoje', d: 0 },
-              { label: '7 dias', d: 7 },
-              { label: '14 dias', d: 14 },
-              { label: '30 dias', d: 30 },
-            ].map(({ label, d }) => (
-              <button
-                key={d}
-                onClick={() => { setStartDate(daysAgo(d)); setEndDate(today()) }}
-                className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
-              >
-                {label}
-              </button>
-            ))}
-          </div>
           <button
             onClick={() => void load(startDate, endDate)}
-            className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50 transition-colors sm:ml-auto"
+            className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600 hover:bg-slate-50 transition-colors"
           >
             <RefreshCw className="h-3 w-3" />
             Atualizar

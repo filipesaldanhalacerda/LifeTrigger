@@ -6,7 +6,7 @@ const MONTHS = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
   'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
 ]
-const WEEKDAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
+const WEEKDAYS = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S']
 
 // ── Date helpers (all local, no timezone) ────────────────────────
 function toKey(d: Date) {
@@ -75,7 +75,7 @@ function CalendarMonth({
   const effectiveEnd = rangeEnd ?? hoverDate
 
   return (
-    <div className="select-none">
+    <div className="select-none w-[252px]">
       <div className="flex items-center justify-between mb-3 px-1">
         {onPrev
           ? <button type="button" onClick={onPrev} className="p-1 rounded-md hover:bg-slate-100 text-slate-500 transition-colors"><ChevronLeft className="h-4 w-4" /></button>
@@ -88,9 +88,9 @@ function CalendarMonth({
         }
       </div>
 
-      <div className="grid grid-cols-7 gap-0">
-        {WEEKDAYS.map((w) => (
-          <div key={w} className="py-1.5 text-center text-[10px] font-semibold uppercase tracking-wider text-slate-400">{w}</div>
+      <div className="grid grid-cols-7">
+        {WEEKDAYS.map((w, i) => (
+          <div key={i} className="py-1.5 text-center text-[10px] font-semibold uppercase tracking-wider text-slate-400">{w}</div>
         ))}
         {cells.map((day, i) => {
           if (!day) return <div key={`e-${i}`} />
@@ -261,7 +261,7 @@ export function DateRangePicker({ startDate, endDate, onChange, maxDate }: DateR
 
       {/* Dropdown */}
       {open && (
-        <div className="absolute left-0 top-full z-50 mt-2 flex flex-col sm:flex-row rounded-2xl border border-slate-200 bg-white shadow-elevated animate-scaleIn origin-top-left w-[calc(100vw-2rem)] sm:w-auto max-w-[calc(100vw-2rem)]">
+        <div className="absolute left-0 top-full z-50 mt-2 flex flex-col sm:flex-row rounded-2xl border border-slate-200 bg-white shadow-elevated animate-scaleIn origin-top-left max-w-[calc(100vw-2rem)]">
           {/* Presets — horizontal on mobile, sidebar on desktop */}
           <div className="border-b sm:border-b-0 sm:border-r border-slate-100 py-2 sm:py-3 px-2 sm:min-w-[140px]">
             <p className="px-2 pb-1.5 sm:pb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Período</p>
