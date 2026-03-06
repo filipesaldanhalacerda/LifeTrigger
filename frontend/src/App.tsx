@@ -15,7 +15,6 @@ import TeamManagement from './pages/TeamManagement'
 import UserProfile from './pages/UserProfile'
 import Reports from './pages/Reports'
 import TenantManagement from './pages/TenantManagement'
-import PlatformOverview from './pages/PlatformOverview'
 import ClientHistory from './pages/ClientHistory'
 import Billing from './pages/Billing'
 import GlobalUsers from './pages/GlobalUsers'
@@ -74,7 +73,6 @@ export default function App() {
               {/* ── SuperAdmin routes ────────────────────────────────────────── */}
               <Route element={<ProtectedRoute minRole="SuperAdmin" />}>
                 <Route path="admin/tenants" element={<TenantManagement />} />
-                <Route path="admin/platform" element={<PlatformOverview />} />
                 <Route path="admin/users" element={<GlobalUsers />} />
                 <Route path="admin/access" element={<AccessMonitor />} />
               </Route>

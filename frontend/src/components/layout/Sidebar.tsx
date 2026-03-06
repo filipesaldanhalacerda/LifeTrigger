@@ -13,7 +13,6 @@ import {
   Building2,
   UserCheck,
   CreditCard,
-  Globe,
   PanelLeftClose,
   PanelLeftOpen,
   X,
@@ -82,10 +81,9 @@ const sections: NavSection[] = [
   {
     label: 'Plataforma',
     items: [
-      { to: '/admin/tenants',  label: 'Corretoras',       icon: Building2, minRole: 'SuperAdmin' },
-      { to: '/admin/platform', label: 'Visão Global',     icon: Globe,     minRole: 'SuperAdmin' },
-      { to: '/admin/users',    label: 'Usuários Globais', icon: Users,     minRole: 'SuperAdmin' },
-      { to: '/admin/access',   label: 'Monitor de Acessos', icon: Eye,     minRole: 'SuperAdmin' },
+      { to: '/admin/tenants',  label: 'Corretoras',         icon: Building2, minRole: 'SuperAdmin' },
+      { to: '/admin/users',    label: 'Usuários Globais',   icon: Users,     minRole: 'SuperAdmin' },
+      { to: '/admin/access',   label: 'Monitor de Acessos', icon: Eye,       minRole: 'SuperAdmin' },
     ],
   },
   {
