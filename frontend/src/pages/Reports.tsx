@@ -134,9 +134,16 @@ function BrokerRow({ stats, rank }: { stats: BrokerStats; rank: number }) {
 }
 
 // ── CSV Export ─────────────────────────────────────────────────────
+function csvCell(value: string) {
+  if (value.includes(',') || value.includes('"') || value.includes('\n'))
+    return `"${value.replace(/"/g, '""')}"`
+  return value
+}
+
 function exportCsv(evals: EvaluationSummary[], users: UserRecord[]) {
   const userMap = new Map(users.map((u) => [u.id, u.email]))
-  const header = 'ID,Data,Ação,Risco,Score,Gap%,Canal,Corretor'
+  const BOM = '\uFEFF'
+  const header = 'ID;Data;Ação;Risco;Score;Gap%;Canal;Corretor'
   const rows = evals.map((ev) => {
     const broker = ev.createdByUserId ? (userMap.get(ev.createdByUserId) ?? ev.createdByUserId) : ''
     return [
@@ -145,12 +152,12 @@ function exportCsv(evals: EvaluationSummary[], users: UserRecord[]) {
       actionLabel(ev.action),
       riskLabel(ev.risk),
       ev.score.toFixed(0),
-      ev.gapPct.toFixed(1),
-      ev.channel,
+      ev.gapPct.toFixed(1).replace('.', ','),
+      ev.channel ?? '',
       broker,
-    ].join(',')
+    ].map(String).map(csvCell).join(';')
   })
-  const csv = [header, ...rows].join('\n')
+  const csv = BOM + [header, ...rows].join('\r\n')
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
@@ -179,7 +186,7 @@ export default function Reports() {
       const end = nextDay(endDate)
       const [pilotRes, evalsRes, usersRes] = await Promise.allSettled([
         getPilotReport(tenantId, { startDate, endDate: end, limit: 1000 }),
-        getEvaluations(tenantId, { startDate, endDate: end, limit: 200 }),
+        getEvaluations(tenantId, { startDate, endDate: end, limit: 1000 }),
         getUsers(),
       ])
       if (pilotRes.status === 'fulfilled') setReport(pilotRes.value)

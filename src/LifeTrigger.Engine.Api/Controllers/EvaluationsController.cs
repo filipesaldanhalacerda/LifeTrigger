@@ -150,8 +150,8 @@ public class EvaluationsController : ControllerBase
         [FromQuery] int offset = 0,
         CancellationToken cancellationToken = default)
     {
-        if (limit < 1 || limit > 200)
-            return BadRequest(new { Message = "O parâmetro 'limit' deve estar entre 1 e 200." });
+        if (limit < 1 || limit > 1000)
+            return BadRequest(new { Message = "O parâmetro 'limit' deve estar entre 1 e 1000." });
 
         // JWT tenantId overrides query param for non-SuperAdmin
         var jwtTenantId     = GetTenantIdFromJwt();
