@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronDown, RefreshCw, LogOut, Building2, Check, User } from 'lucide-react'
+import { ChevronDown, LogOut, Building2, Check, User } from 'lucide-react'
 import { getActiveTenantId, setActiveTenantId, getTenants, getTenant } from '../../lib/api'
 import { useAuth } from '../../contexts/AuthContext'
 import type { Tenant } from '../../types/api'
@@ -8,8 +8,6 @@ import type { Tenant } from '../../types/api'
 interface TopBarProps {
   title: string
   subtitle?: string
-  onRefresh?: () => void
-  isLoading?: boolean
 }
 
 const ROLE_AVATAR_BG: Record<string, string> = {
@@ -36,7 +34,7 @@ const ROLE_LABEL: Record<string, string> = {
   Viewer:      'Observador',
 }
 
-export function TopBar({ title, subtitle, onRefresh, isLoading }: TopBarProps) {
+export function TopBar({ title, subtitle }: TopBarProps) {
   const { user, logout, hasRole } = useAuth()
   const navigate = useNavigate()
 
@@ -117,18 +115,6 @@ export function TopBar({ title, subtitle, onRefresh, isLoading }: TopBarProps) {
 
       {/* Right: controls */}
       <div className="flex items-center gap-2 ml-4 shrink-0">
-
-        {/* Refresh */}
-        {onRefresh && (
-          <button
-            onClick={onRefresh}
-            disabled={isLoading}
-            title="Atualizar dados"
-            className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-700 disabled:opacity-40 transition-colors"
-          >
-            <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-          </button>
-        )}
 
         {/* Tenant: SuperAdmin gets a dropdown switcher */}
         {hasRole('SuperAdmin') ? (

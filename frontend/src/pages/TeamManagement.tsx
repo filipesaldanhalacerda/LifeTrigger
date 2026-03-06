@@ -469,8 +469,6 @@ export default function TeamManagement() {
             ? 'Carregando…'
             : `${activeCount} ativo${activeCount !== 1 ? 's' : ''} · ${users.length} membro${users.length !== 1 ? 's' : ''} no total`
         }
-        onRefresh={load}
-        isLoading={loading}
       />
 
       <div className="p-6 space-y-5 animate-fadeIn">

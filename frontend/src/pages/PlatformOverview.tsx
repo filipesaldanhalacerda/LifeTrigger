@@ -160,8 +160,6 @@ export default function PlatformOverview() {
       <TopBar
         title="Visão da Plataforma"
         subtitle={loading ? 'Carregando…' : `${rows.length} corretora${rows.length !== 1 ? 's' : ''} · ${totalEvals.toLocaleString('pt-BR')} avaliações`}
-        onRefresh={load}
-        isLoading={loading}
       />
 
       <div className="p-6 space-y-5 animate-fadeIn">

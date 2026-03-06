@@ -122,8 +122,6 @@ export default function Billing() {
       <TopBar
         title="Plano & Faturamento"
         subtitle="Consumo e informações do plano ativo"
-        onRefresh={load}
-        isLoading={loading}
       />
 
       <div className="p-6 space-y-5 animate-fadeIn">

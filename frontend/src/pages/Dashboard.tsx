@@ -75,8 +75,6 @@ export default function Dashboard() {
       <TopBar
         title="Dashboard"
         subtitle={isBroker ? 'Suas avaliações' : 'Visão consolidada da carteira'}
-        onRefresh={load}
-        isLoading={loading}
       />
 
       <div className="p-6 space-y-5">

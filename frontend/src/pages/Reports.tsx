@@ -235,8 +235,6 @@ export default function Reports() {
       <TopBar
         title="Relatórios Gerenciais"
         subtitle={loading ? 'Carregando…' : `${total} avaliações no período`}
-        onRefresh={load}
-        isLoading={loading}
       />
 
       <div className="p-6 space-y-5 animate-fadeIn">

@@ -177,8 +177,6 @@ export default function ClientHistory() {
       <TopBar
         title="Histórico de Clientes"
         subtitle={loading ? 'Carregando…' : `${groups.length} cliente${groups.length !== 1 ? 's' : ''} · ${items.length} avaliações`}
-        onRefresh={load}
-        isLoading={loading}
       />
 
       <div className="p-6 space-y-5 animate-fadeIn">

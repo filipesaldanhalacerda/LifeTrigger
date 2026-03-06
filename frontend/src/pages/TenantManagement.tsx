@@ -161,8 +161,6 @@ export default function TenantManagement() {
       <TopBar
         title="Gerenciamento de Corretoras"
         subtitle={loading ? 'Carregando…' : `${tenants.length} corretora${tenants.length !== 1 ? 's' : ''} cadastrada${tenants.length !== 1 ? 's' : ''}`}
-        onRefresh={load}
-        isLoading={loading}
       />
 
       <div className="p-6 space-y-5 animate-fadeIn">

@@ -26,7 +26,7 @@ export default function EngineInfo() {
 
   return (
     <div>
-      <TopBar title="Motor & Sistema" subtitle="Versão do motor e status operacional" onRefresh={load} isLoading={loading} />
+      <TopBar title="Motor & Sistema" subtitle="Versão do motor e status operacional" />
 
       <div className="p-6 space-y-5 animate-fadeIn">
         {/* Health status */}

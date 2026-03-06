@@ -84,8 +84,6 @@ export default function GlobalUsers() {
       <TopBar
         title="Usuários Globais"
         subtitle={loading ? 'Carregando…' : `${users.length} usuário${users.length !== 1 ? 's' : ''} na plataforma`}
-        onRefresh={load}
-        isLoading={loading}
       />
 
       <div className="p-6 space-y-5 animate-fadeIn">
