@@ -149,6 +149,70 @@ function ClientGroupRow({ group }: { group: ClientGroup }) {
   )
 }
 
+// ── Mobile client card ───────────────────────────────────────────────
+function MobileClientCard({ group }: { group: ClientGroup }) {
+  const navigate = useNavigate()
+  const [expanded, setExpanded] = useState(false)
+  const scoreColor = group.latestScore >= 70 ? 'bg-emerald-500' : group.latestScore >= 40 ? 'bg-amber-500' : 'bg-red-500'
+
+  return (
+    <div>
+      <div
+        onClick={() => setExpanded((v) => !v)}
+        className="flex items-start gap-3 px-4 py-3 cursor-pointer active:bg-slate-50"
+      >
+        <RiskIcon risk={group.latestRisk} />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between gap-2">
+            <p className="font-mono text-xs font-semibold text-slate-700 truncate">
+              {group.consentId.slice(0, 20)}{group.consentId.length > 20 ? '…' : ''}
+            </p>
+            <ChevronDown className={`h-4 w-4 shrink-0 text-slate-400 transition-transform ${expanded ? 'rotate-180' : ''}`} />
+          </div>
+          <div className="mt-1 flex flex-wrap items-center gap-1.5">
+            <Badge className={riskColors(group.latestRisk)} size="sm">{riskLabel(group.latestRisk)}</Badge>
+            <Badge className={actionColors(group.latestAction as never)} size="sm">{actionLabel(group.latestAction as never)}</Badge>
+          </div>
+          <div className="mt-1.5 flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <div className="h-1.5 w-12 overflow-hidden rounded-full bg-slate-100">
+                <div className={`h-1.5 rounded-full ${scoreColor}`} style={{ width: `${Math.max(4, group.latestScore)}%` }} />
+              </div>
+              <span className="text-xs font-bold tabular-nums text-slate-700">{group.latestScore.toFixed(0)}</span>
+            </div>
+            <span className="text-[11px] text-slate-400 tabular-nums">{group.evaluations.length} aval.</span>
+            <span className="text-[11px] text-slate-400">{formatDate(group.latestDate)}</span>
+          </div>
+        </div>
+      </div>
+      {expanded && (
+        <div className="bg-slate-50 divide-y divide-slate-100">
+          {group.evaluations.map((ev) => {
+            const EvIcon = ACTION_ICONS[ev.action] ?? Minus
+            return (
+              <div
+                key={ev.id}
+                onClick={() => navigate(`/evaluations/${ev.id}`)}
+                className="flex items-center gap-3 px-4 py-2.5 pl-11 cursor-pointer active:bg-brand-50"
+              >
+                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-white border border-slate-200">
+                  <EvIcon className="h-3 w-3 text-slate-500" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-mono text-[11px] text-slate-500 truncate">{ev.id.slice(0, 18)}…</p>
+                  <p className="text-[10px] text-slate-400">{formatDate(ev.timestamp)}</p>
+                </div>
+                <Badge className={riskColors(ev.risk)} size="sm">{riskLabel(ev.risk)}</Badge>
+                <ChevronRight className="h-3.5 w-3.5 text-slate-300 shrink-0" />
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Main component ─────────────────────────────────────────────────
 export default function ClientHistory() {
   const [items,   setItems]   = useState<EvaluationSummary[]>([])
@@ -179,7 +243,7 @@ export default function ClientHistory() {
         subtitle={loading ? 'Carregando…' : `${groups.length} cliente${groups.length !== 1 ? 's' : ''} · ${items.length} avaliações`}
       />
 
-      <div className="p-6 space-y-5 animate-fadeIn">
+      <div className="p-4 sm:p-6 space-y-4 sm:space-y-5 animate-fadeIn">
 
         {/* ── Summary cards ── */}
         {!loading && !error && items.length > 0 && (
@@ -261,6 +325,13 @@ export default function ClientHistory() {
                     cliente{filtered.length !== 1 ? 's' : ''} — clique em uma linha para ver o histórico completo de avaliações.
                   </p>
                 </div>
+                {/* Mobile card list */}
+                <div className="divide-y divide-slate-100 sm:hidden">
+                  {filtered.map((group) => (
+                    <MobileClientCard key={group.consentId} group={group} />
+                  ))}
+                </div>
+                <div className="overflow-x-auto hidden sm:block">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-slate-100">
@@ -288,6 +359,7 @@ export default function ClientHistory() {
                     ))}
                   </tbody>
                 </table>
+                </div>
               </>
             )}
           </div>

@@ -261,39 +261,45 @@ export function DateRangePicker({ startDate, endDate, onChange, maxDate }: DateR
 
       {/* Dropdown */}
       {open && (
-        <div className="absolute left-0 top-full z-50 mt-2 flex rounded-2xl border border-slate-200 bg-white shadow-elevated animate-scaleIn origin-top-left">
-          {/* Presets sidebar */}
-          <div className="border-r border-slate-100 py-3 px-2 min-w-[140px]">
-            <p className="px-2 pb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Período</p>
-            {presets.map((p) => (
-              <button
-                key={p.label}
-                type="button"
-                onClick={() => applyPreset(p)}
-                className="w-full text-left rounded-lg px-2.5 py-1.5 text-xs text-slate-600 hover:bg-brand-50 hover:text-brand-700 transition-colors"
-              >
-                {p.label}
-              </button>
-            ))}
+        <div className="absolute left-0 top-full z-50 mt-2 flex flex-col sm:flex-row rounded-2xl border border-slate-200 bg-white shadow-elevated animate-scaleIn origin-top-left w-[calc(100vw-2rem)] sm:w-auto max-w-[calc(100vw-2rem)]">
+          {/* Presets — horizontal on mobile, sidebar on desktop */}
+          <div className="border-b sm:border-b-0 sm:border-r border-slate-100 py-2 sm:py-3 px-2 sm:min-w-[140px]">
+            <p className="px-2 pb-1.5 sm:pb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Período</p>
+            <div className="flex flex-wrap gap-1 sm:flex-col sm:gap-0">
+              {presets.map((p) => (
+                <button
+                  key={p.label}
+                  type="button"
+                  onClick={() => applyPreset(p)}
+                  className="rounded-lg px-2.5 py-1.5 text-xs text-slate-600 hover:bg-brand-50 hover:text-brand-700 transition-colors sm:w-full sm:text-left"
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
           </div>
 
-          {/* Calendars */}
-          <div className="p-4">
+          {/* Calendars — single on mobile, dual on desktop */}
+          <div className="p-3 sm:p-4">
             <div className="flex gap-6">
-              <CalendarMonth
-                year={leftYear}
-                month={leftMonth}
-                onPrev={prevMonth}
-                rangeStart={tempStart}
-                rangeEnd={selecting === 'end' ? null : tempEnd}
-                hoverDate={selecting === 'end' ? (effectiveEnd ?? null) : null}
-                onDayClick={handleDayClick}
-                onDayHover={(d) => selecting === 'end' && setHover(d)}
-                maxDate={maxD}
-              />
+              {/* Left calendar hidden on mobile */}
+              <div className="hidden sm:block">
+                <CalendarMonth
+                  year={leftYear}
+                  month={leftMonth}
+                  onPrev={prevMonth}
+                  rangeStart={tempStart}
+                  rangeEnd={selecting === 'end' ? null : tempEnd}
+                  hoverDate={selecting === 'end' ? (effectiveEnd ?? null) : null}
+                  onDayClick={handleDayClick}
+                  onDayHover={(d) => selecting === 'end' && setHover(d)}
+                  maxDate={maxD}
+                />
+              </div>
               <CalendarMonth
                 year={rightYear}
                 month={rightMonth}
+                onPrev={prevMonth}
                 onNext={nextMonth}
                 rangeStart={tempStart}
                 rangeEnd={selecting === 'end' ? null : tempEnd}
@@ -305,7 +311,7 @@ export function DateRangePicker({ startDate, endDate, onChange, maxDate }: DateR
             </div>
 
             {/* Footer */}
-            <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3">
+            <div className="mt-3 sm:mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between border-t border-slate-100 pt-3 gap-2">
               <div className="text-xs text-slate-500">
                 {tempStart && (
                   <span>
@@ -419,7 +425,7 @@ export function DatePicker({ value, onChange, maxDate, placeholder, className, e
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full z-50 mt-2 rounded-2xl border border-slate-200 bg-white p-4 shadow-elevated animate-scaleIn origin-top-left">
+        <div className="absolute left-0 top-full z-50 mt-2 rounded-2xl border border-slate-200 bg-white p-3 sm:p-4 shadow-elevated animate-scaleIn origin-top-left w-[calc(100vw-2rem)] sm:w-auto max-w-[calc(100vw-2rem)]">
           <CalendarMonth
             year={viewYear}
             month={viewMonth}

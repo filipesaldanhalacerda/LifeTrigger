@@ -114,11 +114,11 @@ export default function TenantSettings() {
         subtitle="Parâmetros do motor de cálculo para este tenant"
       />
 
-      <div className="p-6 animate-fadeIn">
-        <div className="mx-auto max-w-2xl space-y-5">
+      <div className="p-4 sm:p-6 animate-fadeIn">
+        <div className="mx-auto max-w-2xl space-y-4 sm:space-y-5">
 
           {/* ── Header context banner ── */}
-          <div className="flex items-start gap-3 rounded-2xl border border-brand-100 bg-gradient-to-r from-brand-50 to-white p-5">
+          <div className="flex items-start gap-3 rounded-2xl border border-brand-100 bg-gradient-to-r from-brand-50 to-white p-4 sm:p-5">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-600 shadow-sm">
               <Settings2 className="h-5 w-5 text-white" />
             </div>
@@ -250,7 +250,7 @@ export default function TenantSettings() {
           </SettingsCard>
 
           {/* ── Dynamic summary ── */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-card">
             <div className="mb-4 flex items-center justify-between">
               <div>
                 <h2 className="text-sm font-semibold text-slate-900">Simulação ao Vivo</h2>
@@ -263,7 +263,7 @@ export default function TenantSettings() {
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <SimRow
                 label="Capital base — solteiro"
                 formula={`R$120k × ${settings.incomeReplacementYearsSingle} anos`}
@@ -318,7 +318,7 @@ export default function TenantSettings() {
           )}
 
           {/* ── Actions ── */}
-          <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-card">
+          <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 sm:px-5 py-4 shadow-card">
             <button
               onClick={handleReset}
               className="flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
@@ -357,7 +357,7 @@ function SettingsCard({
   return (
     <div className="rounded-2xl border border-slate-200 bg-white shadow-card overflow-hidden">
       {/* Card header */}
-      <div className="flex items-start gap-3 border-b border-slate-100 p-5">
+      <div className="flex items-start gap-3 border-b border-slate-100 p-4 sm:p-5">
         <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${iconBg}`}>
           <Icon className={`h-4.5 w-4.5 ${iconColor}`} />
         </div>
@@ -367,7 +367,7 @@ function SettingsCard({
         </div>
       </div>
       {/* Fields */}
-      <div className="space-y-6 p-5">
+      <div className="space-y-4 sm:space-y-6 p-4 sm:p-5">
         {children}
       </div>
     </div>

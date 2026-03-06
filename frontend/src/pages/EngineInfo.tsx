@@ -7,18 +7,13 @@ import type { EngineVersionInfo } from '../types/api'
 export default function EngineInfo() {
   const [info, setInfo] = useState<EngineVersionInfo | null>(null)
   const [health, setHealth] = useState<'loading' | 'healthy' | 'unhealthy'>('loading')
-  const [loading, setLoading] = useState(true)
-
   async function load() {
-    setLoading(true)
     try {
       const [ver, h] = await Promise.all([fetchEngineVersions(), fetchHealth()])
       setInfo(ver)
       setHealth(h.status === 'Healthy' ? 'healthy' : 'unhealthy')
     } catch {
       setHealth('unhealthy')
-    } finally {
-      setLoading(false)
     }
   }
 

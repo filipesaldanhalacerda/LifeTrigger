@@ -92,8 +92,8 @@ export default function AuditVerify() {
     <div>
       <TopBar title="Verificação de Auditoria" subtitle="Valida a integridade criptográfica de avaliações" />
 
-      <div className="p-6 animate-fadeIn">
-        <div className="mx-auto max-w-xl space-y-5">
+      <div className="p-4 sm:p-6 animate-fadeIn">
+        <div className="mx-auto max-w-xl space-y-4 sm:space-y-5">
           {/* Explanation card */}
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
             <div className="flex items-start gap-3">

@@ -152,7 +152,7 @@ export default function EvaluationHistory() {
         subtitle={loading ? 'Carregando…' : `${filtered.length} de ${items.length} registros`}
       />
 
-      <div className="p-6 space-y-5 animate-fadeIn">
+      <div className="p-4 sm:p-6 space-y-4 sm:space-y-5 animate-fadeIn">
 
         {/* Summary cards */}
         {!loading && !error && items.length > 0 && (
@@ -199,8 +199,8 @@ export default function EvaluationHistory() {
         )}
 
         {/* Filter bar */}
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="relative flex-1 min-w-52">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3">
+          <div className="relative flex-1 min-w-0 sm:min-w-52">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
@@ -257,7 +257,7 @@ export default function EvaluationHistory() {
           <button
             onClick={load}
             disabled={loading}
-            className="ml-auto flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600 shadow-card hover:bg-slate-50 transition-colors disabled:opacity-50"
+            className="sm:ml-auto flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600 shadow-card hover:bg-slate-50 transition-colors disabled:opacity-50"
           >
             <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
             Atualizar
@@ -300,6 +300,47 @@ export default function EvaluationHistory() {
               </div>
             )}
 
+            {/* Mobile card list */}
+            <div className="divide-y divide-slate-100 sm:hidden">
+              {filtered.map((ev) => {
+                const ActionIcon = ACTION_ICONS[ev.action]
+                const iconBg = ev.risk === 'CRITICO' ? 'bg-red-50' : ev.risk === 'MODERADO' ? 'bg-amber-50' : 'bg-emerald-50'
+                const iconColor = ev.risk === 'CRITICO' ? 'text-red-500' : ev.risk === 'MODERADO' ? 'text-amber-500' : 'text-emerald-500'
+                return (
+                  <div
+                    key={ev.id}
+                    onClick={() => navigate(`/evaluations/${ev.id}`)}
+                    className="flex items-start gap-3 px-4 py-3 cursor-pointer active:bg-slate-50"
+                  >
+                    <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${iconBg} mt-0.5`}>
+                      <ActionIcon className={`h-4 w-4 ${iconColor}`} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-xs font-medium text-slate-700 truncate">{formatDate(ev.timestamp)}</p>
+                        <ChevronRight className="h-4 w-4 shrink-0 text-slate-300" />
+                      </div>
+                      <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                        <Badge className={riskColors(ev.risk)} size="sm">{riskLabel(ev.risk)}</Badge>
+                        <Badge className={actionColors(ev.action)} size="sm">{actionLabel(ev.action)}</Badge>
+                      </div>
+                      <div className="mt-1.5 flex items-center gap-3">
+                        <ScoreBar score={ev.score} />
+                        <span className={`text-[11px] font-semibold tabular-nums ${ev.gapPct > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
+                          Gap {ev.gapPct > 0 ? '+' : ''}{ev.gapPct.toFixed(1)}%
+                        </span>
+                      </div>
+                      <div className="mt-1 flex items-center gap-2 text-[11px] text-slate-400">
+                        <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500">{ev.channel}</span>
+                        {isManagerPlus && <span>{brokerLabel(ev.createdByUserId)}</span>}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+            <div className="hidden sm:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-100 bg-slate-50">
@@ -430,6 +471,7 @@ export default function EvaluationHistory() {
                 })}
               </tbody>
             </table>
+            </div>
 
             {/* Empty state */}
             {filtered.length === 0 && (

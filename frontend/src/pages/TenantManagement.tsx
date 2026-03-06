@@ -163,10 +163,10 @@ export default function TenantManagement() {
         subtitle={loading ? 'Carregando…' : `${tenants.length} corretora${tenants.length !== 1 ? 's' : ''} cadastrada${tenants.length !== 1 ? 's' : ''}`}
       />
 
-      <div className="p-6 space-y-5 animate-fadeIn">
+      <div className="p-4 sm:p-6 space-y-4 sm:space-y-5 animate-fadeIn">
 
         {/* ── Actions bar ── */}
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex items-center gap-4 text-sm text-slate-600">
             <span className="flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-full bg-emerald-500" />
@@ -232,6 +232,55 @@ export default function TenantManagement() {
                 </button>
               </div>
             ) : (
+              <>
+              {/* Mobile card list */}
+              <div className="divide-y divide-slate-100 sm:hidden">
+                {tenants.map((tenant) => (
+                  <div key={tenant.id} className="px-4 py-3 space-y-2">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-50">
+                        <Building2 className="h-4 w-4 text-brand-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-slate-800 truncate">{tenant.name}</p>
+                        <span className="font-mono text-[11px] text-slate-400">/{tenant.slug}</span>
+                      </div>
+                      {tenant.isActive ? (
+                        <span className="flex items-center gap-1 text-[11px] text-emerald-600 font-semibold shrink-0">
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />Ativa
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1 text-[11px] text-slate-400 font-semibold shrink-0">
+                          <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />Inativa
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between pl-12">
+                      <span className="text-[11px] text-slate-400">{formatDate(tenant.createdAt)}</span>
+                      <button
+                        onClick={() => toggleStatus(tenant)}
+                        disabled={togglingId === tenant.id}
+                        className={`flex items-center gap-1 rounded-lg border px-2.5 py-1 text-[11px] font-semibold transition-colors disabled:opacity-50 ${
+                          tenant.isActive
+                            ? 'border-red-200 bg-red-50 text-red-700'
+                            : 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                        }`}
+                      >
+                        {togglingId === tenant.id ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : tenant.isActive ? (
+                          <XCircle className="h-3 w-3" />
+                        ) : (
+                          <CheckCircle className="h-3 w-3" />
+                        )}
+                        {tenant.isActive ? 'Desativar' : 'Ativar'}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="hidden sm:block overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-slate-100 bg-slate-50">
@@ -325,6 +374,8 @@ export default function TenantManagement() {
                   ))}
                 </tbody>
               </table>
+              </div>
+              </>
             )}
           </div>
         )}

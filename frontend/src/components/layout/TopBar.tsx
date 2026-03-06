@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronDown, LogOut, Building2, Check, User } from 'lucide-react'
+import { ChevronDown, LogOut, Building2, Check, User, Menu } from 'lucide-react'
 import { getActiveTenantId, setActiveTenantId, getTenants, getTenant } from '../../lib/api'
 import { useAuth } from '../../contexts/AuthContext'
+import { useMobileMenu } from '../../contexts/MobileMenuContext'
 import type { Tenant } from '../../types/api'
 
 interface TopBarProps {
@@ -37,6 +38,7 @@ const ROLE_LABEL: Record<string, string> = {
 export function TopBar({ title, subtitle }: TopBarProps) {
   const { user, logout, hasRole } = useAuth()
   const navigate = useNavigate()
+  const mobileMenu = useMobileMenu()
 
   const [tenants, setTenants] = useState<Tenant[]>([])
   const [activeTenant, setActiveTenant] = useState<Tenant | null>(null)
@@ -84,8 +86,6 @@ export function TopBar({ title, subtitle }: TopBarProps) {
     setActiveTenantId(t.id)
     setActiveTenant(t)
     setTenantMenuOpen(false)
-    // Navigate to Dashboard so SuperAdmin sees the selected tenant's data.
-    // Use location.href (not reload) to ensure route guards re-evaluate.
     window.location.href = '/'
   }
 
@@ -101,34 +101,44 @@ export function TopBar({ title, subtitle }: TopBarProps) {
   const roleLabel = ROLE_LABEL[user?.role ?? '']     ?? user?.role ?? ''
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-slate-200 bg-white/95 backdrop-blur-sm px-6 relative">
+    <header className="sticky top-0 z-30 flex h-14 lg:h-16 items-center justify-between border-b border-slate-200 bg-white/95 backdrop-blur-sm px-3 sm:px-4 lg:px-6 relative">
       {/* Accent gradient line at top */}
       <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-brand-500 via-accent-400 to-brand-500" />
 
-      {/* Left: page title */}
-      <div className="min-w-0">
-        <h1 className="text-base font-semibold leading-tight text-slate-900 truncate">{title}</h1>
-        {subtitle && (
-          <p className="text-xs leading-tight text-slate-400 truncate">{subtitle}</p>
-        )}
+      {/* Left: hamburger + page title */}
+      <div className="flex items-center gap-2 min-w-0">
+        {/* Mobile hamburger */}
+        <button
+          onClick={() => mobileMenu?.openMobileMenu()}
+          className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors lg:hidden"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+
+        <div className="min-w-0">
+          <h1 className="text-sm lg:text-base font-semibold leading-tight text-slate-900 truncate">{title}</h1>
+          {subtitle && (
+            <p className="text-[11px] lg:text-xs leading-tight text-slate-400 truncate">{subtitle}</p>
+          )}
+        </div>
       </div>
 
       {/* Right: controls */}
-      <div className="flex items-center gap-2 ml-4 shrink-0">
+      <div className="flex items-center gap-1.5 sm:gap-2 ml-2 shrink-0">
 
         {/* Tenant: SuperAdmin gets a dropdown switcher */}
         {hasRole('SuperAdmin') ? (
           <div className="relative" ref={tenantRef}>
             <button
               onClick={() => setTenantMenuOpen((v) => !v)}
-              className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs transition-colors ${
+              className={`flex items-center gap-1.5 sm:gap-2 rounded-lg border px-2 sm:px-3 py-1.5 sm:py-2 text-xs transition-colors ${
                 tenantMenuOpen
                   ? 'border-brand-300 bg-brand-50 text-brand-700'
                   : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-slate-300 hover:bg-white'
               }`}
             >
               <Building2 className="h-3.5 w-3.5 shrink-0 text-slate-400" />
-              <div className="text-left">
+              <div className="text-left hidden sm:block">
                 <p className="text-xs font-semibold leading-none">
                   {activeTenant?.name ?? 'Selecionar…'}
                 </p>
@@ -195,7 +205,7 @@ export function TopBar({ title, subtitle }: TopBarProps) {
           </div>
 
         ) : activeTenant ? (
-          <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+          <div className="hidden sm:flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
             <Building2 className="h-3.5 w-3.5 shrink-0 text-slate-400" />
             <div>
               <p className="text-xs font-semibold leading-none text-slate-700">{activeTenant.name}</p>
@@ -205,14 +215,14 @@ export function TopBar({ title, subtitle }: TopBarProps) {
         ) : null}
 
         {/* Divider */}
-        <div className="h-6 w-px bg-slate-200" />
+        <div className="h-6 w-px bg-slate-200 hidden sm:block" />
 
         {/* User menu */}
         {user && (
           <div className="relative" ref={userRef}>
             <button
               onClick={() => setUserMenuOpen((v) => !v)}
-              className={`flex items-center gap-2 rounded-lg border px-2.5 py-1.5 transition-colors ${
+              className={`flex items-center gap-1.5 sm:gap-2 rounded-lg border px-2 sm:px-2.5 py-1.5 transition-colors ${
                 userMenuOpen
                   ? 'border-brand-200 bg-brand-50'
                   : 'border-slate-200 bg-white hover:bg-slate-50'
@@ -221,7 +231,7 @@ export function TopBar({ title, subtitle }: TopBarProps) {
               <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white ${avatarBg}`}>
                 {initials}
               </div>
-              <div className="hidden sm:block text-left">
+              <div className="hidden md:block text-left">
                 <p className="text-xs font-medium leading-none text-slate-700 max-w-[130px] truncate">
                   {user.email}
                 </p>
@@ -230,7 +240,7 @@ export function TopBar({ title, subtitle }: TopBarProps) {
                 </span>
               </div>
               <ChevronDown
-                className={`h-3.5 w-3.5 text-slate-400 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`}
+                className={`h-3.5 w-3.5 text-slate-400 transition-transform hidden sm:block ${userMenuOpen ? 'rotate-180' : ''}`}
               />
             </button>
 

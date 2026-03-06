@@ -87,7 +87,7 @@ export default function Dashboard() {
         subtitle={isBroker ? 'Suas avaliações' : 'Visão consolidada da carteira'}
       />
 
-      <div className="p-6 space-y-5">
+      <div className="p-4 sm:p-6 space-y-4 sm:space-y-5">
 
         {/* Viewer read-only banner */}
         {isViewer && (
@@ -106,8 +106,8 @@ export default function Dashboard() {
         {loading && (
           <div className="space-y-5 animate-fadeIn">
             <div className="skeleton h-20 w-full rounded-2xl" />
-            <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-              {[0,1,2,3].map(i => <div key={i} className="skeleton h-24 rounded-2xl" />)}
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+              {[0,1,2,3].map(i => <div key={i} className="skeleton h-20 sm:h-24 rounded-2xl" />)}
             </div>
             <div className="skeleton h-72 w-full rounded-2xl" />
           </div>
@@ -140,8 +140,8 @@ export default function Dashboard() {
         {!loading && report && (
           <>
             {/* ── Greeting + Health Score ── */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card animate-fadeIn">
-              <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-card animate-fadeIn">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 {/* Left: greeting + portfolio bar */}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-slate-500">
@@ -161,7 +161,7 @@ export default function Dashboard() {
                       <div className="bg-emerald-500 transition-all duration-700" style={{ width: `${pct(adequado, total)}%` }} />
                     )}
                   </div>
-                  <div className="mt-2 flex items-center gap-4">
+                  <div className="mt-2 flex flex-wrap items-center gap-3 sm:gap-4">
                     <LegendDot color="bg-red-500" label="Crítico" count={critico} />
                     <LegendDot color="bg-amber-400" label="Moderado" count={report.riskDistribution.moderado} />
                     <LegendDot color="bg-emerald-500" label="Adequado" count={adequado} />
@@ -197,7 +197,7 @@ export default function Dashboard() {
             </div>
 
             {/* ── Indicator cards — different from Reports ── */}
-            <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
               <IndicatorCard
                 icon={ShieldAlert}
                 iconBg="bg-red-50" iconColor="text-red-500"
@@ -236,19 +236,21 @@ export default function Dashboard() {
 
             {/* ── Priority alerts ── */}
             {critico > 0 && (
-              <div className="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 animate-fadeIn">
-                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-red-800">
-                    {critico} cliente{critico !== 1 ? 's' : ''} com risco crítico
-                  </p>
-                  <p className="mt-0.5 text-xs text-red-700">
-                    {critico !== 1 ? 'Esses clientes estão' : 'Esse cliente está'} com cobertura muito abaixo do necessário. Priorize o contato para revisão de proteção.
-                  </p>
+              <div className="flex flex-col sm:flex-row sm:items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 animate-fadeIn">
+                <div className="flex items-start gap-3 flex-1">
+                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
+                  <div>
+                    <p className="text-sm font-semibold text-red-800">
+                      {critico} cliente{critico !== 1 ? 's' : ''} com risco crítico
+                    </p>
+                    <p className="mt-0.5 text-xs text-red-700">
+                      {critico !== 1 ? 'Esses clientes estão' : 'Esse cliente está'} com cobertura muito abaixo do necessário. Priorize o contato para revisão de proteção.
+                    </p>
+                  </div>
                 </div>
                 <button
                   onClick={() => navigate('/evaluations')}
-                  className="shrink-0 flex items-center gap-1 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-700 transition-colors"
+                  className="shrink-0 flex items-center justify-center gap-1 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-700 transition-colors"
                 >
                   Ver histórico
                   <ArrowUpRight className="h-3 w-3" />
@@ -257,19 +259,21 @@ export default function Dashboard() {
             )}
 
             {aumentar >= 3 && critico === 0 && (
-              <div className="flex items-start gap-3 rounded-2xl border border-orange-200 bg-orange-50 p-4 animate-fadeIn">
-                <TrendingUp className="mt-0.5 h-4 w-4 shrink-0 text-orange-600" />
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-orange-800">
-                    {aumentar} oportunidade{aumentar !== 1 ? 's' : ''} de venda identificada{aumentar !== 1 ? 's' : ''}
-                  </p>
-                  <p className="mt-0.5 text-xs text-orange-700">
-                    O motor detectou clientes com gap de cobertura. Acesse o relatório para detalhes por corretor.
-                  </p>
+              <div className="flex flex-col sm:flex-row sm:items-start gap-3 rounded-2xl border border-orange-200 bg-orange-50 p-4 animate-fadeIn">
+                <div className="flex items-start gap-3 flex-1">
+                  <TrendingUp className="mt-0.5 h-4 w-4 shrink-0 text-orange-600" />
+                  <div>
+                    <p className="text-sm font-semibold text-orange-800">
+                      {aumentar} oportunidade{aumentar !== 1 ? 's' : ''} de venda identificada{aumentar !== 1 ? 's' : ''}
+                    </p>
+                    <p className="mt-0.5 text-xs text-orange-700">
+                      O motor detectou clientes com gap de cobertura. Acesse o relatório para detalhes por corretor.
+                    </p>
+                  </div>
                 </div>
                 <button
                   onClick={() => navigate('/reports')}
-                  className="shrink-0 flex items-center gap-1 rounded-lg bg-orange-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-orange-700 transition-colors"
+                  className="shrink-0 flex items-center justify-center gap-1 rounded-lg bg-orange-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-orange-700 transition-colors"
                 >
                   Relatórios
                   <ArrowUpRight className="h-3 w-3" />
@@ -278,11 +282,11 @@ export default function Dashboard() {
             )}
 
             {/* ── Two-column: Recent + Actions ── */}
-            <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 sm:gap-5 lg:grid-cols-3">
 
               {/* Recent evaluations (2/3 width) */}
               <div className="lg:col-span-2 rounded-2xl border border-slate-200 bg-white shadow-card overflow-hidden animate-fadeIn" style={{ animationDelay: '100ms' }}>
-                <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+                <div className="flex items-center justify-between border-b border-slate-100 px-4 sm:px-5 py-3 sm:py-4">
                   <div className="flex items-center gap-2">
                     <Clock className="h-4 w-4 text-slate-400" />
                     <div>
@@ -313,7 +317,7 @@ export default function Dashboard() {
                         <button
                           key={ev.id}
                           onClick={() => navigate(`/evaluations/${ev.id}`)}
-                          className="flex w-full items-center gap-3 px-5 py-3 text-left hover:bg-slate-50 transition-colors group"
+                          className="flex w-full items-center gap-2 sm:gap-3 px-4 sm:px-5 py-3 text-left hover:bg-slate-50 transition-colors group"
                         >
                           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 group-hover:bg-white transition-colors">
                             <ActionIcon className="h-3.5 w-3.5 text-slate-500" />
@@ -413,13 +417,13 @@ function IndicatorCard({
 }) {
   return (
     <div
-      className={`rounded-2xl border bg-white p-4 shadow-card transition-all duration-200 hover:shadow-card-hover hover:-translate-y-0.5 animate-fadeIn ${alert ? 'border-orange-200' : 'border-slate-200'}`}
+      className={`rounded-2xl border bg-white p-3 sm:p-4 shadow-card transition-all duration-200 hover:shadow-card-hover hover:-translate-y-0.5 animate-fadeIn ${alert ? 'border-orange-200' : 'border-slate-200'}`}
       style={{ animationDelay: `${delay}ms` }}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{label}</p>
-          <p className="mt-1.5 text-2xl font-extrabold text-slate-900 tabular-nums">{value.toLocaleString('pt-BR')}</p>
+          <p className="mt-1 sm:mt-1.5 text-xl sm:text-2xl font-extrabold text-slate-900 tabular-nums">{value.toLocaleString('pt-BR')}</p>
           {sub && <p className="mt-0.5 text-[11px] text-slate-500 leading-snug">{sub}</p>}
         </div>
         <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${iconBg}`}>

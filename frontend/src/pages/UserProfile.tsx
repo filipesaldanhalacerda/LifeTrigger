@@ -13,7 +13,7 @@ const ROLE_META: Record<UserRole, { label: string; color: string }> = {
 // ── Demo restriction for password change ─────────────────────────────────────
 function ChangePasswordSection() {
   return (
-    <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 shadow-card">
+    <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 sm:p-6 shadow-card">
       <div className="flex items-center gap-3">
         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-100">
           <Lock className="h-4 w-4 text-amber-600" />
@@ -42,7 +42,7 @@ export default function UserProfile() {
   const initials  = user.email.slice(0, 2).toUpperCase()
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6 animate-fadeIn">
+    <div className="mx-auto max-w-2xl p-4 sm:p-6 space-y-4 sm:space-y-6 animate-fadeIn">
       {/* Header */}
       <div>
         <h1 className="text-xl font-bold text-slate-900">Meu Perfil</h1>
@@ -50,7 +50,7 @@ export default function UserProfile() {
       </div>
 
       {/* Identity card */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-card">
+      <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-card">
         <div className="mb-5 flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-100">
             <User className="h-4 w-4 text-brand-700" />

@@ -202,11 +202,11 @@ export default function NewEvaluation() {
     <div>
       <TopBar title="Nova Avaliação" subtitle="Diagnóstico de necessidade de proteção de vida" />
 
-      <div className="p-6 animate-fadeIn">
-        <div className="mx-auto max-w-2xl space-y-5">
+      <div className="p-4 sm:p-6 animate-fadeIn">
+        <div className="mx-auto max-w-2xl space-y-4 sm:space-y-5">
 
           {/* ── Stepper ── */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-card">
             <div className="mb-4 flex items-center justify-between text-xs text-slate-500">
               <span className="font-medium">Progresso</span>
               <span>Passo {step + 1} de {STEPS.length}</span>
@@ -252,7 +252,7 @@ export default function NewEvaluation() {
           </div>
 
           {/* ── Step header ── */}
-          <div className="flex items-center gap-3 rounded-2xl border border-brand-100 bg-gradient-to-r from-brand-50 to-white px-5 py-4">
+          <div className="flex items-center gap-3 rounded-2xl border border-brand-100 bg-gradient-to-r from-brand-50 to-white px-4 sm:px-5 py-4">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-600 shadow-sm">
               <StepIcon className="h-5 w-5 text-white" />
             </div>
@@ -263,12 +263,12 @@ export default function NewEvaluation() {
           </div>
 
           {/* ── Form card ── */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-card">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-card">
 
             {/* ── Step 0: Personal ── */}
             {step === 0 && (
               <div className="space-y-6">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Field
                     label="Idade *"
                     hint="Entre 18 e 99 anos. Afeta o multiplicador de risco etário do motor."
@@ -300,7 +300,7 @@ export default function NewEvaluation() {
                   label="Risco da Profissão *"
                   hint="Profissões de maior risco elevam o capital segurado recomendado pelo motor."
                 >
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {PROFESSION_RISKS.map((opt) => (
                       <button
                         key={opt.value}
@@ -349,7 +349,7 @@ export default function NewEvaluation() {
             {/* ── Step 1: Financial ── */}
             {step === 1 && (
               <div className="space-y-6">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Field
                     label="Renda Mensal Bruta *"
                     hint="Principal parâmetro do cálculo. O motor multiplica a renda anual por um fator de anos de reposição."
@@ -390,7 +390,7 @@ export default function NewEvaluation() {
                       Deixe em branco se não tiver seguro — o motor assumirá cobertura zero.
                     </p>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <Field label="Capital Segurado Atual" hint="Valor total da cobertura da apólice vigente.">
                       <CurrencyInput value={currentCoverage} onChange={setCurrentCoverage} placeholder="200.000" />
                     </Field>
@@ -417,7 +417,7 @@ export default function NewEvaluation() {
                       pois em caso de sinistro precisariam ser quitados.
                     </p>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <Field label="Total de Dívidas" hint="Saldo devedor consolidado (imóvel, veículo, consignado etc.).">
                       <CurrencyInput value={debtTotal} onChange={setDebtTotal} placeholder="150.000" />
                     </Field>
@@ -535,7 +535,7 @@ export default function NewEvaluation() {
             {/* ── Step 3: Operational ── */}
             {step === 3 && (
               <div className="space-y-6">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Field label="Canal de Origem *" hint="Canal pelo qual o diagnóstico está sendo registrado.">
                     <select value={channel} onChange={(e) => setChannel(e.target.value)} className={cls()}>
                       <option value="Web">Web</option>

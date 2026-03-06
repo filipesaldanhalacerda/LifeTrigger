@@ -230,11 +230,11 @@ export default function NewTrigger() {
         subtitle="Registre um evento e receba novo diagnóstico de proteção"
       />
 
-      <div className="p-6 animate-fadeIn">
-        <div className="mx-auto max-w-2xl space-y-5">
+      <div className="p-4 sm:p-6 animate-fadeIn">
+        <div className="mx-auto max-w-2xl space-y-4 sm:space-y-5">
 
           {/* ── Explainer banner ── */}
-          <div className="flex items-start gap-3 rounded-2xl border border-brand-100 bg-gradient-to-r from-brand-50 to-white p-5">
+          <div className="flex items-start gap-3 rounded-2xl border border-brand-100 bg-gradient-to-r from-brand-50 to-white p-4 sm:p-5">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-600 shadow-sm">
               <Zap className="h-5 w-5 text-white" />
             </div>
@@ -252,7 +252,7 @@ export default function NewTrigger() {
           <form onSubmit={handleSubmit} className="space-y-5">
 
             {/* ── Trigger type grid ── */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-card">
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-sm font-semibold text-slate-900">Tipo de Evento de Vida</h2>
                 <span className="text-xs text-slate-400">Selecione o gatilho</span>
@@ -297,9 +297,9 @@ export default function NewTrigger() {
             </div>
 
             {/* ── Event details ── */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card space-y-4">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-card space-y-4">
               <h2 className="text-sm font-semibold text-slate-900">Detalhes do Evento</h2>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Field
                   label="Data do Evento *"
                   hint="Quando o evento ocorreu ou ocorrerá. Registrada no histórico do diagnóstico."
@@ -328,7 +328,7 @@ export default function NewTrigger() {
             </div>
 
             {/* ── Client context ── */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card space-y-5">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-card space-y-4 sm:space-y-5">
               <div>
                 <h2 className="text-sm font-semibold text-slate-900">Dados Atuais do Cliente</h2>
                 <p className="mt-1 text-xs text-slate-500">
@@ -336,7 +336,7 @@ export default function NewTrigger() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Field
                   label="Idade *"
                   hint="Afeta o multiplicador de risco etário do motor."
@@ -474,7 +474,7 @@ export default function NewTrigger() {
                   <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Contexto Financeiro Adicional</p>
                   <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-medium text-slate-500">opcional</span>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Field
                     label="Cobertura de Seguro Atual"
                     hint="Capital segurado da apólice vigente. Motor calcula o gap em relação ao ideal."
@@ -512,7 +512,7 @@ export default function NewTrigger() {
             </div>
 
             {/* ── Consent ── */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-card">
               <h2 className="mb-3 text-sm font-semibold text-slate-900">Consentimento LGPD</h2>
               <label className={`flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition-all ${
                 consent

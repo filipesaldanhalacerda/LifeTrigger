@@ -86,7 +86,7 @@ export default function GlobalUsers() {
         subtitle={loading ? 'Carregando…' : `${users.length} usuário${users.length !== 1 ? 's' : ''} na plataforma`}
       />
 
-      <div className="p-6 space-y-5 animate-fadeIn">
+      <div className="p-4 sm:p-6 space-y-4 sm:space-y-5 animate-fadeIn">
 
         {/* ── Stats strip ── */}
         {!loading && (
@@ -107,8 +107,8 @@ export default function GlobalUsers() {
         )}
 
         {/* ── Filters ── */}
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="relative flex-1 min-w-52">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3">
+          <div className="relative flex-1 min-w-0 sm:min-w-52">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
@@ -160,7 +160,7 @@ export default function GlobalUsers() {
             <button
               onClick={() => void load()}
               disabled={loading}
-              className="ml-auto flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600 shadow-card hover:bg-slate-50 transition-colors disabled:opacity-50"
+              className="sm:ml-auto flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600 shadow-card hover:bg-slate-50 transition-colors disabled:opacity-50"
             >
               <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
               Atualizar
@@ -208,6 +208,46 @@ export default function GlobalUsers() {
                     <span className="font-semibold text-slate-700 tabular-nums">{filtered.length}</span> de <span className="tabular-nums">{users.length}</span> usuários
                   </p>
                 </div>
+                {/* Mobile card list */}
+                <div className="divide-y divide-slate-100 sm:hidden">
+                  {filtered.map((user) => (
+                    <div key={user.id} className="px-4 py-3 space-y-2">
+                      <div className="flex items-center gap-3">
+                        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold ${user.isActive ? 'bg-brand-100 text-brand-700' : 'bg-slate-100 text-slate-400'}`}>
+                          {user.email.slice(0, 1).toUpperCase()}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-slate-800 truncate">{user.email}</p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <RoleBadge role={user.role} />
+                            {user.isActive ? (
+                              <span className="flex items-center gap-1 text-[11px] text-emerald-600 font-semibold">
+                                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />Ativo
+                              </span>
+                            ) : (
+                              <span className="flex items-center gap-1 text-[11px] text-slate-400 font-semibold">
+                                <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />Inativo
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between pl-12 text-[11px] text-slate-400">
+                        <span>
+                          {user.tenantId ? (
+                            <span className="flex items-center gap-1">
+                              <Building2 className="h-3 w-3" />
+                              {tenantMap.get(user.tenantId) ?? user.tenantId.slice(0, 8) + '…'}
+                            </span>
+                          ) : 'Plataforma'}
+                        </span>
+                        <span>{user.lastLoginAt ? formatDate(user.lastLoginAt) : 'Nunca acessou'}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="hidden sm:block overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-slate-100">
@@ -292,6 +332,7 @@ export default function GlobalUsers() {
                     ))}
                   </tbody>
                 </table>
+                </div>
               </>
             )}
           </div>

@@ -136,7 +136,7 @@ export default function Login() {
       </div>
 
       {/* ── Right: Login form ── */}
-      <div className="flex flex-1 flex-col items-center justify-center bg-slate-50 px-6 py-12">
+      <div className="flex flex-1 flex-col items-center justify-center bg-slate-50 px-4 sm:px-6 py-8 sm:py-12">
         <div className="w-full max-w-sm">
           {/* Mobile logo (hidden on lg) */}
           <div className="mb-8 flex flex-col items-center gap-3 lg:hidden">

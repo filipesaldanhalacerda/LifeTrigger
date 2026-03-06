@@ -471,7 +471,7 @@ export default function TeamManagement() {
         }
       />
 
-      <div className="p-6 space-y-5 animate-fadeIn">
+      <div className="p-4 sm:p-6 space-y-4 sm:space-y-5 animate-fadeIn">
 
         {/* ── Stats strip ── */}
         {!loading && users.length > 0 && (
@@ -508,9 +508,9 @@ export default function TeamManagement() {
         )}
 
         {/* ── Actions bar ── */}
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3">
           {/* Search */}
-          <div className="relative flex-1 min-w-52">
+          <div className="relative flex-1 min-w-0 sm:min-w-52">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
@@ -565,7 +565,7 @@ export default function TeamManagement() {
           {canAddUser && (
             <button
               onClick={() => setShowAddModal(true)}
-              className="ml-auto flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 transition-colors"
+              className="sm:ml-auto flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 transition-colors"
             >
               <UserPlus className="h-4 w-4" />
               Adicionar membro
@@ -647,6 +647,50 @@ export default function TeamManagement() {
                 )}
               </div>
             ) : (
+              <>
+              {/* Mobile card list */}
+              <div className="divide-y divide-slate-100 sm:hidden">
+                {filtered.map((u) => {
+                  const canManage = ROLE_LEVEL[callerRole] > ROLE_LEVEL[u.role as UserRole]
+                  return (
+                    <div key={u.id} className="px-4 py-3 space-y-2">
+                      <div className="flex items-center gap-3">
+                        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold ${u.isActive ? 'bg-brand-100 text-brand-700' : 'bg-slate-100 text-slate-400'}`}>
+                          {u.email.slice(0, 1).toUpperCase()}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-sm font-medium truncate ${u.isActive ? 'text-slate-800' : 'text-slate-400'}`}>{u.email}</p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            {u.isActive ? (
+                              <span className="flex items-center gap-1 text-[11px] text-emerald-600 font-semibold">
+                                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />Ativo
+                              </span>
+                            ) : (
+                              <span className="flex items-center gap-1 text-[11px] text-slate-400 font-semibold">
+                                <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />Inativo
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between pl-12">
+                        <div>
+                          {canManage
+                            ? <RoleDropdown user={u} callerRole={callerRole} onChangeRole={handleChangeRole} />
+                            : <RoleBadge role={u.role} />
+                          }
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[11px] text-slate-400">{u.lastLoginAt ? formatDate(u.lastLoginAt) : 'Nunca acessou'}</p>
+                          <p className="text-[10px] text-slate-300">desde {formatDate(u.createdAt)}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+
+              <div className="hidden sm:block overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-slate-100">
@@ -746,6 +790,8 @@ export default function TeamManagement() {
                   })}
                 </tbody>
               </table>
+              </div>
+              </>
             )}
           </div>
         )}
