@@ -21,7 +21,6 @@ import {
 } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { useAuth } from '../../contexts/AuthContext'
-import { getActiveTenantId } from '../../lib/api'
 import type { UserRole } from '../../contexts/AuthContext'
 import { useEffect } from 'react'
 
@@ -98,7 +97,6 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
   const { user, hasRole } = useAuth()
   const location = useLocation()
   const isSuperAdmin = user?.role === 'SuperAdmin'
-  const superAdminHasTenant = isSuperAdmin && !!getActiveTenantId()
 
   // Close mobile sidebar on route change
   useEffect(() => {
@@ -106,8 +104,9 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
   }, [location.pathname, onMobileClose])
 
   function visible(item: NavItemDef) {
-    if (item.tenantOnly && isSuperAdmin && !superAdminHasTenant) return false
-    if (item.tenantOnly && superAdminHasTenant) return true
+    // SuperAdmin sees only platform-level items (no tenant operations)
+    if (isSuperAdmin) return item.minRole === 'SuperAdmin' || !item.minRole
+    if (item.tenantOnly) return true
     return !item.minRole || hasRole(item.minRole)
   }
 
