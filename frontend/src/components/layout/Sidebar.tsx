@@ -105,7 +105,7 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
 
   function visible(item: NavItemDef) {
     // SuperAdmin sees only platform-level items (no tenant operations)
-    if (isSuperAdmin) return item.minRole === 'SuperAdmin' || !item.minRole
+    if (isSuperAdmin) return item.minRole === 'SuperAdmin' || (!item.minRole && !item.tenantOnly)
     if (item.tenantOnly) return true
     return !item.minRole || hasRole(item.minRole)
   }
