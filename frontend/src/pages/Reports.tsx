@@ -24,9 +24,11 @@ function ninetyDaysAgo() {
   return d.toISOString().slice(0, 10)
 }
 
-// Append T23:59:59 so the backend DateTimeOffset includes the full end day
-function endOfDay(date: string) {
-  return `${date}T23:59:59`
+// Return the next day so the backend filter (<= endDate) includes the full selected day
+function nextDay(date: string) {
+  const d = new Date(date)
+  d.setDate(d.getDate() + 1)
+  return d.toISOString().slice(0, 10)
 }
 
 // ── Sub-components ─────────────────────────────────────────────────
@@ -174,7 +176,7 @@ export default function Reports() {
     const tenantId = getActiveTenantId()
     if (!tenantId) { setError('Nenhuma corretora selecionada.'); setLoading(false); return }
     try {
-      const end = endOfDay(endDate)
+      const end = nextDay(endDate)
       const [pilotRes, evalsRes, usersRes] = await Promise.allSettled([
         getPilotReport(tenantId, { startDate, endDate: end, limit: 1000 }),
         getEvaluations(tenantId, { startDate, endDate: end, limit: 200 }),
