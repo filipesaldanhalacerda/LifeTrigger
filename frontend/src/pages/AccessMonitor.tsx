@@ -5,8 +5,19 @@ import {
   Smartphone, Clock,
 } from 'lucide-react'
 import { TopBar } from '../components/layout/TopBar'
+import { DateRangePicker } from '../components/ui/DateRangePicker'
 import { getLoginEvents } from '../lib/api'
 import type { LoginEventsResponse, LoginEventRecord } from '../lib/api'
+
+function today(): string {
+  return new Date().toISOString().slice(0, 10)
+}
+
+function daysAgo(n: number): string {
+  const d = new Date()
+  d.setDate(d.getDate() - n)
+  return d.toISOString().slice(0, 10)
+}
 
 // ── Helpers ───────────────────────────────────────────────────────
 function parseUA(ua: string | null): { browser: string; os: string; isMobile: boolean } {
@@ -52,12 +63,13 @@ const ROLE_COLORS: Record<string, string> = {
 export default function AccessMonitor() {
   const [data, setData] = useState<LoginEventsResponse | null>(null)
   const [loading, setLoading] = useState(true)
-  const [days, setDays] = useState(7)
+  const [startDate, setStartDate] = useState(daysAgo(7))
+  const [endDate, setEndDate] = useState(today())
 
-  async function load(d: number) {
+  async function load(s: string, e: string) {
     setLoading(true)
     try {
-      const res = await getLoginEvents(d)
+      const res = await getLoginEvents(s, e)
       setData(res)
     } catch {
       setData(null)
@@ -66,7 +78,7 @@ export default function AccessMonitor() {
     }
   }
 
-  useEffect(() => { void load(days) }, [days])
+  useEffect(() => { void load(startDate, endDate) }, [startDate, endDate])
 
   const s = data?.summary
 
@@ -74,29 +86,38 @@ export default function AccessMonitor() {
     <div>
       <TopBar
         title="Monitor de Acessos"
-        subtitle={loading ? 'Carregando…' : `${s?.totalLogins ?? 0} logins nos últimos ${days} dias`}
+        subtitle={loading ? 'Carregando…' : `${s?.totalLogins ?? 0} logins no período selecionado`}
       />
 
       <div className="p-4 sm:p-6 space-y-4 sm:space-y-5 animate-fadeIn">
 
         {/* Period selector + refresh */}
-        <div className="flex flex-wrap items-center gap-2">
-          {[1, 7, 14, 30].map((d) => (
-            <button
-              key={d}
-              onClick={() => setDays(d)}
-              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
-                days === d
-                  ? 'bg-brand-600 text-white'
-                  : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
-              }`}
-            >
-              {d === 1 ? 'Hoje' : `${d} dias`}
-            </button>
-          ))}
+        <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3">
+          <DateRangePicker
+            startDate={startDate}
+            endDate={endDate}
+            maxDate={today()}
+            onChange={(s, e) => { setStartDate(s); setEndDate(e) }}
+          />
+          <div className="flex items-center gap-2">
+            {[
+              { label: 'Hoje', d: 0 },
+              { label: '7 dias', d: 7 },
+              { label: '14 dias', d: 14 },
+              { label: '30 dias', d: 30 },
+            ].map(({ label, d }) => (
+              <button
+                key={d}
+                onClick={() => { setStartDate(daysAgo(d)); setEndDate(today()) }}
+                className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+              >
+                {label}
+              </button>
+            ))}
+          </div>
           <button
-            onClick={() => void load(days)}
-            className="ml-auto flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50 transition-colors"
+            onClick={() => void load(startDate, endDate)}
+            className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50 transition-colors sm:ml-auto"
           >
             <RefreshCw className="h-3 w-3" />
             Atualizar
@@ -154,7 +175,7 @@ export default function AccessMonitor() {
               />
               <SummaryCard
                 label="Período"
-                value={`${s!.periodDays}d`}
+                value={`${s!.periodDays} dia${s!.periodDays !== 1 ? 's' : ''}`}
                 icon={Clock}
                 iconBg="bg-slate-100"
                 iconColor="text-slate-500"

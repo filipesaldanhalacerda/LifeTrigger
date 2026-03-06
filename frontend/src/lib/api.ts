@@ -364,8 +364,8 @@ export interface LoginEventsResponse {
   events: LoginEventRecord[]
 }
 
-export async function getLoginEvents(days = 7): Promise<LoginEventsResponse> {
-  return request<LoginEventsResponse>(`/login-events?days=${days}&limit=500`, {}, undefined, true, 'auth')
+export async function getLoginEvents(startDate: string, endDate: string): Promise<LoginEventsResponse> {
+  return request<LoginEventsResponse>(`/login-events?startDate=${startDate}&endDate=${endDate}&limit=500`, {}, undefined, true, 'auth')
 }
 
 // ── Health ───────────────────────────────────────────────────────

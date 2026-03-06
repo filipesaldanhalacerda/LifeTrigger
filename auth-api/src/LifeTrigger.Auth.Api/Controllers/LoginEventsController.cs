@@ -14,20 +14,37 @@ public class LoginEventsController : ControllerBase
 
     public LoginEventsController(AuthDbContext db) => _db = db;
 
-    // GET /api/v1/login-events?days=7&limit=200
+    // GET /api/v1/login-events?startDate=2026-01-01&endDate=2026-03-06&limit=500
+    // Falls back to ?days=7 if dates not provided.
     [HttpGet]
     public async Task<IActionResult> GetEvents(
+        [FromQuery] string? startDate = null,
+        [FromQuery] string? endDate = null,
         [FromQuery] int days = 7,
         [FromQuery] int limit = 500,
         CancellationToken ct = default)
     {
-        days  = Math.Clamp(days, 1, 90);
         limit = Math.Clamp(limit, 1, 2000);
 
-        var since = DateTimeOffset.UtcNow.AddDays(-days);
+        DateTimeOffset since;
+        DateTimeOffset until;
+
+        if (!string.IsNullOrWhiteSpace(startDate) && !string.IsNullOrWhiteSpace(endDate)
+            && DateOnly.TryParse(startDate, out var sd) && DateOnly.TryParse(endDate, out var ed))
+        {
+            since = new DateTimeOffset(sd.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero);
+            until = new DateTimeOffset(ed.ToDateTime(TimeOnly.MaxValue), TimeSpan.Zero);
+            days  = (int)Math.Ceiling((until - since).TotalDays);
+        }
+        else
+        {
+            days  = Math.Clamp(days, 1, 90);
+            since = DateTimeOffset.UtcNow.AddDays(-days);
+            until = DateTimeOffset.UtcNow;
+        }
 
         var events = await _db.LoginEvents
-            .Where(e => e.Timestamp >= since)
+            .Where(e => e.Timestamp >= since && e.Timestamp <= until)
             .OrderByDescending(e => e.Timestamp)
             .Take(limit)
             .Select(e => new
@@ -47,7 +64,7 @@ public class LoginEventsController : ControllerBase
 
         // Summary stats
         var allInPeriod = await _db.LoginEvents
-            .Where(e => e.Timestamp >= since)
+            .Where(e => e.Timestamp >= since && e.Timestamp <= until)
             .ToListAsync(ct);
 
         var totalLogins      = allInPeriod.Count;
