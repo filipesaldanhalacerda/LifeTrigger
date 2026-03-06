@@ -164,13 +164,15 @@ export default function Reports() {
   const [evals,     setEvals]     = useState<EvaluationSummary[]>([])
   const [users,     setUsers]     = useState<UserRecord[]>([])
   const [loading,   setLoading]   = useState(true)
+  const [error,     setError]     = useState<string | null>(null)
   const [startDate, setStartDate] = useState(ninetyDaysAgo())
   const [endDate,   setEndDate]   = useState(today())
 
   const load = useCallback(async () => {
     setLoading(true)
+    setError(null)
     const tenantId = getActiveTenantId()
-    if (!tenantId) { setLoading(false); return }
+    if (!tenantId) { setError('Nenhuma corretora selecionada.'); setLoading(false); return }
     try {
       const end = endOfDay(endDate)
       const [pilotRes, evalsRes, usersRes] = await Promise.allSettled([
@@ -179,6 +181,7 @@ export default function Reports() {
         getUsers(),
       ])
       if (pilotRes.status === 'fulfilled') setReport(pilotRes.value)
+      else setError(`Erro ao carregar relatório: ${(pilotRes.reason as Error)?.message ?? 'desconhecido'}`)
       if (evalsRes.status === 'fulfilled') setEvals(evalsRes.value.items)
       if (usersRes.status === 'fulfilled') setUsers(usersRes.value)
     } finally {
@@ -272,6 +275,17 @@ export default function Reports() {
           <div className="flex items-center justify-center gap-2 py-20 text-slate-400">
             <Loader2 className="h-5 w-5 animate-spin text-brand-500" />
             <span className="text-sm">Carregando relatório…</span>
+          </div>
+        )}
+
+        {/* ── Error ── */}
+        {!loading && error && (
+          <div className="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
+            <div>
+              <p className="font-semibold">Erro ao carregar relatório</p>
+              <p className="mt-0.5 text-xs">{error}</p>
+            </div>
           </div>
         )}
 
