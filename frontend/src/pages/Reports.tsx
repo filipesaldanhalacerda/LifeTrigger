@@ -18,10 +18,15 @@ function today() {
   return new Date().toISOString().slice(0, 10)
 }
 
-function thirtyDaysAgo() {
+function ninetyDaysAgo() {
   const d = new Date()
-  d.setDate(d.getDate() - 30)
+  d.setDate(d.getDate() - 90)
   return d.toISOString().slice(0, 10)
+}
+
+// Append T23:59:59 so the backend DateTimeOffset includes the full end day
+function endOfDay(date: string) {
+  return `${date}T23:59:59`
 }
 
 // ── Sub-components ─────────────────────────────────────────────────
@@ -159,7 +164,7 @@ export default function Reports() {
   const [evals,     setEvals]     = useState<EvaluationSummary[]>([])
   const [users,     setUsers]     = useState<UserRecord[]>([])
   const [loading,   setLoading]   = useState(true)
-  const [startDate, setStartDate] = useState(thirtyDaysAgo())
+  const [startDate, setStartDate] = useState(ninetyDaysAgo())
   const [endDate,   setEndDate]   = useState(today())
 
   const load = useCallback(async () => {
@@ -167,9 +172,10 @@ export default function Reports() {
     const tenantId = getActiveTenantId()
     if (!tenantId) { setLoading(false); return }
     try {
+      const end = endOfDay(endDate)
       const [pilotRes, evalsRes, usersRes] = await Promise.allSettled([
-        getPilotReport(tenantId, { startDate, endDate, limit: 1000 }),
-        getEvaluations(tenantId, { startDate, endDate, limit: 200 }),
+        getPilotReport(tenantId, { startDate, endDate: end, limit: 1000 }),
+        getEvaluations(tenantId, { startDate, endDate: end, limit: 200 }),
         getUsers(),
       ])
       if (pilotRes.status === 'fulfilled') setReport(pilotRes.value)
