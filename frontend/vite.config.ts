@@ -19,6 +19,10 @@ export default defineConfig({
         target: 'http://localhost:5086',
         changeOrigin: true,
       },
+      '/api/v1/login-events': {
+        target: 'http://localhost:5086',
+        changeOrigin: true,
+      },
       // Engine API (evaluations, triggers, engine info, admin)
       '/api': {
         target: 'http://localhost:5001',
