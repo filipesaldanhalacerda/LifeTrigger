@@ -207,8 +207,11 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
           )}
         </button>
         <div className={cn('mt-2 px-2', collapsed && 'lg:hidden')}>
-          <p className="text-[11px] text-brand-300/40">Motor de Inteligência de</p>
-          <p className="text-[11px] text-brand-300/40">Proteção de Vida · B2B SaaS</p>
+          <p className="text-[11px] text-brand-300/40">Desenvolvido por</p>
+          <p className="text-[11px] font-semibold text-brand-300/60">AllTask Soluções Integradas</p>
+          <a href="mailto:alltasksolucoesintegradas@gmail.com" className="mt-1 block text-[10px] text-brand-300/50 hover:text-white transition-colors truncate">
+            alltasksolucoesintegradas@gmail.com
+          </a>
         </div>
       </div>
     </aside>

@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate, Navigate } from 'react-router-dom'
 import {
-  Activity, Loader2, ShieldCheck, BarChart2, Zap,
+  Activity, Loader2, ShieldCheck, Zap,
   Target, Lightbulb, Users, Lock, TrendingUp, Hash, FlaskConical,
 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
@@ -130,7 +130,9 @@ export default function Login() {
         <div className="relative z-10 px-12 xl:px-16 2xl:px-20 py-6 border-t border-white/5">
           <div className="flex items-center justify-between">
             <p className="text-xs text-brand-400/50">LifeTrigger Engine v1.0.0 · <span className="text-amber-400/70 font-semibold">Versao Demonstracao</span></p>
-            <p className="text-xs text-brand-400/50">B2B SaaS · Plataforma para corretoras de seguros</p>
+            <p className="text-xs text-brand-300/60">
+              Desenvolvido por <span className="font-semibold text-brand-300/80">AllTask Soluções Integradas</span>
+            </p>
           </div>
         </div>
       </div>
@@ -151,15 +153,29 @@ export default function Login() {
           </div>
 
           {/* Demo banner */}
-          <div className="mb-6 animate-fadeIn rounded-xl border border-amber-300 bg-amber-50 px-4 py-3">
-            <div className="flex items-center gap-2">
-              <FlaskConical className="h-4 w-4 shrink-0 text-amber-600" />
-              <p className="text-xs font-bold text-amber-800 uppercase tracking-wide">Ambiente de Demonstracao</p>
+          <div className="mb-6 animate-fadeIn rounded-2xl border border-brand-200 bg-gradient-to-br from-brand-50 to-white px-5 py-4 shadow-sm">
+            <div className="flex items-center gap-2.5 mb-3">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-100">
+                <FlaskConical className="h-3.5 w-3.5 text-brand-600" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-brand-900 uppercase tracking-wide">Ambiente de Demonstração</p>
+                <p className="text-[10px] text-brand-500">Dados fictícios · Redefinidos periodicamente</p>
+              </div>
             </div>
-            <p className="mt-1 text-[11px] text-amber-700 leading-relaxed">
-              Voce esta acessando uma <strong>versao demo</strong> do LifeTrigger Engine. Os dados e usuarios sao ficticio e podem ser redefinidos periodicamente.
-              Explore todas as funcionalidades livremente.
+            <p className="text-[12px] text-brand-700 leading-relaxed">
+              Explore todas as funcionalidades do <strong>LifeTrigger Engine</strong> livremente.
+              Este ambiente é para demonstração — navegue sem compromisso.
             </p>
+            <div className="mt-3 flex items-center gap-2 rounded-xl bg-brand-100/60 px-3 py-2.5">
+              <span className="text-[11px] text-brand-700">Quer contratar?</span>
+              <a
+                href="mailto:alltasksolucoesintegradas@gmail.com"
+                className="inline-flex items-center gap-1 rounded-lg bg-brand-600 px-3 py-1 text-[11px] font-semibold text-white hover:bg-brand-700 transition-colors shadow-sm"
+              >
+                Fale conosco
+              </a>
+            </div>
           </div>
 
           <div className="hidden lg:block mb-6">
@@ -212,46 +228,34 @@ export default function Login() {
             </div>
           </form>
 
-          {/* Value reminder */}
-          <div className="mt-6 animate-fadeIn rounded-xl border border-brand-100 bg-brand-50 p-4" style={{ animationDelay: '180ms' }}>
-            <div className="flex gap-3">
-              <BarChart2 className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
-              <div>
-                <p className="text-xs font-semibold text-brand-800">Cada avaliação é uma oportunidade de venda</p>
-                <p className="mt-1 text-[11px] text-brand-600 leading-relaxed">
-                  O motor gera diagnóstico completo com score, gap em R$, classificação de risco e 5 insights
-                  prontos para converter — tudo em milissegundos, com registro auditável.
-                </p>
-              </div>
-            </div>
-          </div>
 
           {/* Demo credentials */}
-          <div className="mt-4 animate-fadeIn" style={{ animationDelay: '220ms' }}>
-            <div className="rounded-xl border border-amber-200 bg-amber-50/50 px-4 py-2.5 shadow-sm">
-              <div className="flex items-center gap-2 mb-1.5">
-                <FlaskConical className="h-3 w-3 text-amber-500" />
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-600">
-                  Usuarios Demo — clique para entrar
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {[
-                  { role: 'Proprietario', email: 'owner@alpha.demo',          password: 'Alpha@123!' },
-                  { role: 'Gerente',      email: 'manager@alpha.demo',        password: 'Alpha@123!' },
-                  { role: 'Corretor',     email: 'broker@alpha.demo',         password: 'Alpha@123!' },
-                  { role: 'Observador',   email: 'viewer@alpha.demo',         password: 'Alpha@123!' },
-                ].map(({ role, email: demoEmail, password: demoPw }) => (
-                  <button
-                    key={demoEmail}
-                    type="button"
-                    onClick={() => { setEmail(demoEmail); setPassword(demoPw) }}
-                    className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-700 hover:border-brand-400 hover:bg-brand-50 hover:text-brand-700 transition-all"
-                  >
-                    Entrar como {role}
-                  </button>
-                ))}
-              </div>
+          <div className="mt-5 animate-fadeIn" style={{ animationDelay: '220ms' }}>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="h-px flex-1 bg-slate-200" />
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Acesso rápido</span>
+              <div className="h-px flex-1 bg-slate-200" />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { role: 'Proprietário', desc: 'Gestão completa',      email: 'owner@alpha.demo',   password: 'Alpha@123!', iconBg: 'bg-purple-100',  iconText: 'text-purple-600',  hoverBorder: 'hover:border-purple-300' },
+                { role: 'Gerente',      desc: 'Equipe e relatórios',  email: 'manager@alpha.demo', password: 'Alpha@123!', iconBg: 'bg-blue-100',    iconText: 'text-blue-600',    hoverBorder: 'hover:border-blue-300' },
+                { role: 'Corretor',     desc: 'Avaliações e clientes', email: 'broker@alpha.demo', password: 'Alpha@123!', iconBg: 'bg-emerald-100', iconText: 'text-emerald-600', hoverBorder: 'hover:border-emerald-300' },
+                { role: 'Observador',   desc: 'Apenas visualização',  email: 'viewer@alpha.demo',  password: 'Alpha@123!', iconBg: 'bg-slate-100',   iconText: 'text-slate-600',   hoverBorder: 'hover:border-slate-300' },
+              ].map(({ role, desc, email: demoEmail, password: demoPw, iconBg, iconText, hoverBorder }) => (
+                <button
+                  key={demoEmail}
+                  type="button"
+                  onClick={() => { setEmail(demoEmail); setPassword(demoPw) }}
+                  className={`group relative rounded-xl border border-slate-200 bg-white p-3 text-left ${hoverBorder} hover:shadow-md transition-all duration-200`}
+                >
+                  <div className={`mb-1.5 flex h-7 w-7 items-center justify-center rounded-lg ${iconBg}`}>
+                    <span className={`text-xs font-bold ${iconText}`}>{role[0]}</span>
+                  </div>
+                  <p className="text-xs font-semibold text-slate-800">{role}</p>
+                  <p className="text-[10px] text-slate-400 leading-snug">{desc}</p>
+                </button>
+              ))}
             </div>
           </div>
         </div>

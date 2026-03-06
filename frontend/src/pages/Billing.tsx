@@ -217,8 +217,8 @@ export default function Billing() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-slate-600">Suporte</span>
-                  <a href="mailto:suporte@lifetrigger.io" className="text-sm font-semibold text-brand-600 hover:text-brand-700">
-                    suporte@lifetrigger.io
+                  <a href="mailto:alltasksolucoesintegradas@gmail.com" className="text-sm font-semibold text-brand-600 hover:text-brand-700">
+                    alltasksolucoesintegradas@gmail.com
                   </a>
                 </div>
               </div>
@@ -234,7 +234,7 @@ export default function Billing() {
                     Entre em contato com nossa equipe comercial para fazer upgrade e garantir continuidade do serviço.
                   </p>
                   <a
-                    href="mailto:comercial@lifetrigger.io"
+                    href="mailto:alltasksolucoesintegradas@gmail.com"
                     className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-amber-700 hover:text-amber-800 underline"
                   >
                     Falar com comercial →

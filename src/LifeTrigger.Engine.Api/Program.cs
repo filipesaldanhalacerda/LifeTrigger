@@ -136,7 +136,7 @@ builder.Services.AddSwaggerGen(c =>
         Contact = new Microsoft.OpenApi.Models.OpenApiContact
         {
             Name = "LifeTrigger API Suporte",
-            Email = "suporte@lifetrigger.example.com"
+            Email = "alltasksolucoesintegradas@gmail.com"
         }
     });
 
