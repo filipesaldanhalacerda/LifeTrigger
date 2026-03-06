@@ -34,9 +34,9 @@ function greeting() {
 }
 
 function healthConfig(score: number) {
-  if (score >= 70) return { label: 'Carteira Saudável',           color: 'text-emerald-700', bg: 'bg-emerald-50',  border: 'border-emerald-200', bar: 'bg-emerald-500', ring: 'ring-emerald-500', dot: 'bg-emerald-500' }
-  if (score >= 45) return { label: 'Atenção Moderada',            color: 'text-amber-700',   bg: 'bg-amber-50',    border: 'border-amber-200',   bar: 'bg-amber-500',   ring: 'ring-amber-500',   dot: 'bg-amber-500'   }
-  return                   { label: 'Atenção Crítica Necessária',  color: 'text-red-700',     bg: 'bg-red-50',      border: 'border-red-200',     bar: 'bg-red-500',     ring: 'ring-red-500',     dot: 'bg-red-500'     }
+  if (score >= 70) return { label: 'Saudável',   color: 'text-emerald-600', ringStroke: '#059669', dot: 'bg-emerald-500' }
+  if (score >= 45) return { label: 'Moderada',   color: 'text-amber-600',   ringStroke: '#d97706', dot: 'bg-amber-500'   }
+  return                   { label: 'Crítica',    color: 'text-red-600',     ringStroke: '#dc2626', dot: 'bg-red-500'     }
 }
 
 export default function Dashboard() {
@@ -77,7 +77,8 @@ export default function Dashboard() {
     : 0
   const health = healthConfig(healthScore)
 
-  const userName = user?.email?.split('@')[0] ?? ''
+  const emailPrefix = user?.email?.split('@')[0] ?? ''
+  const userName = emailPrefix.charAt(0).toUpperCase() + emailPrefix.slice(1)
 
   return (
     <div>
@@ -139,57 +140,59 @@ export default function Dashboard() {
         {!loading && report && (
           <>
             {/* ── Greeting + Health Score ── */}
-            <div className={`rounded-2xl border ${health.border} ${health.bg} p-5 shadow-card animate-fadeIn`}>
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card animate-fadeIn">
               <div className="flex items-center justify-between gap-4 flex-wrap">
-                <div>
-                  <p className="text-sm text-slate-600">
+                {/* Left: greeting + portfolio bar */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-slate-500">
                     {greeting()}, <span className="font-semibold text-slate-800">{userName}</span>
                   </p>
-                  <div className="mt-1.5 flex items-center gap-2">
-                    <div className={`h-2.5 w-2.5 rounded-full ${health.dot}`} />
-                    <span className={`text-sm font-bold ${health.color}`}>{health.label}</span>
+                  <p className="mt-0.5 text-xs text-slate-400">{total} avaliações na carteira</p>
+
+                  {/* Stacked bar */}
+                  <div className="mt-3 flex h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                    {pct(critico, total) > 0 && (
+                      <div className="bg-red-500 transition-all duration-700" style={{ width: `${pct(critico, total)}%` }} />
+                    )}
+                    {pct(report.riskDistribution.moderado, total) > 0 && (
+                      <div className="bg-amber-400 transition-all duration-700" style={{ width: `${pct(report.riskDistribution.moderado, total)}%` }} />
+                    )}
+                    {pct(adequado, total) > 0 && (
+                      <div className="bg-emerald-500 transition-all duration-700" style={{ width: `${pct(adequado, total)}%` }} />
+                    )}
+                  </div>
+                  <div className="mt-2 flex items-center gap-4">
+                    <LegendDot color="bg-red-500" label="Crítico" count={critico} />
+                    <LegendDot color="bg-amber-400" label="Moderado" count={report.riskDistribution.moderado} />
+                    <LegendDot color="bg-emerald-500" label="Adequado" count={adequado} />
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  {/* Health ring */}
-                  <div className="relative h-16 w-16">
-                    <svg viewBox="0 0 36 36" className="h-16 w-16 -rotate-90">
-                      <circle cx="18" cy="18" r="15.5" fill="none" stroke="currentColor" strokeWidth="3" className="text-white/60" />
+
+                {/* Right: health ring */}
+                <div className="flex items-center gap-3 shrink-0">
+                  <div className="relative h-14 w-14">
+                    <svg viewBox="0 0 36 36" className="h-14 w-14 -rotate-90">
+                      <circle cx="18" cy="18" r="15.5" fill="none" strokeWidth="3" className="text-slate-100" stroke="currentColor" />
                       <circle
                         cx="18" cy="18" r="15.5" fill="none" strokeWidth="3"
                         strokeDasharray={`${healthScore * 0.975} 100`}
                         strokeLinecap="round"
-                        className={health.color}
+                        stroke={health.ringStroke}
                         style={{ transition: 'stroke-dasharray 1s ease' }}
                       />
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <span className={`text-lg font-extrabold tabular-nums ${health.color}`}>{healthScore}</span>
+                      <span className={`text-base font-extrabold tabular-nums ${health.color}`}>{healthScore}</span>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Score</p>
-                    <p className="text-[11px] text-slate-500">{total} avaliações</p>
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Saúde</p>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <div className={`h-1.5 w-1.5 rounded-full ${health.dot}`} />
+                      <span className={`text-xs font-semibold ${health.color}`}>{health.label}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-
-              {/* Stacked bar */}
-              <div className="mt-3 flex h-2.5 w-full overflow-hidden rounded-full bg-white/60">
-                {pct(critico, total) > 0 && (
-                  <div className="bg-red-500 transition-all duration-700" style={{ width: `${pct(critico, total)}%` }} />
-                )}
-                {pct(report.riskDistribution.moderado, total) > 0 && (
-                  <div className="bg-amber-400 transition-all duration-700" style={{ width: `${pct(report.riskDistribution.moderado, total)}%` }} />
-                )}
-                {pct(adequado, total) > 0 && (
-                  <div className="bg-emerald-500 transition-all duration-700" style={{ width: `${pct(adequado, total)}%` }} />
-                )}
-              </div>
-              <div className="mt-2 flex items-center gap-4">
-                <LegendDot color="bg-red-500" label="Crítico" count={critico} />
-                <LegendDot color="bg-amber-400" label="Moderado" count={report.riskDistribution.moderado} />
-                <LegendDot color="bg-emerald-500" label="Adequado" count={adequado} />
               </div>
             </div>
 
