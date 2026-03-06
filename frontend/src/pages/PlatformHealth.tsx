@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import {
   Activity, Database, Server, CheckCircle, XCircle,
-  Loader2, HardDrive, Users, Shield, Clock,
+  Loader2, HardDrive, Users, Shield,
   RefreshCw, Zap, AlertTriangle,
 } from 'lucide-react'
 import { TopBar } from '../components/layout/TopBar'
