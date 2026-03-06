@@ -320,39 +320,38 @@ function LoginChart({ data }: { data: { date: string; count: number }[] }) {
   const [hover, setHover] = useState<number | null>(null)
 
   const max = Math.max(...data.map((d) => d.count), 1)
-  // Nice Y-axis ceiling (round up to nearest multiple)
   const step = max <= 5 ? 1 : max <= 20 ? 5 : max <= 50 ? 10 : max <= 200 ? 25 : 50
   const ceil = Math.ceil(max / step) * step || 1
-  const gridLines = Array.from({ length: 5 }, (_, i) => Math.round((ceil / 4) * (4 - i)))
+  const gridCount = 4
+  const gridLines = Array.from({ length: gridCount }, (_, i) => Math.round((ceil / gridCount) * (gridCount - i)))
 
-  const W = 100
-  const H = 50
-  const PX = 0.5 // padding x per side
-  const PY = 2   // padding top
-  const PB = 0   // padding bottom
+  const W = 500
+  const H = 160
+  const ML = 30 // margin left for Y labels
+  const MR = 8
+  const MT = 8
+  const MB = 20 // margin bottom for X labels
 
-  const chartW = W - PX * 2
-  const chartH = H - PY - PB
+  const chartW = W - ML - MR
+  const chartH = H - MT - MB
   const n = data.length
 
   const points = data.map((d, i) => ({
-    x: PX + (n > 1 ? (i / (n - 1)) * chartW : chartW / 2),
-    y: PY + chartH - (d.count / ceil) * chartH,
+    x: ML + (n > 1 ? (i / (n - 1)) * chartW : chartW / 2),
+    y: MT + chartH - (d.count / ceil) * chartH,
     ...d,
   }))
 
   const line = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ')
-  const area = `${line} L${points[points.length - 1].x},${PY + chartH} L${points[0].x},${PY + chartH} Z`
+  const area = `${line} L${points[points.length - 1].x},${MT + chartH} L${points[0].x},${MT + chartH} Z`
 
-  // Show ~6 labels max, evenly spaced
-  const labelEvery = Math.max(1, Math.ceil(n / 7))
-
+  const labelEvery = Math.max(1, Math.ceil(n / 8))
   const total = data.reduce((s, d) => s + d.count, 0)
   const avg = n > 0 ? (total / n).toFixed(1) : '0'
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-white shadow-card overflow-hidden">
-      <div className="flex items-center justify-between px-4 sm:px-5 pt-4 sm:pt-5 pb-2">
+      <div className="flex items-center justify-between px-4 sm:px-5 pt-4 sm:pt-5 pb-1">
         <div>
           <h2 className="text-sm font-bold text-slate-900">Logins por Dia</h2>
           <p className="mt-0.5 text-xs text-slate-400">{data.length} dias · média {avg}/dia</p>
@@ -365,66 +364,54 @@ function LoginChart({ data }: { data: { date: string; count: number }[] }) {
         )}
       </div>
 
-      <div
-        className="relative px-2 sm:px-3 pb-2"
-        onMouseLeave={() => setHover(null)}
-      >
-        <svg viewBox={`0 0 ${W} ${H + 8}`} className="w-full" preserveAspectRatio="none">
-          {/* Grid lines */}
+      <div className="px-2 sm:px-3 pb-3" onMouseLeave={() => setHover(null)}>
+        <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto">
+          {/* Grid lines + Y labels */}
           {gridLines.map((v) => {
-            const y = PY + chartH - (v / ceil) * chartH
+            const y = MT + chartH - (v / ceil) * chartH
             return (
               <g key={v}>
-                <line x1={PX} y1={y} x2={W - PX} y2={y} stroke="#e2e8f0" strokeWidth="0.15" strokeDasharray="0.8,0.4" />
-                <text x={W - PX + 0.3} y={y + 0.8} fontSize="2.2" fill="#94a3b8" textAnchor="start">{v}</text>
+                <line x1={ML} y1={y} x2={W - MR} y2={y} stroke="#f1f5f9" strokeWidth="1" />
+                <text x={ML - 6} y={y + 3.5} fontSize="9" fill="#94a3b8" textAnchor="end" fontFamily="system-ui">{v}</text>
               </g>
             )
           })}
-          {/* Zero line */}
-          <line x1={PX} y1={PY + chartH} x2={W - PX} y2={PY + chartH} stroke="#e2e8f0" strokeWidth="0.15" />
+          <line x1={ML} y1={MT + chartH} x2={W - MR} y2={MT + chartH} stroke="#e2e8f0" strokeWidth="1" />
+          <text x={ML - 6} y={MT + chartH + 3.5} fontSize="9" fill="#94a3b8" textAnchor="end" fontFamily="system-ui">0</text>
 
           {/* Area gradient */}
           <defs>
             <linearGradient id="loginArea" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="var(--color-brand-500)" stopOpacity="0.2" />
-              <stop offset="100%" stopColor="var(--color-brand-500)" stopOpacity="0.02" />
+              <stop offset="0%" stopColor="var(--color-brand-500)" stopOpacity="0.15" />
+              <stop offset="100%" stopColor="var(--color-brand-500)" stopOpacity="0.01" />
             </linearGradient>
           </defs>
           <path d={area} fill="url(#loginArea)" />
+          <path d={line} fill="none" stroke="var(--color-brand-500)" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
 
-          {/* Line */}
-          <path d={line} fill="none" stroke="var(--color-brand-500)" strokeWidth="0.4" strokeLinejoin="round" strokeLinecap="round" />
-
-          {/* Data points + hover zones */}
+          {/* Data points + hover */}
           {points.map((p, i) => (
             <g key={p.date}>
-              {/* Invisible wide hit area */}
               <rect
                 x={p.x - chartW / n / 2}
                 y={0}
                 width={chartW / n}
-                height={H + 8}
+                height={H}
                 fill="transparent"
                 onMouseEnter={() => setHover(i)}
                 style={{ cursor: 'pointer' }}
               />
-              {/* Vertical guide on hover */}
               {hover === i && (
-                <line x1={p.x} y1={PY} x2={p.x} y2={PY + chartH} stroke="var(--color-brand-400)" strokeWidth="0.15" strokeDasharray="0.5,0.3" />
+                <line x1={p.x} y1={MT} x2={p.x} y2={MT + chartH} stroke="var(--color-brand-300)" strokeWidth="1" strokeDasharray="4,3" />
               )}
-              {/* Dot */}
               <circle
-                cx={p.x}
-                cy={p.y}
-                r={hover === i ? 1.2 : 0.5}
+                cx={p.x} cy={p.y}
+                r={hover === i ? 5 : 2.5}
                 fill={hover === i ? 'var(--color-brand-600)' : 'var(--color-brand-500)'}
-                stroke="white"
-                strokeWidth={hover === i ? 0.4 : 0}
-                className="transition-all duration-150"
+                stroke="white" strokeWidth={hover === i ? 2 : 0}
               />
-              {/* X-axis labels */}
               {i % labelEvery === 0 && (
-                <text x={p.x} y={H + 5} fontSize="2" fill="#94a3b8" textAnchor="middle">
+                <text x={p.x} y={H - 4} fontSize="9" fill="#94a3b8" textAnchor="middle" fontFamily="system-ui">
                   {formatDateBR(p.date)}
                 </text>
               )}
