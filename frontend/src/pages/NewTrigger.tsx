@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import {
   ChevronRight, ChevronLeft, Send, AlertCircle,
   Heart, Baby, Home, TrendingUp, Scissors, Sunset, Pencil,
@@ -78,6 +78,7 @@ const STEPS = [
 // ── Component ─────────────────────────────────────────────────────
 export default function NewTrigger() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [step, setStep] = useState(0)
   const [loading, setLoading] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -137,6 +138,63 @@ export default function NewTrigger() {
   const [consentId] = useState(`consent-trigger-${Date.now()}`)
 
   const activeTrigger = TRIGGER_TYPES.find((t) => t.value === triggerType)!
+
+  // Pre-fill from evaluation when navigating from EvaluationResult
+  useEffect(() => {
+    const prefill = (location.state as { prefill?: import('../types/api').LifeInsuranceAssessmentRequest })?.prefill
+    if (!prefill) return
+
+    // Personal
+    setAge(String(prefill.personalContext.age || ''))
+    setMaritalStatus(prefill.personalContext.maritalStatus || '')
+    setProfessionRisk(prefill.personalContext.professionRiskLevel || 'BAIXO')
+    setIsSmoker(prefill.personalContext.isSmoker ?? false)
+
+    // Family
+    const depCount = prefill.familyContext.dependentsCount || 0
+    setDependentsCount(String(depCount))
+    const ages = (prefill.familyContext.dependentsAges || []).map(String)
+    setDependentsAges(ages.length >= depCount ? ages.slice(0, depCount) : [...ages, ...Array(depCount - ages.length).fill('')])
+    setEduTuitions(Array(depCount).fill(''))
+
+    // Financial
+    const monthlyIncome = prefill.financialContext.monthlyIncome?.exactValue
+    if (monthlyIncome) setIncome(String(Math.round(monthlyIncome * 100)))
+
+    const pols = prefill.financialContext.policies
+    if (pols && pols.length > 0) {
+      setPolicies(pols.map((p) => ({
+        coverage: p.coverageAmount ? String(Math.round(p.coverageAmount * 100)) : '',
+        policyType: p.policyType || '',
+      })))
+    }
+
+    if (prefill.financialContext.debts?.totalAmount) {
+      setDebtTotal(String(Math.round(prefill.financialContext.debts.totalAmount * 100)))
+      if (prefill.financialContext.debts.remainingTermMonths) {
+        setDebtMonths(String(prefill.financialContext.debts.remainingTermMonths))
+      }
+    }
+
+    if (prefill.financialContext.emergencyFundMonths != null) {
+      setEmergencyFund(String(prefill.financialContext.emergencyFundMonths))
+    }
+
+    if (prefill.financialContext.educationCosts?.totalEstimatedCost) {
+      setEducationCost(String(Math.round(prefill.financialContext.educationCosts.totalEstimatedCost * 100)))
+      setEduMode('manual')
+    }
+
+    if (prefill.financialContext.estate?.totalEstateValue) {
+      setEstateValue(String(Math.round(prefill.financialContext.estate.totalEstateValue * 100)))
+      if (prefill.financialContext.estate.state) {
+        setEstateState(prefill.financialContext.estate.state)
+      }
+    }
+
+    // Consent already given in original evaluation
+    setConsent(true)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   function clearError(field: string) {
     setFieldErrors((prev) => {
