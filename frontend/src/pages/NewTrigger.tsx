@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useLayoutEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Send, AlertCircle, Heart, Baby, Home, TrendingUp,
@@ -13,29 +13,20 @@ import type { LifeTriggerEvent } from '../types/api'
 // ── Currency helpers ──────────────────────────────────────────────
 function parseCurrency(raw: string): number {
   if (!raw) return 0
-  // Brazilian format: 1.234,56 → remove dots (thousands), replace comma (decimal) with dot
   const cleaned = raw.replace(/\./g, '').replace(',', '.')
   return Number(cleaned) || 0
 }
 
-function formatBRL(raw: string): string {
-  const n = parseCurrency(raw)
-  if (!n) return ''
-  return n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-}
-
-function sanitizeCurrencyInput(value: string): string {
-  // Allow only digits, dots, and one comma
-  let sanitized = value.replace(/[^\d.,]/g, '')
-  // Only allow one comma (decimal separator)
-  const commaIdx = sanitized.indexOf(',')
-  if (commaIdx !== -1) {
-    sanitized = sanitized.slice(0, commaIdx + 1) + sanitized.slice(commaIdx + 1).replace(/,/g, '')
-    // Limit to 2 decimal places
-    const decimals = sanitized.slice(commaIdx + 1)
-    if (decimals.length > 2) sanitized = sanitized.slice(0, commaIdx + 3)
+function formatCurrencyLive(raw: string): string {
+  if (!raw) return ''
+  const parts = raw.split(',')
+  let intPart = parts[0].replace(/\D/g, '')
+  intPart = intPart.replace(/^0+(\d)/, '$1')
+  if (intPart.length > 3) {
+    intPart = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.')
   }
-  return sanitized
+  if (parts.length > 1) return `${intPart},${parts[1].replace(/\D/g, '').slice(0, 2)}`
+  return intPart
 }
 
 // ── Trigger type catalogue ────────────────────────────────────────
@@ -710,19 +701,53 @@ function CurrencyInput({
   placeholder?: string
   hasError?: boolean
 }) {
-  const [focused, setFocused] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const cursorRef = useRef<number>(0)
+
+  useLayoutEffect(() => {
+    const el = inputRef.current
+    if (el && document.activeElement === el) {
+      el.setSelectionRange(cursorRef.current, cursorRef.current)
+    }
+  })
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const el = e.target
+    const pos = el.selectionStart ?? 0
+    // Count meaningful chars (digits + comma) before cursor
+    const meaningful = el.value.slice(0, pos).replace(/\./g, '').length
+
+    // Strip dots, keep only digits and one comma with max 2 decimals
+    let raw = el.value.replace(/\./g, '').replace(/[^\d,]/g, '')
+    const ci = raw.indexOf(',')
+    if (ci !== -1) {
+      raw = raw.slice(0, ci + 1) + raw.slice(ci + 1).replace(/,/g, '').slice(0, 2)
+    }
+
+    const formatted = formatCurrencyLive(raw)
+
+    // Restore cursor: find where N meaningful chars land in the formatted string
+    let count = 0
+    let newPos = formatted.length
+    for (let i = 0; i < formatted.length; i++) {
+      if (formatted[i] !== '.') count++
+      if (count >= meaningful) { newPos = i + 1; break }
+    }
+    cursorRef.current = newPos
+    onChange(raw)
+  }
+
   return (
     <div className="relative">
       <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-slate-400">
         R$
       </span>
       <input
+        ref={inputRef}
         type="text"
         inputMode="decimal"
-        value={focused ? value : formatBRL(value)}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
-        onChange={(e) => onChange(sanitizeCurrencyInput(e.target.value))}
+        value={formatCurrencyLive(value)}
+        onChange={handleChange}
         placeholder={placeholder ?? '0,00'}
         className={`${cls(hasError)} pl-9`}
       />
