@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import {
   ChevronRight, ChevronLeft, Send, AlertCircle,
   User, Banknote, Users, ClipboardCheck,
+  ChevronDown, Check, ShieldCheck, ShieldAlert, ShieldOff,
 } from 'lucide-react'
 import { TopBar } from '../components/layout/TopBar'
 import { postEvaluation, getActiveTenantId } from '../lib/api'
@@ -409,14 +410,8 @@ export default function NewEvaluation() {
                     <Field label="Capital Segurado Atual" hint="Valor total da cobertura da apólice vigente.">
                       <CurrencyInput value={currentCoverage} onChange={setCurrentCoverage} placeholder="200.000,00" />
                     </Field>
-                    <Field label="Tipo de Apólice" hint="Modalidade contratual do seguro vigente.">
-                      <select value={policyType} onChange={(e) => setPolicyType(e.target.value)} className={cls()}>
-                        <option value="">Não informado</option>
-                        <option value="TEMPORARIO">Temporário</option>
-                        <option value="VIDA_INTEIRA">Vida Inteira</option>
-                        <option value="ACIDENTES_PESSOAIS">Acidentes Pessoais</option>
-                        <option value="DESCONHECIDO">Desconhecido</option>
-                      </select>
+                    <Field label="Tipo de Apólice" hint="Modalidade contratual do seguro vigente. Afeta como o motor contabiliza a cobertura.">
+                      <PolicyTypeSelector value={policyType} onChange={setPolicyType} />
                     </Field>
                   </div>
                 </div>
@@ -483,12 +478,7 @@ export default function NewEvaluation() {
                       <CurrencyInput value={estateValue} onChange={setEstateValue} placeholder="1.000.000,00" />
                     </Field>
                     <Field label="Estado (UF)" hint="O ITCMD varia de 2% a 8% conforme o estado. Alíquota padrão: 4%.">
-                      <select value={estateState} onChange={(e) => setEstateState(e.target.value)} className={cls()}>
-                        <option value="">Não informado (4% padrão)</option>
-                        {BR_STATES.map((s) => (
-                          <option key={s.uf} value={s.uf}>{s.uf} — {s.name} ({s.rate}%)</option>
-                        ))}
-                      </select>
+                      <StateCombobox value={estateState} onChange={setEstateState} />
                     </Field>
                   </div>
                 </div>
@@ -754,7 +744,7 @@ const BR_STATES = [
   { uf: 'RJ', name: 'Rio de Janeiro', rate: 8 }, { uf: 'RN', name: 'Rio Grande do Norte', rate: 6 },
   { uf: 'RO', name: 'Rondônia', rate: 4 }, { uf: 'RR', name: 'Roraima', rate: 4 },
   { uf: 'RS', name: 'Rio Grande do Sul', rate: 6 }, { uf: 'SC', name: 'Santa Catarina', rate: 8 },
-  { uf: 'SE', name: 'Sergipe', rate: 8 }, { uf: 'SP', name: 'São Paulo', rate: 4 },
+  { uf: 'SE', name: 'Sergipe', rate: 8 }, { uf: 'SP', name: 'São Paulo', rate: 8 },
   { uf: 'TO', name: 'Tocantins', rate: 8 },
 ]
 
@@ -805,6 +795,242 @@ function CurrencyInput({
         placeholder={placeholder ?? '0,00'}
         className={`${cls(hasError)} pl-9`}
       />
+    </div>
+  )
+}
+
+function StateCombobox({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [open, setOpen] = useState(false)
+  const [search, setSearch] = useState('')
+
+  const filtered = search
+    ? BR_STATES.filter(
+        (s) =>
+          s.uf.toLowerCase().includes(search.toLowerCase()) ||
+          s.name.toLowerCase().includes(search.toLowerCase()),
+      )
+    : BR_STATES
+
+  const selected = BR_STATES.find((s) => s.uf === value)
+
+  function pick(uf: string) {
+    onChange(uf)
+    setSearch('')
+    setOpen(false)
+  }
+
+  return (
+    <div
+      className="relative"
+      onBlur={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+          setOpen(false)
+          setSearch('')
+        }
+      }}
+    >
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className={`${cls()} flex items-center justify-between text-left`}
+      >
+        <span className={selected ? 'text-slate-900' : 'text-slate-400'}>
+          {selected ? `${selected.uf} — ${selected.name} (${selected.rate}%)` : 'Não informado (4% padrão)'}
+        </span>
+        <svg className={`h-4 w-4 text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+      </button>
+
+      {open && (
+        <div className="absolute z-50 bottom-full mb-1 w-full rounded-xl border border-slate-200 bg-white shadow-lg">
+          <div className="p-2">
+            <input
+              type="text"
+              autoFocus
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Buscar estado..."
+              className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm placeholder:text-slate-400 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100"
+            />
+          </div>
+          <ul className="max-h-52 overflow-y-auto px-1 pb-1">
+            <li>
+              <button
+                type="button"
+                onClick={() => pick('')}
+                className={`w-full rounded-lg px-3 py-2 text-left text-sm transition-colors hover:bg-slate-50 ${!value ? 'bg-brand-50 font-semibold text-brand-700' : 'text-slate-600'}`}
+              >
+                Não informado (4% padrão)
+              </button>
+            </li>
+            {filtered.map((s) => (
+              <li key={s.uf}>
+                <button
+                  type="button"
+                  onClick={() => pick(s.uf)}
+                  className={`w-full rounded-lg px-3 py-2 text-left text-sm transition-colors hover:bg-slate-50 ${value === s.uf ? 'bg-brand-50 font-semibold text-brand-700' : 'text-slate-700'}`}
+                >
+                  <span className="font-medium">{s.uf}</span>
+                  <span className="text-slate-500"> — {s.name}</span>
+                  <span className="ml-1 text-xs text-slate-400">({s.rate}%)</span>
+                </button>
+              </li>
+            ))}
+            {filtered.length === 0 && (
+              <li className="px-3 py-2 text-sm text-slate-400">Nenhum estado encontrado</li>
+            )}
+          </ul>
+        </div>
+      )}
+    </div>
+  )
+}
+
+const POLICY_TYPE_OPTIONS = [
+  {
+    value: '',
+    label: 'Não informado',
+    desc: 'O cliente não sabe ou não informou o tipo. O motor assumirá cobertura integral (fator 1.0×).',
+    factor: '1.0×',
+    icon: ShieldCheck,
+    color: 'text-slate-400',
+    bg: 'bg-slate-50',
+    ring: 'ring-slate-200',
+  },
+  {
+    value: 'TEMPORARIO',
+    label: 'Vida Temporário',
+    desc: 'Seguro com prazo fixo (ex: 10, 20 anos). Cobertura plena por morte de qualquer causa durante a vigência.',
+    factor: '1.0×',
+    icon: ShieldCheck,
+    color: 'text-emerald-600',
+    bg: 'bg-emerald-50',
+    ring: 'ring-emerald-200',
+  },
+  {
+    value: 'VIDA_INTEIRA',
+    label: 'Vida Inteira',
+    desc: 'Cobertura permanente, sem prazo de vencimento. Protege a família contra morte por qualquer causa, por toda a vida.',
+    factor: '1.0×',
+    icon: ShieldCheck,
+    color: 'text-emerald-600',
+    bg: 'bg-emerald-50',
+    ring: 'ring-emerald-200',
+  },
+  {
+    value: 'RESGATAVEL',
+    label: 'Vida Resgatável',
+    desc: 'Seguro de vida com componente de poupança. Cobertura plena + valor de resgate acumulado ao longo do tempo.',
+    factor: '1.0×',
+    icon: ShieldCheck,
+    color: 'text-emerald-600',
+    bg: 'bg-emerald-50',
+    ring: 'ring-emerald-200',
+  },
+  {
+    value: 'GRUPO_EMPRESARIAL',
+    label: 'Vida em Grupo / Empresarial',
+    desc: 'Apólice coletiva oferecida pelo empregador. Cobertura plena, mas há risco de perda se o segurado sair da empresa.',
+    factor: '1.0×',
+    icon: ShieldAlert,
+    color: 'text-amber-600',
+    bg: 'bg-amber-50',
+    ring: 'ring-amber-200',
+  },
+  {
+    value: 'ACIDENTES_PESSOAIS',
+    label: 'Somente Acidentes Pessoais',
+    desc: 'Cobre apenas morte acidental — não é seguro de vida. Cerca de 70% das mortes são por causas naturais e não seriam cobertas.',
+    factor: '0.3×',
+    icon: ShieldAlert,
+    color: 'text-amber-600',
+    bg: 'bg-amber-50',
+    ring: 'ring-amber-200',
+  },
+  {
+    value: 'PRESTAMISTA',
+    label: 'Prestamista',
+    desc: 'Vinculado a financiamento — paga o credor, não a família. Não protege os dependentes e o motor desconsidera essa cobertura.',
+    factor: '0×',
+    icon: ShieldOff,
+    color: 'text-red-500',
+    bg: 'bg-red-50',
+    ring: 'ring-red-200',
+  },
+] as const
+
+function PolicyTypeSelector({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [open, setOpen] = useState(false)
+  const selected = POLICY_TYPE_OPTIONS.find((o) => o.value === value) ?? POLICY_TYPE_OPTIONS[0]
+
+  function pick(v: string) {
+    onChange(v)
+    setOpen(false)
+  }
+
+  const Icon = selected.icon
+
+  return (
+    <div
+      className="relative"
+      onBlur={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node)) setOpen(false)
+      }}
+    >
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className={`${cls()} flex items-center justify-between gap-2 text-left`}
+      >
+        <span className="flex items-center gap-2 min-w-0">
+          <Icon className={`h-4 w-4 shrink-0 ${selected.color}`} />
+          <span className={value ? 'text-slate-900 truncate' : 'text-slate-400 truncate'}>
+            {selected.label}
+          </span>
+          {value && (
+            <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold ${selected.bg} ${selected.color}`}>
+              {selected.factor}
+            </span>
+          )}
+        </span>
+        <ChevronDown className={`h-4 w-4 shrink-0 text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+
+      {open && (
+        <div className="absolute z-50 bottom-full mb-1 w-full rounded-xl border border-slate-200 bg-white shadow-lg max-h-[420px] overflow-y-auto">
+          <div className="p-1.5 space-y-1">
+            {POLICY_TYPE_OPTIONS.map((opt) => {
+              const OptIcon = opt.icon
+              const isSelected = value === opt.value
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => pick(opt.value)}
+                  className={`w-full rounded-lg p-3 text-left transition-all hover:ring-1 ${opt.ring} ${
+                    isSelected ? `${opt.bg} ring-1 ${opt.ring}` : 'hover:bg-slate-50'
+                  }`}
+                >
+                  <div className="flex items-start gap-2.5">
+                    <OptIcon className={`h-4 w-4 mt-0.5 shrink-0 ${opt.color}`} />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-sm font-semibold ${isSelected ? 'text-slate-900' : 'text-slate-700'}`}>
+                          {opt.label}
+                        </span>
+                        <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${opt.bg} ${opt.color}`}>
+                          Fator {opt.factor}
+                        </span>
+                        {isSelected && <Check className="h-4 w-4 text-brand-600 ml-auto shrink-0" />}
+                      </div>
+                      <p className="mt-0.5 text-xs text-slate-500 leading-relaxed">{opt.desc}</p>
+                    </div>
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
