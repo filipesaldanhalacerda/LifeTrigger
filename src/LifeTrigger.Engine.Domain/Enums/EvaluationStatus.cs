@@ -5,4 +5,5 @@ public enum EvaluationStatus
     ABERTO = 0,
     CONVERTIDO = 1,
     ARQUIVADO = 2,
+    CONVERTIDO_PARCIAL = 3,
 }

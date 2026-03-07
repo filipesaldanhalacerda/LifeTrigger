@@ -182,6 +182,7 @@ public class EvaluationsController : ControllerBase
             consentId        = e.Request.OperationalData.ConsentId,
             isTrigger        = e.Request.OperationalData.RecentLifeTrigger,
             status           = e.Status.ToString(),
+            statusNotes      = e.StatusNotes,
         }).ToList();
 
         return Ok(new { total = items.Count, items });
@@ -242,9 +243,9 @@ public class EvaluationsController : ControllerBase
     public async Task<IActionResult> UpdateEvaluationStatus(Guid id, [FromBody] UpdateStatusRequest body, CancellationToken cancellationToken)
     {
         if (!Enum.TryParse<EvalStatus>(body.Status, ignoreCase: true, out var newStatus))
-            return BadRequest(new { Message = $"Status inválido: '{body.Status}'. Valores aceitos: ABERTO, CONVERTIDO, ARQUIVADO." });
+            return BadRequest(new { Message = $"Status inválido: '{body.Status}'. Valores aceitos: ABERTO, CONVERTIDO, ARQUIVADO, CONVERTIDO_PARCIAL." });
 
-        var updated = await _repository.UpdateStatusAsync(id, newStatus, cancellationToken);
+        var updated = await _repository.UpdateStatusAsync(id, newStatus, body.StatusNotes, cancellationToken);
         if (!updated)
             return NotFound(new { Message = "Avaliação não encontrada." });
 
@@ -361,8 +362,8 @@ public class EvaluationsController : ControllerBase
             });
         }
 
-        // Only count ABERTO evaluations for risk/action distributions (dashboard health)
-        var active = evaluations.Where(e => e.Status == EvalStatus.ABERTO).ToList();
+        // ABERTO and CONVERTIDO_PARCIAL count towards risk/action distributions (dashboard health)
+        var active = evaluations.Where(e => e.Status == EvalStatus.ABERTO || e.Status == EvalStatus.CONVERTIDO_PARCIAL).ToList();
         var riskDist     = active.GroupBy(e => e.Result.RiskClassification).ToDictionary(g => g.Key, g => g.Count());
         var actionDist   = active.GroupBy(e => e.Result.RecommendedAction).ToDictionary(g => g.Key, g => g.Count());
         var triggerCount = evaluations.Count(e => e.Request?.OperationalData?.RecentLifeTrigger == true);
@@ -414,4 +415,4 @@ public class EvaluationsController : ControllerBase
     }
 }
 
-public record UpdateStatusRequest(string Status);
+public record UpdateStatusRequest(string Status, string? StatusNotes = null);

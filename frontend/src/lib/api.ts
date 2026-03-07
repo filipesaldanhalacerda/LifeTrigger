@@ -254,10 +254,10 @@ export async function getEvaluation(id: string): Promise<EvaluationRecord> {
   return request<EvaluationRecord>(`/evaluations/${id}`)
 }
 
-export async function updateEvaluationStatus(id: string, status: string): Promise<void> {
+export async function updateEvaluationStatus(id: string, status: string, statusNotes?: string): Promise<void> {
   return request<void>(`/evaluations/${id}/status`, {
     method: 'PATCH',
-    body: JSON.stringify({ status }),
+    body: JSON.stringify({ status, statusNotes }),
   })
 }
 

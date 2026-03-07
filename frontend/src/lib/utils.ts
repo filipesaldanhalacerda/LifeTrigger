@@ -98,6 +98,7 @@ export function evalStatusLabel(status: EvaluationStatusType): string {
     ABERTO: 'Aberto',
     CONVERTIDO: 'Convertido',
     ARQUIVADO: 'Arquivado',
+    CONVERTIDO_PARCIAL: 'Parcial',
   }
   return map[status] ?? status
 }
@@ -107,6 +108,7 @@ export function evalStatusColors(status: EvaluationStatusType): string {
     ABERTO: 'bg-blue-50 text-blue-700 ring-1 ring-blue-200',
     CONVERTIDO: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200',
     ARQUIVADO: 'bg-slate-100 text-slate-500 ring-1 ring-slate-200',
+    CONVERTIDO_PARCIAL: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200',
   }
   return map[status] ?? 'bg-slate-100 text-slate-500'
 }

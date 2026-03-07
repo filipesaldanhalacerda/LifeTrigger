@@ -65,11 +65,11 @@ public class InMemoryEvaluationRepository : IEvaluationRepository
         return Task.FromResult<IEnumerable<EvaluationRecord>>(result.ToList());
     }
 
-    public Task<bool> UpdateStatusAsync(Guid id, EvaluationStatus status, CancellationToken cancellationToken = default)
+    public Task<bool> UpdateStatusAsync(Guid id, EvaluationStatus status, string? statusNotes = null, CancellationToken cancellationToken = default)
     {
         if (_store.TryGetValue(id, out var record))
         {
-            _store[id] = record with { Status = status };
+            _store[id] = record with { Status = status, StatusNotes = statusNotes };
             return Task.FromResult(true);
         }
         return Task.FromResult(false);

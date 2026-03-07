@@ -13,5 +13,6 @@ public record EvaluationRecord(
     LifeInsuranceAssessmentResult Result,
     string? AuditHash = null,
     Guid? CreatedByUserId = null,
-    EvaluationStatus Status = EvaluationStatus.ABERTO
+    EvaluationStatus Status = EvaluationStatus.ABERTO,
+    string? StatusNotes = null
 );

@@ -72,11 +72,13 @@ public class EfEvaluationRepository : IEvaluationRepository
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<bool> UpdateStatusAsync(Guid id, EvaluationStatus status, CancellationToken cancellationToken = default)
+    public async Task<bool> UpdateStatusAsync(Guid id, EvaluationStatus status, string? statusNotes = null, CancellationToken cancellationToken = default)
     {
         var count = await _context.Evaluations
             .Where(e => e.Id == id)
-            .ExecuteUpdateAsync(s => s.SetProperty(e => e.Status, status), cancellationToken);
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(e => e.Status, status)
+                .SetProperty(e => e.StatusNotes, statusNotes), cancellationToken);
         return count > 0;
     }
 }

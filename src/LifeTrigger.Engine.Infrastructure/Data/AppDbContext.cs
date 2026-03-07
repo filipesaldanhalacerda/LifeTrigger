@@ -74,6 +74,11 @@ public class AppDbContext : DbContext
                 .HasColumnName("Status")
                 .HasDefaultValue(LifeTrigger.Engine.Domain.Enums.EvaluationStatus.ABERTO);
 
+            entity.Property(e => e.StatusNotes)
+                .HasColumnName("StatusNotes")
+                .HasColumnType("jsonb")
+                .IsRequired(false);
+
             entity.HasIndex(e => e.CreatedByUserId).HasDatabaseName("IX_Evaluations_CreatedByUserId");
             entity.HasIndex(e => e.Timestamp).HasDatabaseName("IX_Evaluations_Timestamp");
         });

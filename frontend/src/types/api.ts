@@ -22,7 +22,7 @@ export type ProfessionRiskLevel = 'BAIXO' | 'MEDIO' | 'ALTO' | 'MUITO_ALTO'
 export type PolicyType = 'TEMPORARIO' | 'VIDA_INTEIRA' | 'RESGATAVEL' | 'GRUPO_EMPRESARIAL' | 'ACIDENTES_PESSOAIS' | 'PRESTAMISTA'
 export type RiskClassification = 'CRITICO' | 'MODERADO' | 'ADEQUADO'
 export type RecommendedAction = 'AUMENTAR' | 'MANTER' | 'REDUZIR' | 'REVISAR'
-export type EvaluationStatusType = 'ABERTO' | 'CONVERTIDO' | 'ARQUIVADO'
+export type EvaluationStatusType = 'ABERTO' | 'CONVERTIDO' | 'ARQUIVADO' | 'CONVERTIDO_PARCIAL'
 export type CoverageStatus = 'SUBPROTEGIDO' | 'ADEQUADO' | 'SOBRESEGURADO'
 
 export interface IncomeData {
@@ -153,6 +153,7 @@ export interface EvaluationRecord {
   result: LifeInsuranceAssessmentResult
   auditHash?: string
   status?: EvaluationStatusType
+  statusNotes?: string
 }
 
 export interface TenantSettings {
@@ -206,6 +207,7 @@ export interface EvaluationSummary {
   consentId?: string
   isTrigger?: boolean
   status?: EvaluationStatusType
+  statusNotes?: string
 }
 
 export interface EvaluationListResponse {

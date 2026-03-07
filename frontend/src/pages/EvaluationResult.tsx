@@ -187,8 +187,8 @@ export default function EvaluationResult() {
                   <ChevronDown className="h-3 w-3" />
                 </button>
                 {showStatusMenu && (
-                  <div className="absolute right-0 top-full mt-1 z-20 w-40 rounded-lg border border-slate-200 bg-white shadow-lg py-1">
-                    {(['ABERTO', 'CONVERTIDO', 'ARQUIVADO'] as EvaluationStatusType[])
+                  <div className="absolute right-0 top-full mt-1 z-20 w-44 rounded-lg border border-slate-200 bg-white shadow-lg py-1">
+                    {(['ABERTO', 'CONVERTIDO', 'CONVERTIDO_PARCIAL', 'ARQUIVADO'] as EvaluationStatusType[])
                       .filter((s) => s !== (record.status || 'ABERTO'))
                       .map((s) => (
                         <button
@@ -197,7 +197,12 @@ export default function EvaluationResult() {
                           onClick={() => handleStatusChange(s)}
                           className="flex w-full items-center gap-2 px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 transition-colors"
                         >
-                          <span className={`inline-block h-2 w-2 rounded-full ${s === 'CONVERTIDO' ? 'bg-emerald-500' : s === 'ARQUIVADO' ? 'bg-slate-400' : 'bg-blue-500'}`} />
+                          <span className={`inline-block h-2 w-2 rounded-full ${
+                            s === 'CONVERTIDO' ? 'bg-emerald-500'
+                            : s === 'CONVERTIDO_PARCIAL' ? 'bg-amber-500'
+                            : s === 'ARQUIVADO' ? 'bg-slate-400'
+                            : 'bg-blue-500'
+                          }`} />
                           {evalStatusLabel(s)}
                         </button>
                       ))}
