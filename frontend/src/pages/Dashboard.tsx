@@ -41,7 +41,7 @@ function healthConfig(score: number) {
 
 export default function Dashboard() {
   const [report,  setReport]  = useState<PilotReport | null>(null)
-  const [allEvals, setAllEvals] = useState<EvaluationSummary[]>([])
+  const [recent,  setRecent]  = useState<EvaluationSummary[]>([])
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
   const { user } = useAuth()
@@ -55,10 +55,10 @@ export default function Dashboard() {
     try {
       const [pilotData, listData] = await Promise.allSettled([
         getPilotReport(tenantId, { limit: 500 }),
-        getEvaluations(tenantId, { limit: 500 }),
+        getEvaluations(tenantId, { limit: 8 }),
       ])
       if (pilotData.status === 'fulfilled') setReport(pilotData.value)
-      if (listData.status  === 'fulfilled') setAllEvals(listData.value.items)
+      if (listData.status  === 'fulfilled') setRecent(listData.value.items)
     } finally {
       setLoading(false)
     }
@@ -66,19 +66,15 @@ export default function Dashboard() {
 
   useEffect(() => { void load() }, [load])
 
-  const recent = allEvals.slice(0, 8)
-
   const total = report?.totalEvaluations ?? 0
   const critico = report?.riskDistribution.critico ?? 0
   const adequado = report?.riskDistribution.adequado ?? 0
   const aumentar = report?.actionDistribution.aumentar ?? 0
   const triggerCount = report?.triggerCount ?? 0
 
-  // Count active (open / partially converted) evaluations
-  const activeCount = allEvals.filter(
-    ev => !ev.status || ev.status === 'ABERTO' || ev.status === 'CONVERTIDO_PARCIAL',
-  ).length
-  const allConverted = total > 0 && activeCount === 0
+  // totalAll includes all evaluations regardless of status; total only counts active ones
+  const totalAll = report?.totalAll ?? total
+  const allConverted = totalAll > 0 && total === 0
 
   const healthScore = allConverted
     ? 100
@@ -160,7 +156,7 @@ export default function Dashboard() {
                     {greeting()}, <span className="font-semibold text-slate-800">{userName}</span>
                   </p>
                   <p className="mt-0.5 text-xs text-slate-400">
-                    {total} avaliações na carteira
+                    {allConverted ? totalAll : total} avaliações na carteira
                     {allConverted && ' — todas convertidas'}
                   </p>
 
@@ -182,7 +178,7 @@ export default function Dashboard() {
                   )}
                   <div className="mt-2 flex flex-wrap items-center gap-3 sm:gap-4">
                     {allConverted ? (
-                      <LegendDot color="bg-emerald-500" label="Convertidas" count={total} />
+                      <LegendDot color="bg-emerald-500" label="Convertidas" count={totalAll} />
                     ) : (
                       <>
                         <LegendDot color="bg-red-500" label="Crítico" count={critico} />

@@ -176,6 +176,7 @@ export interface LifeTriggerEvent {
 
 export interface PilotReport {
   totalEvaluations: number
+  totalAll?: number
   riskDistribution: { critico: number; moderado: number; adequado: number }
   actionDistribution: { aumentar: number; manter: number; reduzir: number; revisar: number }
   triggerCount: number
