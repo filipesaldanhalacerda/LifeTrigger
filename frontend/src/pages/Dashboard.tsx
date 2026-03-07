@@ -41,7 +41,7 @@ function healthConfig(score: number) {
 
 export default function Dashboard() {
   const [report,  setReport]  = useState<PilotReport | null>(null)
-  const [recent,  setRecent]  = useState<EvaluationSummary[]>([])
+  const [allEvals, setAllEvals] = useState<EvaluationSummary[]>([])
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
   const { user } = useAuth()
@@ -55,10 +55,10 @@ export default function Dashboard() {
     try {
       const [pilotData, listData] = await Promise.allSettled([
         getPilotReport(tenantId, { limit: 500 }),
-        getEvaluations(tenantId, { limit: 8 }),
+        getEvaluations(tenantId, { limit: 500 }),
       ])
       if (pilotData.status === 'fulfilled') setReport(pilotData.value)
-      if (listData.status  === 'fulfilled') setRecent(listData.value.items)
+      if (listData.status  === 'fulfilled') setAllEvals(listData.value.items)
     } finally {
       setLoading(false)
     }
@@ -66,16 +66,28 @@ export default function Dashboard() {
 
   useEffect(() => { void load() }, [load])
 
+  const recent = allEvals.slice(0, 8)
+
   const total = report?.totalEvaluations ?? 0
   const critico = report?.riskDistribution.critico ?? 0
   const adequado = report?.riskDistribution.adequado ?? 0
   const aumentar = report?.actionDistribution.aumentar ?? 0
   const triggerCount = report?.triggerCount ?? 0
 
-  const healthScore = total > 0
-    ? Math.round(((report!.riskDistribution.adequado * 100) + (report!.riskDistribution.moderado * 50)) / total)
-    : 0
-  const health = healthConfig(healthScore)
+  // Count active (open / partially converted) evaluations
+  const activeCount = allEvals.filter(
+    ev => !ev.status || ev.status === 'ABERTO' || ev.status === 'CONVERTIDO_PARCIAL',
+  ).length
+  const allConverted = total > 0 && activeCount === 0
+
+  const healthScore = allConverted
+    ? 100
+    : total > 0
+      ? Math.round(((report!.riskDistribution.adequado * 100) + (report!.riskDistribution.moderado * 50)) / total)
+      : 0
+  const health = allConverted
+    ? { label: 'Protegida', color: 'text-emerald-600', ringStroke: '#059669', dot: 'bg-emerald-500' }
+    : healthConfig(healthScore)
 
   const emailPrefix = user?.email?.split('@')[0] ?? ''
   const userName = emailPrefix.charAt(0).toUpperCase() + emailPrefix.slice(1)
@@ -147,24 +159,37 @@ export default function Dashboard() {
                   <p className="text-sm text-slate-500">
                     {greeting()}, <span className="font-semibold text-slate-800">{userName}</span>
                   </p>
-                  <p className="mt-0.5 text-xs text-slate-400">{total} avaliações na carteira</p>
+                  <p className="mt-0.5 text-xs text-slate-400">
+                    {total} avaliações na carteira
+                    {allConverted && ' — todas convertidas'}
+                  </p>
 
                   {/* Stacked bar */}
-                  <div className="mt-3 flex h-2 w-full overflow-hidden rounded-full bg-slate-100">
-                    {pct(critico, total) > 0 && (
-                      <div className="bg-red-500 transition-all duration-700" style={{ width: `${pct(critico, total)}%` }} />
-                    )}
-                    {pct(report.riskDistribution.moderado, total) > 0 && (
-                      <div className="bg-amber-400 transition-all duration-700" style={{ width: `${pct(report.riskDistribution.moderado, total)}%` }} />
-                    )}
-                    {pct(adequado, total) > 0 && (
-                      <div className="bg-emerald-500 transition-all duration-700" style={{ width: `${pct(adequado, total)}%` }} />
-                    )}
-                  </div>
+                  {allConverted ? (
+                    <div className="mt-3 flex h-2 w-full overflow-hidden rounded-full bg-emerald-500 transition-all duration-700" />
+                  ) : (
+                    <div className="mt-3 flex h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                      {pct(critico, total) > 0 && (
+                        <div className="bg-red-500 transition-all duration-700" style={{ width: `${pct(critico, total)}%` }} />
+                      )}
+                      {pct(report.riskDistribution.moderado, total) > 0 && (
+                        <div className="bg-amber-400 transition-all duration-700" style={{ width: `${pct(report.riskDistribution.moderado, total)}%` }} />
+                      )}
+                      {pct(adequado, total) > 0 && (
+                        <div className="bg-emerald-500 transition-all duration-700" style={{ width: `${pct(adequado, total)}%` }} />
+                      )}
+                    </div>
+                  )}
                   <div className="mt-2 flex flex-wrap items-center gap-3 sm:gap-4">
-                    <LegendDot color="bg-red-500" label="Crítico" count={critico} />
-                    <LegendDot color="bg-amber-400" label="Moderado" count={report.riskDistribution.moderado} />
-                    <LegendDot color="bg-emerald-500" label="Adequado" count={adequado} />
+                    {allConverted ? (
+                      <LegendDot color="bg-emerald-500" label="Convertidas" count={total} />
+                    ) : (
+                      <>
+                        <LegendDot color="bg-red-500" label="Crítico" count={critico} />
+                        <LegendDot color="bg-amber-400" label="Moderado" count={report.riskDistribution.moderado} />
+                        <LegendDot color="bg-emerald-500" label="Adequado" count={adequado} />
+                      </>
+                    )}
                   </div>
                 </div>
 
