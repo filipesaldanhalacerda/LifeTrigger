@@ -179,6 +179,7 @@ public class EvaluationsController : ControllerBase
             channel          = e.Request.OperationalData.OriginChannel,
             createdByUserId  = e.CreatedByUserId,
             consentId        = e.Request.OperationalData.ConsentId,
+            isTrigger        = e.Request.OperationalData.RecentLifeTrigger,
         }).ToList();
 
         return Ok(new { total = items.Count, items });

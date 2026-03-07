@@ -202,6 +202,7 @@ export interface EvaluationSummary {
   channel: string
   createdByUserId?: string
   consentId?: string
+  isTrigger?: boolean
 }
 
 export interface EvaluationListResponse {

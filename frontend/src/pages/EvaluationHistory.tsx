@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Search, Filter, TrendingUp, TrendingDown, Minus, RotateCcw,
-  AlertCircle, ChevronRight, RefreshCw, Users, CheckCircle,
+  AlertCircle, ChevronRight, RefreshCw, Users, CheckCircle, Zap,
   ShieldAlert, ShieldCheck, ShieldQuestion, Copy, Check,
 } from 'lucide-react'
 import { TopBar } from '../components/layout/TopBar'
@@ -86,6 +86,7 @@ export default function EvaluationHistory() {
   const [filterAction, setFilterAction] = useState<string>('')
   const [filterRisk, setFilterRisk]     = useState<string>('')
   const [filterUser, setFilterUser]     = useState<string>('')
+  const [filterType, setFilterType]     = useState<string>('')
   const [copiedId, setCopiedId]         = useState<string | null>(null)
   const [users, setUsers]               = useState<UserRecord[]>([])
 
@@ -119,6 +120,7 @@ export default function EvaluationHistory() {
     setFilterAction('')
     setFilterRisk('')
     setFilterUser('')
+    setFilterType('')
   }
 
   const filtered = items.filter((ev) => {
@@ -127,6 +129,8 @@ export default function EvaluationHistory() {
     if (filterAction && ev.action !== filterAction) return false
     if (filterRisk && ev.risk !== filterRisk) return false
     if (filterUser && ev.createdByUserId !== filterUser) return false
+    if (filterType === 'trigger' && !ev.isTrigger) return false
+    if (filterType === 'evaluation' && ev.isTrigger) return false
     return true
   })
 
@@ -136,7 +140,7 @@ export default function EvaluationHistory() {
     adequado: items.filter((e) => e.risk === 'ADEQUADO').length,
   }
 
-  const hasActiveFilters = !!(search || filterAction || filterRisk || filterUser)
+  const hasActiveFilters = !!(search || filterAction || filterRisk || filterUser || filterType)
 
   // Helper: email curto do corretor por userId
   function brokerLabel(userId?: string): string {
@@ -233,6 +237,15 @@ export default function EvaluationHistory() {
               <option value="MODERADO">Risco Moderado</option>
               <option value="ADEQUADO">Risco Adequado</option>
             </select>
+            <select
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value)}
+              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-card focus:border-brand-400 focus:outline-none"
+            >
+              <option value="">Avaliações e Gatilhos</option>
+              <option value="evaluation">Apenas Avaliações</option>
+              <option value="trigger">Apenas Gatilhos</option>
+            </select>
             {isManagerPlus && users.length > 0 && (
               <select
                 value={filterUser}
@@ -295,7 +308,15 @@ export default function EvaluationHistory() {
               <div className="border-b border-slate-100 bg-slate-50 px-4 py-2">
                 <p className="text-[11px] text-slate-500">
                   <span className="font-semibold tabular-nums text-slate-700">{filtered.length}</span>{' '}
-                  {filtered.length === 1 ? 'avaliação' : 'avaliações'} — clique em uma linha para ver o resultado completo. Use os cards acima para filtrar por risco.
+                  {filtered.length === 1 ? 'registro' : 'registros'}
+                  {(() => {
+                    const triggers = filtered.filter((e) => e.isTrigger).length
+                    const evals = filtered.length - triggers
+                    if (triggers > 0 && evals > 0) return ` (${evals} ${evals === 1 ? 'avaliação' : 'avaliações'}, ${triggers} ${triggers === 1 ? 'gatilho' : 'gatilhos'})`
+                    if (triggers > 0) return ` (${triggers} ${triggers === 1 ? 'gatilho' : 'gatilhos'})`
+                    return ` (${evals} ${evals === 1 ? 'avaliação' : 'avaliações'})`
+                  })()}
+                  {' '}— clique em uma linha para ver o resultado completo.
                 </p>
               </div>
             )}
@@ -321,6 +342,11 @@ export default function EvaluationHistory() {
                         <ChevronRight className="h-4 w-4 shrink-0 text-slate-300" />
                       </div>
                       <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                        {ev.isTrigger && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
+                            <Zap className="h-2.5 w-2.5" />Gatilho
+                          </span>
+                        )}
                         <Badge className={riskColors(ev.risk)} size="sm">{riskLabel(ev.risk)}</Badge>
                         <Badge className={actionColors(ev.action)} size="sm">{actionLabel(ev.action)}</Badge>
                       </div>
@@ -398,7 +424,14 @@ export default function EvaluationHistory() {
                             <ActionIcon className={`h-3.5 w-3.5 ${iconColor}`} />
                           </div>
                           <div>
-                            <p className="font-mono text-xs text-slate-700">{ev.id.slice(0, 18)}…</p>
+                            <div className="flex items-center gap-1.5">
+                              <p className="font-mono text-xs text-slate-700">{ev.id.slice(0, 18)}…</p>
+                              {ev.isTrigger && (
+                                <span className="inline-flex items-center gap-0.5 rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-semibold text-amber-700">
+                                  <Zap className="h-2.5 w-2.5" />Gatilho
+                                </span>
+                              )}
+                            </div>
                             <p className="text-[11px] text-slate-400">{formatDate(ev.timestamp)}</p>
                           </div>
                           <button

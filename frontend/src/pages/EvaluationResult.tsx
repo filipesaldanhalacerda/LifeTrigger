@@ -12,7 +12,7 @@ import { TopBar } from '../components/layout/TopBar'
 import { ScoreRing } from '../components/ui/ScoreRing'
 import { GapBar } from '../components/ui/GapBar'
 import { Badge } from '../components/ui/Badge'
-import { getEvaluation } from '../lib/api'
+import { getEvaluation, getEvaluations, getActiveTenantId } from '../lib/api'
 import {
   actionColors, actionLabel, riskColors, riskLabel, coverageStatusLabel,
   formatCurrency, formatDate, riskScoreColor,
@@ -68,6 +68,7 @@ export default function EvaluationResult() {
   const [loading, setLoading] = useState(true)
   const [copiedHash, setCopiedHash] = useState(false)
   const [activeTab, setActiveTab] = useState<TabId>('resultado')
+  const [previousResult, setPreviousResult] = useState<LifeInsuranceAssessmentResult | null>(null)
 
   useEffect(() => {
     if (id) {
@@ -81,6 +82,26 @@ export default function EvaluationResult() {
       setLoading(false)
     }
   }, [id])
+
+  // For triggers: fetch previous evaluation with same consentId
+  useEffect(() => {
+    if (!record) return
+    const isTrigger = record.request.operationalData.recentLifeTrigger
+    const consentId = record.request.operationalData.consentId
+    if (!isTrigger || !consentId) return
+
+    getEvaluations(getActiveTenantId(), { limit: 200 })
+      .then((res) => {
+        const sameClient = res.items
+          .filter((e) => e.consentId === consentId && e.id !== record.id)
+          .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+        const prev = sameClient[0]
+        if (prev) {
+          getEvaluation(prev.id).then((r) => setPreviousResult(r.result))
+        }
+      })
+      .catch(() => { /* best-effort */ })
+  }, [record])
 
   function copyHash(hash: string) {
     navigator.clipboard.writeText(hash).then(() => {
@@ -222,7 +243,7 @@ export default function EvaluationResult() {
                         {Math.abs(result.protectionGapPercentage).toFixed(0)}%
                       </p>
                       <p className={`text-xs font-semibold ${result.protectionGapPercentage > 0 ? 'text-red-500' : 'text-emerald-500'}`}>
-                        {result.protectionGapPercentage > 0 ? 'Déficit' : 'Excedente'}
+                        {result.protectionGapPercentage > 0 ? 'Déficit' : result.protectionGapPercentage < 0 ? 'Excedente' : 'Alinhado'}
                       </p>
                     </div>
                   </div>
@@ -233,6 +254,57 @@ export default function EvaluationResult() {
                 </div>
               </div>
             </div>
+
+            {/* 1b. Trigger comparison — before vs after */}
+            {record?.request.operationalData.recentLifeTrigger && previousResult && (
+              <div className="rounded-2xl border border-amber-200 bg-gradient-to-b from-amber-50 to-white p-5 sm:p-6 shadow-card">
+                <div className="mb-5 flex items-center gap-2">
+                  <Zap className="h-5 w-5 text-amber-600" />
+                  <div>
+                    <h2 className="text-base font-bold text-amber-900">Impacto do Gatilho de Vida</h2>
+                    <p className="mt-0.5 text-xs text-amber-700">
+                      Comparação entre a avaliação anterior e o resultado após o evento de vida.
+                    </p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {([
+                    { label: 'Cobertura Recomendada', prev: previousResult.recommendedCoverageAmount, curr: result.recommendedCoverageAmount, fmt: 'currency' as const },
+                    { label: 'Score de Proteção', prev: previousResult.protectionScore, curr: result.protectionScore, fmt: 'pct' as const },
+                    { label: 'Score de Eficiência', prev: previousResult.coverageEfficiencyScore, curr: result.coverageEfficiencyScore, fmt: 'pct' as const },
+                    { label: 'Gap de Cobertura', prev: previousResult.protectionGapPercentage, curr: result.protectionGapPercentage, fmt: 'gap' as const },
+                  ]).map((item) => {
+                    const diff = item.curr - item.prev
+                    const improved = item.fmt === 'gap' ? diff <= 0 : diff >= 0
+                    return (
+                      <div key={item.label} className="rounded-xl border border-amber-100 bg-white p-3 space-y-2">
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-amber-700">{item.label}</p>
+                        <div className="flex items-end justify-between gap-1">
+                          <div>
+                            <p className="text-[10px] text-slate-400">Antes</p>
+                            <p className="text-xs font-semibold text-slate-500 tabular-nums">
+                              {item.fmt === 'currency' ? formatCurrency(item.prev) : `${item.prev.toFixed(0)}%`}
+                            </p>
+                          </div>
+                          <ArrowRight className="h-3 w-3 text-slate-300 shrink-0 mb-0.5" />
+                          <div className="text-right">
+                            <p className="text-[10px] text-slate-400">Depois</p>
+                            <p className="text-xs font-bold text-slate-900 tabular-nums">
+                              {item.fmt === 'currency' ? formatCurrency(item.curr) : `${item.curr.toFixed(0)}%`}
+                            </p>
+                          </div>
+                        </div>
+                        {diff !== 0 && (
+                          <p className={`text-[10px] font-semibold tabular-nums ${improved ? 'text-emerald-600' : 'text-red-600'}`}>
+                            {diff > 0 ? '+' : ''}{item.fmt === 'currency' ? formatCurrency(diff) : `${diff.toFixed(0)}%`}
+                          </p>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* 2. Coverage gap — detailed */}
             <div className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-card">
