@@ -11,13 +11,30 @@ import type { LifeInsuranceAssessmentRequest } from '../types/api'
 
 // ── Currency helpers ─────────────────────────────────────────────
 function parseCurrency(raw: string): number {
-  return Number(raw.replace(/\D/g, '')) || 0
+  if (!raw) return 0
+  // Brazilian format: 1.234,56 → remove dots (thousands), replace comma (decimal) with dot
+  const cleaned = raw.replace(/\./g, '').replace(',', '.')
+  return Number(cleaned) || 0
 }
 
 function formatBRL(raw: string): string {
   const n = parseCurrency(raw)
   if (!n) return ''
-  return new Intl.NumberFormat('pt-BR').format(n)
+  return n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+}
+
+function sanitizeCurrencyInput(value: string): string {
+  // Allow only digits, dots, and one comma
+  let sanitized = value.replace(/[^\d.,]/g, '')
+  // Only allow one comma (decimal separator)
+  const commaIdx = sanitized.indexOf(',')
+  if (commaIdx !== -1) {
+    sanitized = sanitized.slice(0, commaIdx + 1) + sanitized.slice(commaIdx + 1).replace(/,/g, '')
+    // Limit to 2 decimal places
+    const decimals = sanitized.slice(commaIdx + 1)
+    if (decimals.length > 2) sanitized = sanitized.slice(0, commaIdx + 3)
+  }
+  return sanitized
 }
 
 // ── Step metadata ────────────────────────────────────────────────
@@ -369,7 +386,7 @@ export default function NewEvaluation() {
                     <CurrencyInput
                       value={income}
                       onChange={(v) => { setIncome(v); clearError('income') }}
-                      placeholder="10.000"
+                      placeholder="10.000,00"
                       hasError={!!fieldErrors.income}
                     />
                   </Field>
@@ -403,7 +420,7 @@ export default function NewEvaluation() {
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <Field label="Capital Segurado Atual" hint="Valor total da cobertura da apólice vigente.">
-                      <CurrencyInput value={currentCoverage} onChange={setCurrentCoverage} placeholder="200.000" />
+                      <CurrencyInput value={currentCoverage} onChange={setCurrentCoverage} placeholder="200.000,00" />
                     </Field>
                     <Field label="Tipo de Apólice" hint="Modalidade contratual do seguro vigente.">
                       <select value={policyType} onChange={(e) => setPolicyType(e.target.value)} className={cls()}>
@@ -430,7 +447,7 @@ export default function NewEvaluation() {
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <Field label="Total de Dívidas" hint="Saldo devedor consolidado (imóvel, veículo, consignado etc.).">
-                      <CurrencyInput value={debtTotal} onChange={setDebtTotal} placeholder="150.000" />
+                      <CurrencyInput value={debtTotal} onChange={setDebtTotal} placeholder="150.000,00" />
                     </Field>
                     <Field label="Prazo Restante" hint="Meses até quitar todas as dívidas listadas.">
                       <div className="relative">
@@ -459,7 +476,7 @@ export default function NewEvaluation() {
                     </p>
                   </div>
                   <Field label="Custo Total Estimado" hint="Soma de mensalidades até a formação de todos os dependentes.">
-                    <CurrencyInput value={educationCost} onChange={setEducationCost} placeholder="200.000" />
+                    <CurrencyInput value={educationCost} onChange={setEducationCost} placeholder="200.000,00" />
                   </Field>
                 </div>
 
@@ -476,7 +493,7 @@ export default function NewEvaluation() {
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <Field label="Valor Total do Patrimônio" hint="Soma de imóveis, veículos, investimentos e outros bens.">
-                      <CurrencyInput value={estateValue} onChange={setEstateValue} placeholder="1.000.000" />
+                      <CurrencyInput value={estateValue} onChange={setEstateValue} placeholder="1.000.000,00" />
                     </Field>
                     <Field label="Estado (UF)" hint="O ITCMD varia de 2% a 8% conforme o estado. Alíquota padrão: 4%.">
                       <select value={estateState} onChange={(e) => setEstateState(e.target.value)} className={cls()}>
@@ -796,12 +813,12 @@ function CurrencyInput({
       </span>
       <input
         type="text"
-        inputMode="numeric"
+        inputMode="decimal"
         value={focused ? value : formatBRL(value)}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
-        onChange={(e) => onChange(e.target.value.replace(/\D/g, ''))}
-        placeholder={placeholder ?? '0'}
+        onChange={(e) => onChange(sanitizeCurrencyInput(e.target.value))}
+        placeholder={placeholder ?? '0,00'}
         className={`${cls(hasError)} pl-9`}
       />
     </div>
