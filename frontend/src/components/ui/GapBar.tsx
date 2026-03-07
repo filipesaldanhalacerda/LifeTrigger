@@ -1,4 +1,4 @@
-import { TrendingDown, TrendingUp, Equal } from 'lucide-react'
+import { TrendingDown, TrendingUp, CheckCircle, ShieldCheck, Target } from 'lucide-react'
 import { formatCurrency, formatPercent } from '../../lib/utils'
 
 interface GapBarProps {
@@ -15,78 +15,96 @@ export function GapBar({ current, recommended }: GapBarProps) {
   const isUnder = current < recommended
   const isMatch = current === recommended && current > 0
 
+  const currentBarColor = isMatch
+    ? 'bg-gradient-to-r from-emerald-400 to-emerald-500'
+    : isUnder
+      ? 'bg-gradient-to-r from-amber-300 to-amber-400'
+      : 'bg-gradient-to-r from-sky-400 to-sky-500'
+
+  const recommendedBarColor = isMatch
+    ? 'bg-gradient-to-r from-emerald-400 to-emerald-500'
+    : 'bg-gradient-to-r from-brand-400 to-brand-600'
+
   return (
-    <div className="space-y-4">
-      {/* Cobertura atual */}
-      <div>
-        <div className="mb-1.5 flex justify-between text-sm">
-          <span className="font-medium text-slate-700">Cobertura Atual</span>
-          <span className="font-semibold text-slate-900 tabular-nums">{formatCurrency(current)}</span>
-        </div>
-        <div className="h-3 w-full overflow-hidden rounded-full bg-slate-100">
-          <div
-            className={`h-3 rounded-full transition-all duration-700 ${
-              isMatch
-                ? 'bg-gradient-to-r from-emerald-400 to-emerald-500'
-                : 'bg-gradient-to-r from-slate-300 to-slate-400'
-            }`}
-            style={{ width: `${currentPct}%` }}
-          />
-        </div>
-      </div>
-
-      {/* Cobertura recomendada */}
-      <div>
-        <div className="mb-1.5 flex justify-between text-sm">
-          <span className="font-medium text-slate-700">Cobertura Recomendada</span>
-          <span className="font-semibold text-slate-900 tabular-nums">{formatCurrency(recommended)}</span>
-        </div>
-        <div className="h-3 w-full overflow-hidden rounded-full bg-slate-100">
-          <div
-            className={`h-3 rounded-full transition-all duration-700 ${
-              isMatch
-                ? 'bg-gradient-to-r from-emerald-400 to-emerald-500'
-                : 'bg-gradient-to-r from-brand-400 to-brand-600'
-            }`}
-            style={{ width: `${recommendedPct}%` }}
-          />
-        </div>
-      </div>
-
-      {/* Gap summary */}
-      {isMatch ? (
-        <div className="flex items-center justify-between rounded-xl p-3 bg-emerald-50 border border-emerald-100">
-          <div className="flex items-center gap-2">
-            <Equal className="h-4 w-4 text-emerald-500" />
-            <span className="text-sm font-medium text-emerald-700">
-              Cobertura perfeitamente alinhada
-            </span>
+    <div className="space-y-5">
+      {/* Bars */}
+      <div className="space-y-4">
+        {/* Cobertura atual */}
+        <div>
+          <div className="mb-2 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-slate-400" />
+              <span className="text-sm font-medium text-slate-700">Cobertura Atual</span>
+            </div>
+            <span className="text-sm font-bold text-slate-900 tabular-nums">{formatCurrency(current)}</span>
           </div>
-          <p className="text-sm font-bold tabular-nums text-emerald-700">0%</p>
+          <div className="h-4 w-full overflow-hidden rounded-full bg-slate-100">
+            <div
+              className={`h-full rounded-full ${currentBarColor} transition-all duration-700`}
+              style={{ width: `${Math.max(currentPct, current > 0 ? 2 : 0)}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Cobertura recomendada */}
+        <div>
+          <div className="mb-2 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Target className="h-4 w-4 text-slate-400" />
+              <span className="text-sm font-medium text-slate-700">Cobertura Recomendada</span>
+            </div>
+            <span className="text-sm font-bold text-slate-900 tabular-nums">{formatCurrency(recommended)}</span>
+          </div>
+          <div className="h-4 w-full overflow-hidden rounded-full bg-slate-100">
+            <div
+              className={`h-full rounded-full ${recommendedBarColor} transition-all duration-700`}
+              style={{ width: `${Math.max(recommendedPct, recommended > 0 ? 2 : 0)}%` }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Difference */}
+      {isMatch ? (
+        <div className="flex items-center gap-3 rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-3">
+          <CheckCircle className="h-5 w-5 shrink-0 text-emerald-500" />
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-emerald-800">Cobertura perfeitamente alinhada</p>
+            <p className="text-xs text-emerald-600">A apólice atual cobre exatamente a necessidade calculada pelo motor.</p>
+          </div>
+          <span className="text-lg font-extrabold tabular-nums text-emerald-600">0%</span>
         </div>
       ) : (
-        <div
-          className={`flex items-center justify-between rounded-xl p-3 ${
-            isUnder ? 'bg-red-50 border border-red-100' : 'bg-emerald-50 border border-emerald-100'
-          }`}
-        >
-          <div className="flex items-center gap-2">
-            {isUnder ? (
-              <TrendingDown className="h-4 w-4 text-red-500" />
-            ) : (
-              <TrendingUp className="h-4 w-4 text-emerald-500" />
-            )}
-            <span className={`text-sm font-medium ${isUnder ? 'text-red-700' : 'text-emerald-700'}`}>
-              {isUnder ? 'Gap de proteção' : 'Capital excedente'}
-            </span>
-          </div>
-          <div className="text-right">
-            <p className={`text-sm font-bold tabular-nums ${isUnder ? 'text-red-700' : 'text-emerald-700'}`}>
-              {formatCurrency(Math.abs(gapAmount))}
-            </p>
-            <p className={`text-xs tabular-nums ${isUnder ? 'text-red-500' : 'text-emerald-500'}`}>
-              {formatPercent(Math.abs(gapPct))}
-            </p>
+        <div className={`rounded-xl border px-4 py-3 ${
+          isUnder ? 'bg-red-50 border-red-200' : 'bg-emerald-50 border-emerald-200'
+        }`}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {isUnder ? (
+                <TrendingDown className="h-5 w-5 shrink-0 text-red-500" />
+              ) : (
+                <TrendingUp className="h-5 w-5 shrink-0 text-emerald-500" />
+              )}
+              <div>
+                <p className={`text-sm font-semibold ${isUnder ? 'text-red-800' : 'text-emerald-800'}`}>
+                  {isUnder ? 'Gap de proteção' : 'Capital excedente'}
+                </p>
+                <p className={`text-xs ${isUnder ? 'text-red-600' : 'text-emerald-600'}`}>
+                  {isUnder
+                    ? 'A cobertura atual não atinge a necessidade calculada. Recomende aumento.'
+                    : 'A cobertura contratada excede a necessidade. O prêmio pode ser otimizado.'
+                  }
+                </p>
+              </div>
+            </div>
+            <div className="text-right shrink-0 ml-4">
+              <p className={`text-lg font-extrabold tabular-nums ${isUnder ? 'text-red-600' : 'text-emerald-600'}`}>
+                {formatCurrency(Math.abs(gapAmount))}
+              </p>
+              <p className={`text-xs font-semibold tabular-nums ${isUnder ? 'text-red-500' : 'text-emerald-500'}`}>
+                {formatPercent(Math.abs(gapPct))} {isUnder ? 'abaixo' : 'acima'}
+              </p>
+            </div>
           </div>
         </div>
       )}

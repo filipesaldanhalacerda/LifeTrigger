@@ -239,13 +239,24 @@ export default function EvaluationResult() {
               <div className="mb-5">
                 <h2 className="text-base font-bold text-slate-900">Cobertura vs. Necessidade</h2>
                 <p className="mt-0.5 text-xs text-slate-500">
-                  Comparação entre o valor da apólice atual e o capital recomendado pelo motor, baseado no perfil completo do cliente.
+                  O motor calcula o capital necessário para proteger a família com base em renda, dependentes, dívidas e patrimônio.
+                  Abaixo, a comparação entre o que o cliente já tem contratado e o que deveria ter.
                 </p>
               </div>
               <GapBar
                 current={result.currentCoverageAmount}
                 recommended={result.recommendedCoverageAmount}
               />
+              {/* Coverage ratio */}
+              <div className="mt-4 flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 px-4 py-2.5">
+                <span className="text-xs font-medium text-slate-500">Cobertura contratada representa</span>
+                <span className={`text-sm font-bold tabular-nums ${riskScoreColor(result.protectionScore)}`}>
+                  {result.recommendedCoverageAmount > 0
+                    ? `${((result.currentCoverageAmount / result.recommendedCoverageAmount) * 100).toFixed(0)}%`
+                    : '—'
+                  } da necessidade
+                </span>
+              </div>
             </div>
 
             {/* 3. Scores — detailed with segmented bars */}
