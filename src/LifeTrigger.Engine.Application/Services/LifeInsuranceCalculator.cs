@@ -65,7 +65,43 @@ public class LifeInsuranceCalculator : ILifeInsuranceCalculator
 
         decimal finalRecommendedCoverage = ApplyGuardrails(rawRecommendedCoverage, annualIncome, evalRecorder, tenantSettings);
 
-        decimal currentCoverage = request.FinancialContext.CurrentLifeInsurance?.CoverageAmount ?? 0m;
+        decimal declaredCoverage = request.FinancialContext.CurrentLifeInsurance?.CoverageAmount ?? 0m;
+        var policyType = request.FinancialContext.CurrentLifeInsurance?.PolicyType;
+        decimal effectiveFactor = CalculationRules.GetCoverageEffectiveFactor(policyType);
+        decimal currentCoverage = declaredCoverage * effectiveFactor;
+
+        // Track coverage type warnings
+        if (declaredCoverage > 0 && policyType.HasValue)
+        {
+            switch (policyType.Value)
+            {
+                case PolicyType.ACIDENTES_PESSOAIS:
+                    evalRecorder.TrackRule(_ruleJustificationProvider.Build(
+                        EngineRuleId.RULE_COVERAGE_TYPE_AP_ONLY,
+                        new Dictionary<string, RuleArgValue>
+                        {
+                            { "declaredCoverage", declaredCoverage },
+                            { "effectiveCoverage", currentCoverage },
+                        }));
+                    break;
+                case PolicyType.GRUPO_EMPRESARIAL:
+                    evalRecorder.TrackRule(_ruleJustificationProvider.Build(
+                        EngineRuleId.RULE_COVERAGE_TYPE_GROUP_PORTABILITY_RISK,
+                        new Dictionary<string, RuleArgValue>
+                        {
+                            { "coverageAmount", declaredCoverage },
+                        }));
+                    break;
+                case PolicyType.PRESTAMISTA:
+                    evalRecorder.TrackRule(_ruleJustificationProvider.Build(
+                        EngineRuleId.RULE_COVERAGE_TYPE_PRESTAMISTA_NOT_FAMILY,
+                        new Dictionary<string, RuleArgValue>
+                        {
+                            { "declaredCoverage", declaredCoverage },
+                        }));
+                    break;
+            }
+        }
 
         var partialResult = new LifeInsuranceAssessmentResult
         {
@@ -119,7 +155,7 @@ public class LifeInsuranceCalculator : ILifeInsuranceCalculator
         decimal debtClearance = CalculateDebtClearance(request.FinancialContext.Debts, evalRecorder);
         decimal transitionReserve = CalculateTransitionReserve(request.FinancialContext.MonthlyIncome, request.FinancialContext.EmergencyFundMonths, evalRecorder, settings);
         decimal educationCosts = CalculateEducationCosts(request.FinancialContext.EducationCosts, evalRecorder);
-        var (itcmdCost, inventoryCost) = CalculateEstateCosts(request.FinancialContext.Estate, evalRecorder);
+        var (itcmdCost, inventoryCost) = CalculateEstateCosts(request.FinancialContext.Estate, evalRecorder, settings);
 
         decimal total = incomeReplacement + debtClearance + transitionReserve + educationCosts + itcmdCost + inventoryCost;
         return (total, incomeReplacement, debtClearance, transitionReserve, educationCosts, itcmdCost, inventoryCost);
@@ -128,26 +164,28 @@ public class LifeInsuranceCalculator : ILifeInsuranceCalculator
     private decimal CalculateIncomeReplacement(decimal annualIncome, FamilyContext familyContext, EvaluationRecorder evalRecorder, TenantSettings? settings)
     {
         int yearsToReplace = 0;
+        int maxYears = settings?.MaxIncomeReplacementYears ?? CalculationRules.MaxTotalIncomeReplacementYears;
 
         if (familyContext.DependentsCount == 0)
         {
             yearsToReplace = settings?.IncomeReplacementYearsSingle ?? CalculationRules.BaseIncomeReplacementYearsNoDependents;
+            yearsToReplace = Math.Min(yearsToReplace, maxYears);
             evalRecorder.TrackRule(_ruleJustificationProvider.Build(
-                EngineRuleId.RULE_INCOME_REPLACEMENT_NO_DEPENDENTS, 
+                EngineRuleId.RULE_INCOME_REPLACEMENT_NO_DEPENDENTS,
                 new Dictionary<string, RuleArgValue> { { "years", yearsToReplace } }));
         }
         else
         {
             int baseYearsDep = settings?.IncomeReplacementYearsWithDependents ?? CalculationRules.BaseIncomeReplacementYearsWithDependents;
-            
+
             int extraYears = Math.Min(
                 familyContext.DependentsCount * CalculationRules.AdditionalYearsPerDependent,
                 CalculationRules.MaxAdditionalYearsForDependents
             );
-            
+
             yearsToReplace = Math.Min(
                 baseYearsDep + extraYears,
-                CalculationRules.MaxTotalIncomeReplacementYears
+                maxYears
             );
             
             evalRecorder.TrackRule(_ruleJustificationProvider.Build(
@@ -226,7 +264,7 @@ public class LifeInsuranceCalculator : ILifeInsuranceCalculator
         return education.TotalEstimatedCost;
     }
 
-    private (decimal ItcmdCost, decimal InventoryCost) CalculateEstateCosts(EstateData? estate, EvaluationRecorder evalRecorder)
+    private (decimal ItcmdCost, decimal InventoryCost) CalculateEstateCosts(EstateData? estate, EvaluationRecorder evalRecorder, TenantSettings? settings)
     {
         if (estate == null || estate.TotalEstateValue <= 0)
             return (0m, 0m);
@@ -244,7 +282,7 @@ public class LifeInsuranceCalculator : ILifeInsuranceCalculator
                 { "state", (RuleArgValue)(estate.State ?? "N/A") },
             }));
 
-        decimal inventoryRate = CalculationRules.DefaultInventoryRate;
+        decimal inventoryRate = settings?.InventoryRate ?? CalculationRules.DefaultInventoryRate;
         decimal inventoryCost = estate.TotalEstateValue * inventoryRate;
 
         evalRecorder.TrackRule(_ruleJustificationProvider.Build(

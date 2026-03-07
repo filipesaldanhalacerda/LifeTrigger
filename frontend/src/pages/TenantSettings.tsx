@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import {
   Save, RotateCcw, AlertTriangle, TrendingUp,
   Wallet, ShieldCheck, CheckCircle2, Settings2,
+  Landmark, Clock,
 } from 'lucide-react'
 import { TopBar } from '../components/layout/TopBar'
 import { getTenantSettings, putTenantSettings, getActiveTenantId } from '../lib/api'
@@ -15,6 +16,8 @@ const DEFAULTS: Omit<TSettings, 'tenantId'> = {
   emergencyFundBufferMonths: 6,
   maxTotalCoverageMultiplier: 20,
   minCoverageAnnualIncomeMultiplier: 2,
+  inventoryRate: 0.10,
+  maxIncomeReplacementYears: 10,
 }
 
 // ── Helpers ───────────────────────────────────────────────────────
@@ -249,6 +252,57 @@ export default function TenantSettings() {
             />
           </SettingsCard>
 
+          {/* ── Section 4: Succession / Inventory ── */}
+          <SettingsCard
+            icon={Landmark}
+            iconColor="text-violet-600"
+            iconBg="bg-violet-50"
+            title="Sucessão e Inventário"
+            description="Percentual estimado de custos advocatícios, cartorários e processuais para abertura de inventário. Aplicado sobre o valor total do patrimônio declarado."
+          >
+            <SliderField
+              label="Taxa de inventário"
+              value={settings.inventoryRate * 100}
+              min={5} max={20} step={1}
+              defaultValue={DEFAULTS.inventoryRate * 100}
+              unit="%"
+              onChange={(v) => set('inventoryRate', v / 100)}
+              formula="Custo Inventário = Patrimônio Total × Taxa"
+              effectLines={[
+                'Inclui honorários advocatícios, custas judiciais e emolumentos cartorários.',
+                'Taxa menor (5–8%) → inventários simples, patrimônio líquido e sem litígio.',
+                'Taxa maior (12–20%) → patrimônio complexo, múltiplos imóveis ou disputas entre herdeiros.',
+              ]}
+              example={`Ex: Patrimônio R$1.000.000 × ${(settings.inventoryRate * 100).toFixed(0)}% = ${brl(settings.inventoryRate * 1000000)} somados ao capital recomendado`}
+            />
+          </SettingsCard>
+
+          {/* ── Section 5: Max Income Replacement Years ── */}
+          <SettingsCard
+            icon={Clock}
+            iconColor="text-sky-600"
+            iconBg="bg-sky-50"
+            title="Teto de Reposição de Renda"
+            description="Limite absoluto de anos usado no cálculo de substituição de renda, independente da quantidade de dependentes ou do valor base configurado."
+          >
+            <SliderField
+              label="Teto máximo de anos de reposição"
+              value={settings.maxIncomeReplacementYears}
+              min={5} max={20} step={1}
+              defaultValue={DEFAULTS.maxIncomeReplacementYears}
+              unit="anos"
+              onChange={(v) => set('maxIncomeReplacementYears', v)}
+              formula="Anos efetivos = min(base + extras por dependentes, teto)"
+              effectLines={[
+                'O motor soma anos-base + extras automáticos por dependente, mas nunca ultrapassa este teto.',
+                'Teto menor (5–8) → perfil agressivo; limita exposição mesmo com muitos dependentes.',
+                'Teto maior (12–20) → perfil conservador; permite recomendações mais altas para famílias grandes.',
+                'Este valor deve ser maior ou igual aos anos-base configurados acima.',
+              ]}
+              example={`Ex: Base ${settings.incomeReplacementYearsWithDependents} anos + 3 dep. (+3) = ${settings.incomeReplacementYearsWithDependents + 3} → limitado ao teto de ${settings.maxIncomeReplacementYears} anos = ${Math.min(settings.incomeReplacementYearsWithDependents + 3, settings.maxIncomeReplacementYears)} anos efetivos`}
+            />
+          </SettingsCard>
+
           {/* ── Dynamic summary ── */}
           <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-card">
             <div className="mb-4 flex items-center justify-between">
@@ -293,8 +347,20 @@ export default function TenantSettings() {
                 formula={`${Math.max(0, settings.emergencyFundBufferMonths - 3)} meses × R$10k`}
                 value={brl(Math.max(0, settings.emergencyFundBufferMonths - 3) * 10000)}
                 color="amber"
-                span={false}
                 note="(cliente com apenas 3 meses de reserva)"
+              />
+              <SimRow
+                label="Custo de inventário"
+                formula={`R$1M × ${(settings.inventoryRate * 100).toFixed(0)}%`}
+                value={brl(settings.inventoryRate * 1000000)}
+                color="amber"
+                note="(patrimônio de R$ 1.000.000)"
+              />
+              <SimRow
+                label="Teto reposição — com 3 dep."
+                formula={`min(${settings.incomeReplacementYearsWithDependents}+3, ${settings.maxIncomeReplacementYears}) anos`}
+                value={`${Math.min(settings.incomeReplacementYearsWithDependents + 3, settings.maxIncomeReplacementYears)} anos`}
+                color="brand"
               />
             </div>
 

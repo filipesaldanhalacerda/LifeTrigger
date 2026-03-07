@@ -19,7 +19,7 @@ export interface CreateUserPayload {
 
 export type MaritalStatus = 'SOLTEIRO' | 'CASADO' | 'DIVORCIADO' | 'VIUVO'
 export type ProfessionRiskLevel = 'BAIXO' | 'MEDIO' | 'ALTO' | 'MUITO_ALTO'
-export type PolicyType = 'TEMPORARIO' | 'VIDA_INTEIRA' | 'ACIDENTES_PESSOAIS' | 'DESCONHECIDO'
+export type PolicyType = 'TEMPORARIO' | 'VIDA_INTEIRA' | 'RESGATAVEL' | 'GRUPO_EMPRESARIAL' | 'ACIDENTES_PESSOAIS' | 'PRESTAMISTA'
 export type RiskClassification = 'CRITICO' | 'MODERADO' | 'ADEQUADO'
 export type RecommendedAction = 'AUMENTAR' | 'MANTER' | 'REDUZIR' | 'REVISAR'
 export type CoverageStatus = 'SUBPROTEGIDO' | 'ADEQUADO' | 'SOBRESEGURADO'
@@ -159,6 +159,8 @@ export interface TenantSettings {
   emergencyFundBufferMonths: number
   maxTotalCoverageMultiplier: number
   minCoverageAnnualIncomeMultiplier: number
+  inventoryRate: number
+  maxIncomeReplacementYears: number
 }
 
 export interface LifeTriggerEvent {

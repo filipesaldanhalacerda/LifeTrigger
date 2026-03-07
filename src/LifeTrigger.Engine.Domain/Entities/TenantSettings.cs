@@ -20,4 +20,10 @@ public class TenantSettings
     // Guardrails de Venda
     public decimal MaxTotalCoverageMultiplier { get; set; } = 20.0m;
     public decimal MinCoverageAnnualIncomeMultiplier { get; set; } = 2.0m;
+
+    // Sucessão / Inventário
+    public decimal InventoryRate { get; set; } = 0.10m;
+
+    // Teto absoluto de anos de reposição de renda
+    public int MaxIncomeReplacementYears { get; set; } = 10;
 }

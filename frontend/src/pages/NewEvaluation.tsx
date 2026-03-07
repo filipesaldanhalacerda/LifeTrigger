@@ -890,7 +890,7 @@ const POLICY_TYPE_OPTIONS = [
     value: '',
     label: 'Não informado',
     desc: 'O cliente não sabe ou não informou o tipo. O motor assumirá cobertura integral (fator 1.0×).',
-    factor: '1.0×',
+
     icon: ShieldCheck,
     color: 'text-slate-400',
     bg: 'bg-slate-50',
@@ -900,7 +900,7 @@ const POLICY_TYPE_OPTIONS = [
     value: 'TEMPORARIO',
     label: 'Vida Temporário',
     desc: 'Seguro com prazo fixo (ex: 10, 20 anos). Cobertura plena por morte de qualquer causa durante a vigência.',
-    factor: '1.0×',
+
     icon: ShieldCheck,
     color: 'text-emerald-600',
     bg: 'bg-emerald-50',
@@ -910,7 +910,7 @@ const POLICY_TYPE_OPTIONS = [
     value: 'VIDA_INTEIRA',
     label: 'Vida Inteira',
     desc: 'Cobertura permanente, sem prazo de vencimento. Protege a família contra morte por qualquer causa, por toda a vida.',
-    factor: '1.0×',
+
     icon: ShieldCheck,
     color: 'text-emerald-600',
     bg: 'bg-emerald-50',
@@ -920,7 +920,7 @@ const POLICY_TYPE_OPTIONS = [
     value: 'RESGATAVEL',
     label: 'Vida Resgatável',
     desc: 'Seguro de vida com componente de poupança. Cobertura plena + valor de resgate acumulado ao longo do tempo.',
-    factor: '1.0×',
+
     icon: ShieldCheck,
     color: 'text-emerald-600',
     bg: 'bg-emerald-50',
@@ -930,7 +930,7 @@ const POLICY_TYPE_OPTIONS = [
     value: 'GRUPO_EMPRESARIAL',
     label: 'Vida em Grupo / Empresarial',
     desc: 'Apólice coletiva oferecida pelo empregador. Cobertura plena, mas há risco de perda se o segurado sair da empresa.',
-    factor: '1.0×',
+
     icon: ShieldAlert,
     color: 'text-amber-600',
     bg: 'bg-amber-50',
@@ -940,7 +940,7 @@ const POLICY_TYPE_OPTIONS = [
     value: 'ACIDENTES_PESSOAIS',
     label: 'Somente Acidentes Pessoais',
     desc: 'Cobre apenas morte acidental — não é seguro de vida. Cerca de 70% das mortes são por causas naturais e não seriam cobertas.',
-    factor: '0.3×',
+
     icon: ShieldAlert,
     color: 'text-amber-600',
     bg: 'bg-amber-50',
@@ -950,7 +950,7 @@ const POLICY_TYPE_OPTIONS = [
     value: 'PRESTAMISTA',
     label: 'Prestamista',
     desc: 'Vinculado a financiamento — paga o credor, não a família. Não protege os dependentes e o motor desconsidera essa cobertura.',
-    factor: '0×',
+
     icon: ShieldOff,
     color: 'text-red-500',
     bg: 'bg-red-50',
@@ -986,11 +986,6 @@ function PolicyTypeSelector({ value, onChange }: { value: string; onChange: (v: 
           <span className={value ? 'text-slate-900 truncate' : 'text-slate-400 truncate'}>
             {selected.label}
           </span>
-          {value && (
-            <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold ${selected.bg} ${selected.color}`}>
-              {selected.factor}
-            </span>
-          )}
         </span>
         <ChevronDown className={`h-4 w-4 shrink-0 text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
@@ -1016,9 +1011,6 @@ function PolicyTypeSelector({ value, onChange }: { value: string; onChange: (v: 
                       <div className="flex items-center gap-2">
                         <span className={`text-sm font-semibold ${isSelected ? 'text-slate-900' : 'text-slate-700'}`}>
                           {opt.label}
-                        </span>
-                        <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${opt.bg} ${opt.color}`}>
-                          Fator {opt.factor}
                         </span>
                         {isSelected && <Check className="h-4 w-4 text-brand-600 ml-auto shrink-0" />}
                       </div>

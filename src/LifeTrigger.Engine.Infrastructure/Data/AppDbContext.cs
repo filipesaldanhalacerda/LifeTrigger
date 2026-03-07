@@ -27,6 +27,7 @@ public class AppDbContext : DbContext
             entity.ToTable("TenantSettings");
             entity.Property(t => t.MaxTotalCoverageMultiplier).HasPrecision(18, 2);
             entity.Property(t => t.MinCoverageAnnualIncomeMultiplier).HasPrecision(18, 2);
+            entity.Property(t => t.InventoryRate).HasPrecision(18, 2);
         });
 
         // Map EvaluationRecord
