@@ -66,6 +66,93 @@ const TRIGGER_TYPES = [
   },
 ]
 
+// ── Per-trigger guidance: what fields to review ──────────────────
+interface TriggerGuidance {
+  auto?: { field: string; label: string; value: string }[]  // auto-applied changes
+  review: { step: number; fields: string[] }[]               // fields to review per step
+  checklist: string[]                                        // human-readable checklist
+}
+
+const TRIGGER_GUIDANCE: Record<string, TriggerGuidance> = {
+  Casamento: {
+    auto: [{ field: 'maritalStatus', label: 'Estado Civil', value: 'CASADO' }],
+    review: [
+      { step: 1, fields: ['maritalStatus'] },
+      { step: 2, fields: ['dependentsCount'] },
+      { step: 3, fields: ['income', 'policies'] },
+    ],
+    checklist: [
+      'Estado civil atualizado para Casado(a) automaticamente',
+      'Verifique se o cônjuge deve ser adicionado como dependente',
+      'Revise a renda mensal caso tenha mudado com a nova composição familiar',
+      'Avalie se as apólices atuais cobrem o novo dependente',
+    ],
+  },
+  NovoFilho: {
+    review: [
+      { step: 2, fields: ['dependentsCount', 'dependentsAges'] },
+      { step: 3, fields: ['educationCost'] },
+    ],
+    checklist: [
+      'Adicione +1 dependente e informe a idade (0 para recém-nascido)',
+      'Inclua o custo de educação estimado para o novo dependente',
+      'Revise a cobertura — cada dependente eleva o capital necessário',
+    ],
+  },
+  Imovel: {
+    review: [
+      { step: 3, fields: ['debtTotal', 'debtMonths', 'estateValue'] },
+    ],
+    checklist: [
+      'Adicione o valor do financiamento ao total de dívidas',
+      'Informe o prazo restante do financiamento em meses',
+      'Atualize o valor do patrimônio com o novo imóvel',
+      'Verifique se há seguro prestamista vinculado ao financiamento',
+    ],
+  },
+  Aumento_Salario: {
+    review: [
+      { step: 3, fields: ['income'] },
+    ],
+    checklist: [
+      'Atualize a renda mensal com o novo valor',
+      'Renda maior eleva proporcionalmente a cobertura recomendada',
+      'Revise o fundo de emergência — pode precisar de ajuste',
+    ],
+  },
+  Divorcio: {
+    auto: [{ field: 'maritalStatus', label: 'Estado Civil', value: 'DIVORCIADO' }],
+    review: [
+      { step: 1, fields: ['maritalStatus'] },
+      { step: 2, fields: ['dependentsCount'] },
+      { step: 3, fields: ['debtTotal', 'estateValue'] },
+    ],
+    checklist: [
+      'Estado civil atualizado para Divorciado(a) automaticamente',
+      'Remova o ex-cônjuge dos dependentes se aplicável',
+      'Revise dívidas — parte pode ter sido assumida pelo ex-cônjuge',
+      'Atualize o patrimônio após a partilha de bens',
+    ],
+  },
+  Aposentadoria: {
+    review: [
+      { step: 3, fields: ['income', 'emergencyFund'] },
+    ],
+    checklist: [
+      'Atualize a renda para o valor da aposentadoria/previdência',
+      'Revise o fundo de emergência — necessidade pode mudar',
+      'Avalie se a cobertura atual ainda é proporcional à nova renda',
+    ],
+  },
+  Personalizado: {
+    review: [],
+    checklist: [
+      'Revise todos os campos que possam ter sido afetados pelo evento',
+      'Use a descrição do evento para registrar o contexto completo',
+    ],
+  },
+}
+
 // ── Step metadata ────────────────────────────────────────────────
 const STEPS = [
   { label: 'Evento', icon: Zap, description: 'Tipo de gatilho de vida e data do evento' },
@@ -83,6 +170,7 @@ export default function NewTrigger() {
   const [loading, setLoading] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+  const [hasPrefill, setHasPrefill] = useState(false)
 
   // Trigger
   const [triggerType, setTriggerType] = useState('Casamento')
@@ -194,7 +282,26 @@ export default function NewTrigger() {
 
     // Consent already given in original evaluation
     setConsent(true)
+    setHasPrefill(true)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Auto-apply obvious field changes when trigger type changes (only for prefilled triggers)
+  useEffect(() => {
+    if (!hasPrefill) return
+    const guidance = TRIGGER_GUIDANCE[triggerType]
+    if (!guidance?.auto) return
+    for (const change of guidance.auto) {
+      if (change.field === 'maritalStatus') setMaritalStatus(change.value)
+    }
+  }, [triggerType, hasPrefill])
+
+  // Check if a field should be highlighted as needing review
+  function needsReview(fieldName: string): boolean {
+    if (!hasPrefill) return false
+    const guidance = TRIGGER_GUIDANCE[triggerType]
+    if (!guidance) return false
+    return guidance.review.some((r) => r.step === step && r.fields.includes(fieldName))
+  }
 
   function clearError(field: string) {
     setFieldErrors((prev) => {
@@ -433,6 +540,21 @@ export default function NewTrigger() {
                   </p>
                 </div>
 
+                {/* Trigger checklist — what needs to change */}
+                {hasPrefill && TRIGGER_GUIDANCE[triggerType] && (
+                  <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <AlertCircle className="h-4 w-4 text-amber-600" />
+                      <p className="text-xs font-semibold text-amber-800">O que precisa ser atualizado neste gatilho:</p>
+                    </div>
+                    <ul className="space-y-1.5 pl-6">
+                      {TRIGGER_GUIDANCE[triggerType].checklist.map((item, i) => (
+                        <li key={i} className="text-xs text-amber-700 list-disc">{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
                 {/* Event details */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Field
@@ -466,6 +588,16 @@ export default function NewTrigger() {
             {/* ── Step 1: Personal ── */}
             {step === 1 && (
               <div className="space-y-6">
+                {hasPrefill && TRIGGER_GUIDANCE[triggerType]?.review.some((r) => r.step === 1) && (
+                  <div className="flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+                    <Zap className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+                    <p className="text-xs text-amber-700">
+                      <span className="font-semibold">Revise os campos destacados.</span>{' '}
+                      {triggerType === 'Casamento' && 'Estado civil já foi atualizado automaticamente para Casado(a). Verifique se os demais dados pessoais continuam corretos.'}
+                      {triggerType === 'Divorcio' && 'Estado civil já foi atualizado automaticamente para Divorciado(a). Revise os dados pessoais.'}
+                    </p>
+                  </div>
+                )}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Field
                     label="Idade *"
@@ -483,6 +615,7 @@ export default function NewTrigger() {
                   <Field
                     label="Estado Civil"
                     hint="Impacta a análise de dependência financeira do cônjuge."
+                    highlight={needsReview('maritalStatus')}
                   >
                     <select value={maritalStatus} onChange={(e) => setMaritalStatus(e.target.value)} className={cls()}>
                       <option value="">Não informado</option>
@@ -547,9 +680,21 @@ export default function NewTrigger() {
             {/* ── Step 2: Family ── */}
             {step === 2 && (
               <div className="space-y-6">
+                {hasPrefill && TRIGGER_GUIDANCE[triggerType]?.review.some((r) => r.step === 2) && (
+                  <div className="flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+                    <Zap className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+                    <p className="text-xs text-amber-700">
+                      <span className="font-semibold">Revise os dependentes.</span>{' '}
+                      {triggerType === 'NovoFilho' && 'Adicione +1 dependente e informe idade 0 para recém-nascido. Cada dependente eleva o capital recomendado.'}
+                      {triggerType === 'Casamento' && 'Se o cônjuge depende financeiramente, adicione como dependente.'}
+                      {triggerType === 'Divorcio' && 'Remova o ex-cônjuge dos dependentes se aplicável. Mantenha os filhos.'}
+                    </p>
+                  </div>
+                )}
                 <Field
                   label="Número de Dependentes *"
                   hint="Filhos, cônjuge sem renda própria e outros que dependem financeiramente do segurado. Cada dependente acrescenta anos ao cálculo de proteção."
+                  highlight={needsReview('dependentsCount')}
                 >
                   <div className="flex items-center gap-4">
                     <button
@@ -631,11 +776,26 @@ export default function NewTrigger() {
             {/* ── Step 3: Financial ── */}
             {step === 3 && (
               <div className="space-y-6">
+                {hasPrefill && TRIGGER_GUIDANCE[triggerType]?.review.some((r) => r.step === 3) && (
+                  <div className="flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+                    <Zap className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+                    <p className="text-xs text-amber-700">
+                      <span className="font-semibold">Revise os dados financeiros.</span>{' '}
+                      {triggerType === 'Imovel' && 'Adicione o valor do financiamento às dívidas e atualize o patrimônio com o novo imóvel.'}
+                      {triggerType === 'Aumento_Salario' && 'Atualize a renda mensal com o novo valor. A cobertura recomendada cresce proporcionalmente.'}
+                      {triggerType === 'Aposentadoria' && 'Atualize a renda para o valor da aposentadoria e revise o fundo de emergência.'}
+                      {triggerType === 'Casamento' && 'Revise a renda caso tenha mudado e verifique se as apólices cobrem o novo dependente.'}
+                      {triggerType === 'Divorcio' && 'Revise dívidas após a partilha e atualize o patrimônio.'}
+                      {triggerType === 'NovoFilho' && 'Inclua os custos de educação do novo dependente.'}
+                    </p>
+                  </div>
+                )}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Field
                     label="Renda Mensal Bruta *"
                     hint="Principal parâmetro do cálculo. O motor multiplica a renda anual por um fator de anos de reposição."
                     error={fieldErrors.income}
+                    highlight={needsReview('income')}
                   >
                     <CurrencyInput
                       value={income}
@@ -647,6 +807,7 @@ export default function NewTrigger() {
                   <Field
                     label="Reserva de Emergência"
                     hint="Meses de gastos cobertos pela reserva líquida. Meta-padrão do motor: 6 meses."
+                    highlight={needsReview('emergencyFund')}
                   >
                     <div className="relative">
                       <input
@@ -662,10 +823,11 @@ export default function NewTrigger() {
                 </div>
 
                 {/* Policies */}
-                <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 space-y-4">
+                <div className={`rounded-xl border p-4 space-y-4 ${needsReview('policies') ? 'border-amber-300 bg-amber-50/30' : 'border-slate-100 bg-slate-50'}`}>
                   <div>
                     <div className="flex items-center gap-2 mb-1">
                       <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Seguros de Vida Atuais</p>
+                      {needsReview('policies') && <span className="rounded-full bg-amber-200 px-1.5 py-0.5 text-[9px] font-bold text-amber-700">REVISAR</span>}
                       <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-medium text-slate-500">opcional</span>
                     </div>
                     <p className="text-xs text-slate-500">
@@ -736,7 +898,7 @@ export default function NewTrigger() {
                       Financiamentos, empréstimos e dívidas em aberto são adicionados ao capital necessário.
                     </p>
                   </div>
-                  <Field label="Total de Dívidas" hint="Saldo devedor consolidado (imóvel, veículo, consignado etc.).">
+                  <Field label="Total de Dívidas" hint="Saldo devedor consolidado (imóvel, veículo, consignado etc.)." highlight={needsReview('debtTotal')}>
                     <CurrencyInput value={debtTotal} onChange={setDebtTotal} placeholder="150.000,00" />
                   </Field>
                   {debtTotal && parseCurrency(debtTotal) > 0 && (
@@ -757,11 +919,12 @@ export default function NewTrigger() {
 
                 {/* Education — conditional on dependents */}
                 {Number(dependentsCount) > 0 && (
-                  <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 space-y-4">
+                  <div className={`rounded-xl border p-4 space-y-4 ${needsReview('educationCost') ? 'border-amber-300 bg-amber-50/30' : 'border-slate-100 bg-slate-50'}`}>
                     <div>
                       <div className="flex items-center gap-2 mb-1">
                         <GraduationCap className="h-4 w-4 text-slate-500" />
                         <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Custos de Educação</p>
+                        {needsReview('educationCost') && <span className="rounded-full bg-amber-200 px-1.5 py-0.5 text-[9px] font-bold text-amber-700">REVISAR</span>}
                         <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-medium text-slate-500">opcional</span>
                       </div>
                       <p className="text-xs text-slate-500">
@@ -905,7 +1068,7 @@ export default function NewTrigger() {
                       automaticamente o ITCMD (imposto estadual sobre herança) e custos de inventário.
                     </p>
                   </div>
-                  <Field label="Valor Total do Patrimônio" hint="Soma de imóveis, veículos, investimentos e outros bens.">
+                  <Field label="Valor Total do Patrimônio" hint="Soma de imóveis, veículos, investimentos e outros bens." highlight={needsReview('estateValue')}>
                     <CurrencyInput value={estateValue} onChange={setEstateValue} placeholder="1.000.000,00" />
                   </Field>
                   {estateValue && parseCurrency(estateValue) > 0 && (
@@ -1050,16 +1213,20 @@ function cls(hasError = false) {
 }
 
 function Field({
-  label, hint, error, children,
+  label, hint, error, highlight, children,
 }: {
   label: string
   hint?: string
   error?: string
+  highlight?: boolean
   children: React.ReactNode
 }) {
   return (
-    <div className="space-y-1.5">
-      <label className="text-xs font-semibold text-slate-600">{label}</label>
+    <div className={`space-y-1.5 ${highlight ? 'rounded-lg border border-amber-300 bg-amber-50/50 p-2.5 -m-2.5' : ''}`}>
+      <div className="flex items-center gap-1.5">
+        <label className="text-xs font-semibold text-slate-600">{label}</label>
+        {highlight && <span className="rounded-full bg-amber-200 px-1.5 py-0.5 text-[9px] font-bold text-amber-700">REVISAR</span>}
+      </div>
       {children}
       {hint && !error && <p className="text-[11px] leading-snug text-slate-400">{hint}</p>}
       {error && <p className="text-[11px] font-semibold text-red-600">{error}</p>}
