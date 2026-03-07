@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using LifeTrigger.Engine.Application.Interfaces;
 using LifeTrigger.Engine.Domain.Entities;
+using LifeTrigger.Engine.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace LifeTrigger.Engine.Infrastructure.Repositories;
@@ -69,5 +70,13 @@ public class EfEvaluationRepository : IEvaluationRepository
             .Skip(offset)
             .Take(limit)
             .ToListAsync(cancellationToken);
+    }
+
+    public async Task<bool> UpdateStatusAsync(Guid id, EvaluationStatus status, CancellationToken cancellationToken = default)
+    {
+        var count = await _context.Evaluations
+            .Where(e => e.Id == id)
+            .ExecuteUpdateAsync(s => s.SetProperty(e => e.Status, status), cancellationToken);
+        return count > 0;
     }
 }

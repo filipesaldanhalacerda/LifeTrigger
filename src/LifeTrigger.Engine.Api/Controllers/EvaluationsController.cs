@@ -10,6 +10,7 @@ using LifeTrigger.Engine.Application.Interfaces;
 using LifeTrigger.Engine.Domain.Entities;
 using LifeTrigger.Engine.Domain.Enums;
 using LifeTrigger.Engine.Domain.Requests;
+using EvalStatus = LifeTrigger.Engine.Domain.Enums.EvaluationStatus;
 using LifeTrigger.Engine.Api.Filters;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.RateLimiting;
@@ -180,6 +181,7 @@ public class EvaluationsController : ControllerBase
             createdByUserId  = e.CreatedByUserId,
             consentId        = e.Request.OperationalData.ConsentId,
             isTrigger        = e.Request.OperationalData.RecentLifeTrigger,
+            status           = e.Status.ToString(),
         }).ToList();
 
         return Ok(new { total = items.Count, items });
@@ -227,6 +229,26 @@ public class EvaluationsController : ControllerBase
         }
 
         return Ok(record);
+    }
+
+    /// <summary>
+    /// Atualiza o status do ciclo de vida de uma avaliação (ABERTO, CONVERTIDO, ARQUIVADO).
+    /// </summary>
+    [HttpPatch("{id}/status")]
+    [Authorize(Policy = "Broker")]
+    [ProducesResponseType(204)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> UpdateEvaluationStatus(Guid id, [FromBody] UpdateStatusRequest body, CancellationToken cancellationToken)
+    {
+        if (!Enum.TryParse<EvalStatus>(body.Status, ignoreCase: true, out var newStatus))
+            return BadRequest(new { Message = $"Status inválido: '{body.Status}'. Valores aceitos: ABERTO, CONVERTIDO, ARQUIVADO." });
+
+        var updated = await _repository.UpdateStatusAsync(id, newStatus, cancellationToken);
+        if (!updated)
+            return NotFound(new { Message = "Avaliação não encontrada." });
+
+        return NoContent();
     }
 
     /// <summary>
@@ -339,13 +361,16 @@ public class EvaluationsController : ControllerBase
             });
         }
 
-        var riskDist     = evaluations.GroupBy(e => e.Result.RiskClassification).ToDictionary(g => g.Key, g => g.Count());
-        var actionDist   = evaluations.GroupBy(e => e.Result.RecommendedAction).ToDictionary(g => g.Key, g => g.Count());
+        // Only count ABERTO evaluations for risk/action distributions (dashboard health)
+        var active = evaluations.Where(e => e.Status == EvalStatus.ABERTO).ToList();
+        var riskDist     = active.GroupBy(e => e.Result.RiskClassification).ToDictionary(g => g.Key, g => g.Count());
+        var actionDist   = active.GroupBy(e => e.Result.RecommendedAction).ToDictionary(g => g.Key, g => g.Count());
         var triggerCount = evaluations.Count(e => e.Request?.OperationalData?.RecentLifeTrigger == true);
 
         return Ok(new
         {
-            totalEvaluations = total,
+            totalEvaluations = active.Count,
+            totalAll = total,
             riskDistribution = new
             {
                 critico  = riskDist.GetValueOrDefault(RiskClassification.CRITICO,  0),
@@ -388,3 +413,5 @@ public class EvaluationsController : ControllerBase
         return (int)Math.Clamp(Math.Round(efficiency), 0, 100);
     }
 }
+
+public record UpdateStatusRequest(string Status);

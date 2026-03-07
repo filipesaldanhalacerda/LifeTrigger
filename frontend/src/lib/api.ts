@@ -254,6 +254,13 @@ export async function getEvaluation(id: string): Promise<EvaluationRecord> {
   return request<EvaluationRecord>(`/evaluations/${id}`)
 }
 
+export async function updateEvaluationStatus(id: string, status: string): Promise<void> {
+  return request<void>(`/evaluations/${id}/status`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status }),
+  })
+}
+
 export async function verifyEvaluationIntegrity(id: string): Promise<AuditVerifyResult> {
   return request<AuditVerifyResult>(`/admin/audit/evaluations/${id}/verify`)
 }

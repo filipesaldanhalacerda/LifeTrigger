@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using LifeTrigger.Engine.Application.Interfaces;
 using LifeTrigger.Engine.Domain.Entities;
+using LifeTrigger.Engine.Domain.Enums;
 
 namespace LifeTrigger.Engine.Infrastructure.Repositories;
 
@@ -62,5 +63,15 @@ public class InMemoryEvaluationRepository : IEvaluationRepository
         result = result.OrderByDescending(v => v.Timestamp).Skip(offset).Take(limit);
 
         return Task.FromResult<IEnumerable<EvaluationRecord>>(result.ToList());
+    }
+
+    public Task<bool> UpdateStatusAsync(Guid id, EvaluationStatus status, CancellationToken cancellationToken = default)
+    {
+        if (_store.TryGetValue(id, out var record))
+        {
+            _store[id] = record with { Status = status };
+            return Task.FromResult(true);
+        }
+        return Task.FromResult(false);
     }
 }

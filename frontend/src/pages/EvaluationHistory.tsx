@@ -1,16 +1,17 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Search, Filter, TrendingUp, TrendingDown, Minus, RotateCcw,
   AlertCircle, ChevronRight, RefreshCw, Users, CheckCircle, Zap,
   ShieldAlert, ShieldCheck, ShieldQuestion, Copy, Check,
+  CircleDot, Archive, BadgeCheck,
 } from 'lucide-react'
 import { TopBar } from '../components/layout/TopBar'
 import { Badge } from '../components/ui/Badge'
-import { actionColors, actionLabel, riskColors, riskLabel, formatDate, riskScoreColor } from '../lib/utils'
-import { getEvaluations, getUsers, getActiveTenantId } from '../lib/api'
+import { actionColors, actionLabel, riskColors, riskLabel, formatDate, riskScoreColor, evalStatusLabel, evalStatusColors } from '../lib/utils'
+import { getEvaluations, getUsers, getActiveTenantId, updateEvaluationStatus } from '../lib/api'
 import { useAuth } from '../contexts/AuthContext'
-import type { EvaluationSummary, RecommendedAction, UserRecord } from '../types/api'
+import type { EvaluationSummary, RecommendedAction, EvaluationStatusType, UserRecord } from '../types/api'
 
 const ACTION_ICONS: Record<RecommendedAction, React.ElementType> = {
   AUMENTAR: TrendingUp,
@@ -87,8 +88,19 @@ export default function EvaluationHistory() {
   const [filterRisk, setFilterRisk]     = useState<string>('')
   const [filterUser, setFilterUser]     = useState<string>('')
   const [filterType, setFilterType]     = useState<string>('')
+  const [filterStatus, setFilterStatus] = useState<string>('')
   const [copiedId, setCopiedId]         = useState<string | null>(null)
+  const [statusMenuId, setStatusMenuId] = useState<string | null>(null)
   const [users, setUsers]               = useState<UserRecord[]>([])
+
+  // Close status menu on outside click
+  const closeMenu = useCallback(() => setStatusMenuId(null), [])
+  useEffect(() => {
+    if (statusMenuId) {
+      document.addEventListener('click', closeMenu)
+      return () => document.removeEventListener('click', closeMenu)
+    }
+  }, [statusMenuId, closeMenu])
 
   function load() {
     setLoading(true)
@@ -121,6 +133,16 @@ export default function EvaluationHistory() {
     setFilterRisk('')
     setFilterUser('')
     setFilterType('')
+    setFilterStatus('')
+  }
+
+  async function changeStatus(e: React.MouseEvent, id: string, newStatus: EvaluationStatusType) {
+    e.stopPropagation()
+    setStatusMenuId(null)
+    try {
+      await updateEvaluationStatus(id, newStatus)
+      setItems((prev) => prev.map((ev) => ev.id === id ? { ...ev, status: newStatus } : ev))
+    } catch { /* best-effort */ }
   }
 
   const filtered = items.filter((ev) => {
@@ -131,16 +153,18 @@ export default function EvaluationHistory() {
     if (filterUser && ev.createdByUserId !== filterUser) return false
     if (filterType === 'trigger' && !ev.isTrigger) return false
     if (filterType === 'evaluation' && ev.isTrigger) return false
+    if (filterStatus && (ev.status || 'ABERTO') !== filterStatus) return false
     return true
   })
 
+  const activeItems = items.filter((e) => (e.status || 'ABERTO') === 'ABERTO')
   const riskCounts = {
-    critico:  items.filter((e) => e.risk === 'CRITICO').length,
-    moderado: items.filter((e) => e.risk === 'MODERADO').length,
-    adequado: items.filter((e) => e.risk === 'ADEQUADO').length,
+    critico:  activeItems.filter((e) => e.risk === 'CRITICO').length,
+    moderado: activeItems.filter((e) => e.risk === 'MODERADO').length,
+    adequado: activeItems.filter((e) => e.risk === 'ADEQUADO').length,
   }
 
-  const hasActiveFilters = !!(search || filterAction || filterRisk || filterUser || filterType)
+  const hasActiveFilters = !!(search || filterAction || filterRisk || filterUser || filterType || filterStatus)
 
   // Group filtered items by consentId for visual threading
   const grouped = (() => {
@@ -183,12 +207,12 @@ export default function EvaluationHistory() {
         {!loading && !error && items.length > 0 && (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <SummaryCard
-              label="Total"
-              value={items.length}
+              label="Abertos"
+              value={activeItems.length}
               icon={Users}
               iconBg="bg-slate-100"
               iconColor="text-slate-600"
-              hint="avaliações carregadas"
+              hint={`de ${items.length} total`}
             />
             <SummaryCard
               label="Risco Crítico"
@@ -266,6 +290,16 @@ export default function EvaluationHistory() {
               <option value="">Avaliações e Gatilhos</option>
               <option value="evaluation">Apenas Avaliações</option>
               <option value="trigger">Apenas Gatilhos</option>
+            </select>
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-card focus:border-brand-400 focus:outline-none"
+            >
+              <option value="">Todos os status</option>
+              <option value="ABERTO">Abertos</option>
+              <option value="CONVERTIDO">Convertidos</option>
+              <option value="ARQUIVADO">Arquivados</option>
             </select>
             {isManagerPlus && users.length > 0 && (
               <select
@@ -405,6 +439,9 @@ export default function EvaluationHistory() {
                               </div>
                               <div className="mt-1 flex items-center gap-2 text-[11px] text-slate-400">
                                 <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500">{ev.channel}</span>
+                                <span className={`inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${evalStatusColors((ev.status || 'ABERTO') as EvaluationStatusType)}`}>
+                                  {evalStatusLabel((ev.status || 'ABERTO') as EvaluationStatusType)}
+                                </span>
                                 {isManagerPlus && <span>{brokerLabel(ev.createdByUserId)}</span>}
                               </div>
                             </div>
@@ -441,6 +478,9 @@ export default function EvaluationHistory() {
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                     Canal
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Status
                   </th>
                   {isManagerPlus && (
                     <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -574,6 +614,41 @@ export default function EvaluationHistory() {
                           <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600">
                             {ev.channel}
                           </span>
+                        </td>
+
+                        {/* Status */}
+                        <td className="px-4 py-3">
+                          <div className="relative">
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); setStatusMenuId(statusMenuId === ev.id ? null : ev.id) }}
+                              className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold transition-colors ${evalStatusColors((ev.status || 'ABERTO') as EvaluationStatusType)} hover:opacity-80`}
+                            >
+                              {(ev.status || 'ABERTO') === 'CONVERTIDO' && <BadgeCheck className="h-3 w-3" />}
+                              {(ev.status || 'ABERTO') === 'ARQUIVADO' && <Archive className="h-3 w-3" />}
+                              {(ev.status || 'ABERTO') === 'ABERTO' && <CircleDot className="h-3 w-3" />}
+                              {evalStatusLabel((ev.status || 'ABERTO') as EvaluationStatusType)}
+                            </button>
+                            {statusMenuId === ev.id && (
+                              <div className="absolute left-0 top-full mt-1 z-20 w-36 rounded-lg border border-slate-200 bg-white shadow-lg py-1">
+                                {(['ABERTO', 'CONVERTIDO', 'ARQUIVADO'] as EvaluationStatusType[])
+                                  .filter((s) => s !== (ev.status || 'ABERTO'))
+                                  .map((s) => (
+                                    <button
+                                      key={s}
+                                      type="button"
+                                      onClick={(e) => changeStatus(e, ev.id, s)}
+                                      className="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50 transition-colors"
+                                    >
+                                      {s === 'CONVERTIDO' && <BadgeCheck className="h-3.5 w-3.5 text-emerald-500" />}
+                                      {s === 'ARQUIVADO' && <Archive className="h-3.5 w-3.5 text-slate-400" />}
+                                      {s === 'ABERTO' && <CircleDot className="h-3.5 w-3.5 text-blue-500" />}
+                                      {evalStatusLabel(s)}
+                                    </button>
+                                  ))}
+                              </div>
+                            )}
+                          </div>
                         </td>
 
                         {/* Broker (Manager+ only) */}

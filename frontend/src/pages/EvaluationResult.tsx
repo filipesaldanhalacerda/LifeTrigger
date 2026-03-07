@@ -6,20 +6,20 @@ import {
   ShieldCheck, Shield, BarChart3, User, DollarSign, Baby,
   Lightbulb, MessageSquare, Target, HelpCircle, Package, ArrowRight,
   Cigarette, Briefcase, Landmark, GraduationCap, CreditCard, Wallet,
-  Info,
+  Info, ChevronDown,
 } from 'lucide-react'
 import { TopBar } from '../components/layout/TopBar'
 import { ScoreRing } from '../components/ui/ScoreRing'
 import { GapBar } from '../components/ui/GapBar'
 import { Badge } from '../components/ui/Badge'
-import { getEvaluation, getEvaluations, getActiveTenantId } from '../lib/api'
+import { getEvaluation, getEvaluations, getActiveTenantId, updateEvaluationStatus } from '../lib/api'
 import {
   actionColors, actionLabel, riskColors, riskLabel, coverageStatusLabel,
-  formatCurrency, formatDate, riskScoreColor,
+  formatCurrency, formatDate, riskScoreColor, evalStatusLabel, evalStatusColors,
 } from '../lib/utils'
 import type {
   EvaluationRecord, LifeInsuranceAssessmentResult, RecommendedAction,
-  BrokerInsight, InsightCategory,
+  BrokerInsight, InsightCategory, EvaluationStatusType,
 } from '../types/api'
 
 // ── Explanatory copy ──────────────────────────────────────────────
@@ -70,6 +70,7 @@ export default function EvaluationResult() {
   const [copiedId, setCopiedId] = useState(false)
   const [activeTab, setActiveTab] = useState<TabId>('resultado')
   const [previousResult, setPreviousResult] = useState<LifeInsuranceAssessmentResult | null>(null)
+  const [showStatusMenu, setShowStatusMenu] = useState(false)
 
   useEffect(() => {
     if (id) {
@@ -109,6 +110,15 @@ export default function EvaluationResult() {
       setCopiedHash(true)
       setTimeout(() => setCopiedHash(false), 1500)
     })
+  }
+
+  async function handleStatusChange(newStatus: EvaluationStatusType) {
+    if (!record || !id) return
+    setShowStatusMenu(false)
+    try {
+      await updateEvaluationStatus(id, newStatus)
+      setRecord({ ...record, status: newStatus })
+    } catch { /* best-effort */ }
   }
 
   // ── Loading ───────────────────────────────────────────────────
@@ -166,21 +176,51 @@ export default function EvaluationResult() {
             <ArrowLeft className="h-4 w-4" />
             Voltar
           </button>
-          {id && (
-            <button
-              onClick={() => {
-                navigator.clipboard.writeText(id)
-                setCopiedId(true)
-                setTimeout(() => setCopiedId(false), 1500)
-              }}
-              className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-500 hover:bg-slate-100 transition-colors"
-              title="Copiar ID completo"
-            >
-              <span className="font-mono text-[11px] text-slate-600 hidden sm:inline">{id}</span>
-              <span className="font-mono text-[11px] text-slate-600 sm:hidden">{id.slice(0, 12)}…</span>
-              {copiedId ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            {record && (
+              <div className="relative">
+                <button
+                  onClick={() => setShowStatusMenu(!showStatusMenu)}
+                  className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors ${evalStatusColors((record.status || 'ABERTO') as EvaluationStatusType)}`}
+                >
+                  {evalStatusLabel((record.status || 'ABERTO') as EvaluationStatusType)}
+                  <ChevronDown className="h-3 w-3" />
+                </button>
+                {showStatusMenu && (
+                  <div className="absolute right-0 top-full mt-1 z-20 w-40 rounded-lg border border-slate-200 bg-white shadow-lg py-1">
+                    {(['ABERTO', 'CONVERTIDO', 'ARQUIVADO'] as EvaluationStatusType[])
+                      .filter((s) => s !== (record.status || 'ABERTO'))
+                      .map((s) => (
+                        <button
+                          key={s}
+                          type="button"
+                          onClick={() => handleStatusChange(s)}
+                          className="flex w-full items-center gap-2 px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 transition-colors"
+                        >
+                          <span className={`inline-block h-2 w-2 rounded-full ${s === 'CONVERTIDO' ? 'bg-emerald-500' : s === 'ARQUIVADO' ? 'bg-slate-400' : 'bg-blue-500'}`} />
+                          {evalStatusLabel(s)}
+                        </button>
+                      ))}
+                  </div>
+                )}
+              </div>
+            )}
+            {id && (
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(id)
+                  setCopiedId(true)
+                  setTimeout(() => setCopiedId(false), 1500)
+                }}
+                className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-500 hover:bg-slate-100 transition-colors"
+                title="Copiar ID completo"
+              >
+                <span className="font-mono text-[11px] text-slate-600 hidden sm:inline">{id}</span>
+                <span className="font-mono text-[11px] text-slate-600 sm:hidden">{id.slice(0, 12)}…</span>
+                {copiedId ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
+              </button>
+            )}
+          </div>
         </div>
 
         {/* ── Diagnosis / recommendation card — always visible ── */}

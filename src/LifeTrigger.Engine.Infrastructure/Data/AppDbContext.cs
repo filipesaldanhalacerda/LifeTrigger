@@ -70,6 +70,10 @@ public class AppDbContext : DbContext
                 .IsRequired(false);
 
             entity.HasIndex("TenantId").HasDatabaseName("IX_Evaluations_TenantId");
+            entity.Property(e => e.Status)
+                .HasColumnName("Status")
+                .HasDefaultValue(LifeTrigger.Engine.Domain.Enums.EvaluationStatus.ABERTO);
+
             entity.HasIndex(e => e.CreatedByUserId).HasDatabaseName("IX_Evaluations_CreatedByUserId");
             entity.HasIndex(e => e.Timestamp).HasDatabaseName("IX_Evaluations_Timestamp");
         });

@@ -1,4 +1,5 @@
 using System;
+using LifeTrigger.Engine.Domain.Enums;
 using LifeTrigger.Engine.Domain.Requests;
 
 namespace LifeTrigger.Engine.Domain.Entities;
@@ -11,5 +12,6 @@ public record EvaluationRecord(
     LifeInsuranceAssessmentRequest Request,
     LifeInsuranceAssessmentResult Result,
     string? AuditHash = null,
-    Guid? CreatedByUserId = null
+    Guid? CreatedByUserId = null,
+    EvaluationStatus Status = EvaluationStatus.ABERTO
 );
