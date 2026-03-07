@@ -24,10 +24,10 @@ import type {
 
 // ── Explanatory copy ──────────────────────────────────────────────
 const ACTION_EXPLANATION: Record<RecommendedAction, string> = {
-  AUMENTAR: 'O motor identificou que a cobertura atual do cliente est\u00e1 abaixo do necess\u00e1rio para proteger adequadamente sua fam\u00edlia. Recomende o aumento da ap\u00f3lice para cobrir o d\u00e9ficit identificado.',
-  MANTER:   'A cobertura atual est\u00e1 bem calibrada para o perfil do cliente. N\u00e3o h\u00e1 necessidade de ajuste imediato \u2014 agende uma revis\u00e3o peri\u00f3dica para acompanhar mudan\u00e7as de vida.',
-  REDUZIR:  'A cobertura contratada excede a necessidade real calculada. O cliente pode otimizar o valor do pr\u00eamio sem comprometer a prote\u00e7\u00e3o da fam\u00edlia.',
-  REVISAR:  'Os dados fornecidos s\u00e3o insuficientes ou apresentam situa\u00e7\u00e3o at\u00edpica. Uma revis\u00e3o manual com o cliente \u00e9 necess\u00e1ria antes de qualquer recomenda\u00e7\u00e3o.',
+  AUMENTAR: 'O motor identificou que a cobertura atual do cliente está abaixo do necessário para proteger adequadamente sua família. Recomende o aumento da apólice para cobrir o déficit identificado.',
+  MANTER:   'A cobertura atual está bem calibrada para o perfil do cliente. Não há necessidade de ajuste imediato — agende uma revisão periódica para acompanhar mudanças de vida.',
+  REDUZIR:  'A cobertura contratada excede a necessidade real calculada. O cliente pode otimizar o valor do prêmio sem comprometer a proteção da família.',
+  REVISAR:  'Os dados fornecidos são insuficientes ou apresentam situação atípica. Uma revisão manual com o cliente é necessária antes de qualquer recomendação.',
 }
 
 const ACTION_THEME: Record<RecommendedAction, { border: string; bg: string; text: string; iconColor: string; accentBg: string }> = {
@@ -46,13 +46,13 @@ const ACTION_ICONS: Record<RecommendedAction, React.ElementType> = {
 
 const SCORE_DESCRIPTIONS: Record<string, { title: string; description: string; tip: string }> = {
   protection: {
-    title: 'Score de Prote\u00e7\u00e3o',
-    description: 'Mede o percentual da cobertura necess\u00e1ria que j\u00e1 est\u00e1 coberta pela ap\u00f3lice atual do cliente.',
-    tip: '100 = cobertura completa. Abaixo de 30 indica prote\u00e7\u00e3o cr\u00edtica.',
+    title: 'Score de Proteção',
+    description: 'Mede o percentual da cobertura necessária que já está coberta pela apólice atual do cliente.',
+    tip: '100 = cobertura completa. Abaixo de 30 indica proteção crítica.',
   },
   efficiency: {
-    title: 'Score de Efici\u00eancia',
-    description: 'Avalia se a ap\u00f3lice est\u00e1 bem dimensionada, penalizando tanto subcobertura quanto sobrecobertura.',
+    title: 'Score de Eficiência',
+    description: 'Avalia se a apólice está bem dimensionada, penalizando tanto subcobertura quanto sobrecobertura.',
     tip: '100 = perfeitamente calibrada. Penaliza excesso ou falta.',
   },
 }
@@ -94,7 +94,7 @@ export default function EvaluationResult() {
     return (
       <div className="flex h-64 items-center justify-center gap-3 text-slate-500">
         <Loader2 className="h-5 w-5 animate-spin text-brand-500" />
-        <span className="text-sm">Carregando resultado\u2026</span>
+        <span className="text-sm">Carregando resultado...</span>
       </div>
     )
   }
@@ -103,18 +103,18 @@ export default function EvaluationResult() {
   if (!result) {
     return (
       <div>
-        <TopBar title="Resultado da Avalia\u00e7\u00e3o" subtitle="Avalia\u00e7\u00e3o n\u00e3o encontrada" />
+        <TopBar title="Resultado da Avaliação" subtitle="Avaliação não encontrada" />
         <div className="flex flex-col items-center justify-center gap-4 py-24">
           <AlertCircle className="h-10 w-10 text-slate-300" />
-          <p className="text-sm font-semibold text-slate-600">Resultado n\u00e3o encontrado</p>
+          <p className="text-sm font-semibold text-slate-600">Resultado não encontrado</p>
           <p className="text-xs text-slate-400 text-center max-w-xs">
-            O ID pode ser inv\u00e1lido ou esta avalia\u00e7\u00e3o pertence a outro tenant.
+            O ID pode ser inválido ou esta avaliação pertence a outro tenant.
           </p>
           <button
             onClick={() => navigate('/evaluations/new')}
             className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 transition-colors"
           >
-            Nova Avalia\u00e7\u00e3o
+            Nova Avaliação
           </button>
         </div>
       </div>
@@ -129,8 +129,8 @@ export default function EvaluationResult() {
   return (
     <div>
       <TopBar
-        title="Resultado da Avalia\u00e7\u00e3o"
-        subtitle={id ? `ID: ${id.slice(0, 18)}\u2026` : 'Avalia\u00e7\u00e3o rec\u00e9m-gerada'}
+        title="Resultado da Avaliação"
+        subtitle={id ? `ID: ${id.slice(0, 18)}...` : 'Avaliação recém-gerada'}
       />
 
       <div className="animate-fadeIn p-4 sm:p-6 space-y-4 sm:space-y-5">
@@ -192,9 +192,9 @@ export default function EvaluationResult() {
             {/* 1. Overview — Score rings side by side */}
             <div className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-card">
               <div className="mb-5">
-                <h2 className="text-base font-bold text-slate-900">Vis\u00e3o Geral</h2>
+                <h2 className="text-base font-bold text-slate-900">Visão Geral</h2>
                 <p className="mt-0.5 text-xs text-slate-500">
-                  Resumo dos principais indicadores calculados pelo motor de avalia\u00e7\u00e3o.
+                  Resumo dos principais indicadores calculados pelo motor de avaliação.
                 </p>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
@@ -202,16 +202,16 @@ export default function EvaluationResult() {
                 <div className="flex flex-col items-center gap-3 rounded-xl border border-slate-100 bg-gradient-to-b from-slate-50 to-white p-5">
                   <ScoreRing score={result.protectionScore} size={100} strokeWidth={8} />
                   <div className="text-center">
-                    <p className="text-sm font-bold text-slate-900">Prote\u00e7\u00e3o</p>
-                    <p className="mt-0.5 text-[11px] text-slate-500">Quanto da necessidade est\u00e1 coberta</p>
+                    <p className="text-sm font-bold text-slate-900">Proteção</p>
+                    <p className="mt-0.5 text-[11px] text-slate-500">Quanto da necessidade está coberta</p>
                   </div>
                 </div>
                 {/* Efficiency Score */}
                 <div className="flex flex-col items-center gap-3 rounded-xl border border-slate-100 bg-gradient-to-b from-slate-50 to-white p-5">
                   <ScoreRing score={result.coverageEfficiencyScore} size={100} strokeWidth={8} />
                   <div className="text-center">
-                    <p className="text-sm font-bold text-slate-900">Efici\u00eancia</p>
-                    <p className="mt-0.5 text-[11px] text-slate-500">Calibragem da ap\u00f3lice atual</p>
+                    <p className="text-sm font-bold text-slate-900">Eficiência</p>
+                    <p className="mt-0.5 text-[11px] text-slate-500">Calibragem da apólice atual</p>
                   </div>
                 </div>
                 {/* Gap Summary */}
@@ -222,7 +222,7 @@ export default function EvaluationResult() {
                         {Math.abs(result.protectionGapPercentage).toFixed(0)}%
                       </p>
                       <p className={`text-xs font-semibold ${result.protectionGapPercentage > 0 ? 'text-red-500' : 'text-emerald-500'}`}>
-                        {result.protectionGapPercentage > 0 ? 'D\u00e9ficit' : 'Excedente'}
+                        {result.protectionGapPercentage > 0 ? 'Déficit' : 'Excedente'}
                       </p>
                     </div>
                   </div>
@@ -239,7 +239,7 @@ export default function EvaluationResult() {
               <div className="mb-5">
                 <h2 className="text-base font-bold text-slate-900">Cobertura vs. Necessidade</h2>
                 <p className="mt-0.5 text-xs text-slate-500">
-                  Compara\u00e7\u00e3o entre o valor da ap\u00f3lice atual e o capital recomendado pelo motor, baseado no perfil completo do cliente.
+                  Comparação entre o valor da apólice atual e o capital recomendado pelo motor, baseado no perfil completo do cliente.
                 </p>
               </div>
               <GapBar
@@ -251,18 +251,18 @@ export default function EvaluationResult() {
             {/* 3. Scores — detailed with segmented bars */}
             <div className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-card">
               <div className="mb-5">
-                <h2 className="text-base font-bold text-slate-900">An\u00e1lise Detalhada dos Scores</h2>
+                <h2 className="text-base font-bold text-slate-900">Análise Detalhada dos Scores</h2>
                 <p className="mt-0.5 text-xs text-slate-500">
-                  Cada score \u00e9 calculado com base no perfil financeiro, familiar e no hist\u00f3rico do cliente.
+                  Cada score é calculado com base no perfil financeiro, familiar e no histórico do cliente.
                 </p>
               </div>
               {/* Scale legend */}
               <div className="mb-5 flex flex-wrap items-center gap-x-5 gap-y-2 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
                 <p className="text-[11px] font-bold text-slate-500 shrink-0">Como ler a escala:</p>
                 <div className="flex flex-wrap items-center gap-3">
-                  <ScalePill range="0 \u2013 29"   hint="Cr\u00edtico"  colorClass="bg-red-500" />
-                  <ScalePill range="30 \u2013 69"  hint="Moderado" colorClass="bg-amber-500" />
-                  <ScalePill range="70 \u2013 100" hint="Adequado" colorClass="bg-emerald-500" />
+                  <ScalePill range="0 – 29"   hint="Crítico"  colorClass="bg-red-500" />
+                  <ScalePill range="30 – 69"  hint="Moderado" colorClass="bg-amber-500" />
+                  <ScalePill range="70 – 100" hint="Adequado" colorClass="bg-emerald-500" />
                 </div>
               </div>
               <div className="space-y-4">
@@ -281,10 +281,10 @@ export default function EvaluationResult() {
             {result.recommendedCoverageAmount > 0 && (
               <div className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-card">
                 <div className="mb-5">
-                  <h2 className="text-base font-bold text-slate-900">Composi\u00e7\u00e3o da Cobertura Recomendada</h2>
+                  <h2 className="text-base font-bold text-slate-900">Composição da Cobertura Recomendada</h2>
                   <p className="mt-0.5 text-xs text-slate-500">
-                    Cada componente representa uma necessidade espec\u00edfica identificada pelo motor.
-                    O valor total \u00e9 a soma de todas as prote\u00e7\u00f5es necess\u00e1rias.
+                    Cada componente representa uma necessidade específica identificada pelo motor.
+                    O valor total é a soma de todas as proteções necessárias.
                   </p>
                 </div>
 
@@ -340,9 +340,9 @@ export default function EvaluationResult() {
             {result.justificationsRendered?.length > 0 && (
               <div className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-card">
                 <div className="mb-4">
-                  <h2 className="text-base font-bold text-slate-900">Justificativas do C\u00e1lculo</h2>
+                  <h2 className="text-base font-bold text-slate-900">Justificativas do Cálculo</h2>
                   <p className="mt-0.5 text-xs text-slate-500">
-                    Regras e crit\u00e9rios aplicados pelo motor que influenciaram diretamente o resultado desta avalia\u00e7\u00e3o.
+                    Regras e critérios aplicados pelo motor que influenciaram diretamente o resultado desta avaliação.
                   </p>
                 </div>
                 <ul className="space-y-2">
@@ -362,7 +362,7 @@ export default function EvaluationResult() {
                 <div className="mb-5">
                   <h2 className="text-base font-bold text-slate-900">Dados do Cliente Avaliado</h2>
                   <p className="mt-0.5 text-xs text-slate-500">
-                    Perfil completo utilizado pelo motor para calcular a necessidade de prote\u00e7\u00e3o. Qualquer altera\u00e7\u00e3o nestes dados pode gerar um resultado diferente.
+                    Perfil completo utilizado pelo motor para calcular a necessidade de proteção. Qualquer alteração nestes dados pode gerar um resultado diferente.
                   </p>
                 </div>
 
@@ -372,7 +372,7 @@ export default function EvaluationResult() {
                   <ContextCard icon={User} label="Idade" value={`${req.personalContext.age} anos`} />
                   <ContextCard icon={Baby} label="Dependentes" value={`${req.familyContext.dependentsCount}`} />
                   <ContextCard icon={Briefcase} label="Risco profissional" value={req.personalContext.professionRiskLevel} />
-                  <ContextCard icon={Cigarette} label="Fumante" value={req.personalContext.isSmoker ? 'Sim' : 'N\u00e3o'} />
+                  <ContextCard icon={Cigarette} label="Fumante" value={req.personalContext.isSmoker ? 'Sim' : 'Não'} />
                 </div>
 
                 {/* Financial data */}
@@ -393,32 +393,32 @@ export default function EvaluationResult() {
                       const pols = req.financialContext.policies
                       if (pols && pols.length > 0) {
                         const total = pols.reduce((s, p) => s + (p.coverageAmount ?? 0), 0)
-                        return total > 0 ? `${formatCurrency(total)} (${pols.length} ap\u00f3lice${pols.length > 1 ? 's' : ''})` : 'Sem ap\u00f3lice'
+                        return total > 0 ? `${formatCurrency(total)} (${pols.length} apólice${pols.length > 1 ? 's' : ''})` : 'Sem apólice'
                       }
                       return req.financialContext.currentLifeInsurance?.coverageAmount != null
                         ? formatCurrency(req.financialContext.currentLifeInsurance.coverageAmount)
-                        : 'Sem ap\u00f3lice'
+                        : 'Sem apólice'
                     })()}
                   />
                   <ContextCard
                     icon={CreditCard}
-                    label="D\u00edvidas"
+                    label="Dívidas"
                     value={req.financialContext.debts?.totalAmount
                       ? formatCurrency(req.financialContext.debts.totalAmount)
-                      : 'Sem d\u00edvidas'}
+                      : 'Sem dívidas'}
                   />
                   <ContextCard
                     icon={Wallet}
-                    label="Reserva emerg\u00eancia"
+                    label="Reserva emergência"
                     value={req.financialContext.emergencyFundMonths != null
                       ? `${req.financialContext.emergencyFundMonths} meses`
-                      : 'N\u00e3o informado'}
+                      : 'Não informado'}
                   />
                   {req.financialContext.educationCosts?.totalEstimatedCost != null &&
                     req.financialContext.educationCosts.totalEstimatedCost > 0 && (
                     <ContextCard
                       icon={GraduationCap}
-                      label="Custos educa\u00e7\u00e3o"
+                      label="Custos educação"
                       value={formatCurrency(req.financialContext.educationCosts.totalEstimatedCost)}
                     />
                   )}
@@ -426,7 +426,7 @@ export default function EvaluationResult() {
                     req.financialContext.estate.totalEstateValue > 0 && (
                     <ContextCard
                       icon={Landmark}
-                      label="Patrim\u00f4nio"
+                      label="Patrimônio"
                       value={`${formatCurrency(req.financialContext.estate.totalEstateValue)}${req.financialContext.estate.state ? ` (${req.financialContext.estate.state})` : ''}`}
                     />
                   )}
@@ -454,7 +454,7 @@ export default function EvaluationResult() {
                 onClick={() => navigate('/evaluations/new')}
                 className="flex items-center gap-2 rounded-xl border border-brand-200 bg-brand-50 px-5 py-3 text-sm font-semibold text-brand-700 hover:bg-brand-100 transition-colors"
               >
-                Nova Avalia\u00e7\u00e3o
+                Nova Avaliação
               </button>
             </div>
           </div>
@@ -472,7 +472,7 @@ export default function EvaluationResult() {
                   <div>
                     <h2 className="text-base font-bold text-brand-900">Insights para o Corretor</h2>
                     <p className="mt-0.5 text-xs text-brand-600">
-                      Sugest\u00f5es de abordagem personalizadas para este perfil espec\u00edfico,
+                      Sugestões de abordagem personalizadas para este perfil específico,
                       geradas pelo motor com base no gap, risco e contexto do cliente.
                     </p>
                   </div>
@@ -486,8 +486,8 @@ export default function EvaluationResult() {
             ) : (
               <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white py-16">
                 <Lightbulb className="h-8 w-8 text-slate-300" />
-                <p className="text-sm font-semibold text-slate-500">Nenhum insight dispon\u00edvel</p>
-                <p className="text-xs text-slate-400">Esta avalia\u00e7\u00e3o n\u00e3o gerou insights de abordagem.</p>
+                <p className="text-sm font-semibold text-slate-500">Nenhum insight disponível</p>
+                <p className="text-xs text-slate-400">Esta avaliação não gerou insights de abordagem.</p>
               </div>
             )}
           </div>
@@ -502,7 +502,7 @@ export default function EvaluationResult() {
                   <div>
                     <h2 className="text-base font-bold text-slate-900">Metadados de Auditoria</h2>
                     <p className="mt-0.5 text-xs text-slate-500">
-                      Rastreabilidade t\u00e9cnica desta avalia\u00e7\u00e3o \u2014 vers\u00e3o do motor e regras utilizadas.
+                      Rastreabilidade técnica desta avaliação — versão do motor e regras utilizadas.
                     </p>
                   </div>
                   {id && (
@@ -517,8 +517,8 @@ export default function EvaluationResult() {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
-                  <AuditRow label="Vers\u00e3o do Motor"   value={result.audit.engineVersion} />
-                  <AuditRow label="Vers\u00e3o do Ruleset" value={result.audit.ruleSetVersion} />
+                  <AuditRow label="Versão do Motor"   value={result.audit.engineVersion} />
+                  <AuditRow label="Versão do Ruleset" value={result.audit.ruleSetVersion} />
                   <AuditRow label="Consent ID"        value={result.audit.consentId} />
                 </div>
 
@@ -610,39 +610,39 @@ function TabButton({
 // ── Coverage items config ─────────────────────────────────────────
 const COVERAGE_ITEMS = [
   {
-    label: 'Substitui\u00e7\u00e3o de Renda',
+    label: 'Substituição de Renda',
     color: 'bg-brand-500',
-    explanation: 'Capital necess\u00e1rio para manter a renda familiar durante o per\u00edodo de transi\u00e7\u00e3o.',
+    explanation: 'Capital necessário para manter a renda familiar durante o período de transição.',
     getValue: (r: LifeInsuranceAssessmentResult) => r.incomeReplacementAmount,
   },
   {
-    label: 'Quita\u00e7\u00e3o de D\u00edvidas',
+    label: 'Quitação de Dívidas',
     color: 'bg-amber-500',
-    explanation: 'Valor para liquidar todas as d\u00edvidas pendentes em caso de sinistro.',
+    explanation: 'Valor para liquidar todas as dívidas pendentes em caso de sinistro.',
     getValue: (r: LifeInsuranceAssessmentResult) => r.debtClearanceAmount,
   },
   {
-    label: 'Reserva de Transi\u00e7\u00e3o',
+    label: 'Reserva de Transição',
     color: 'bg-sky-500',
-    explanation: 'Col\u00e7h\u00e3o financeiro para despesas imediatas e reorganiza\u00e7\u00e3o familiar.',
+    explanation: 'Colchão financeiro para despesas imediatas e reorganização familiar.',
     getValue: (r: LifeInsuranceAssessmentResult) => r.transitionReserveAmount,
   },
   {
-    label: 'Custos de Educa\u00e7\u00e3o',
+    label: 'Custos de Educação',
     color: 'bg-violet-500',
-    explanation: 'Prote\u00e7\u00e3o para garantir a educa\u00e7\u00e3o dos dependentes at\u00e9 a fase adulta.',
+    explanation: 'Proteção para garantir a educação dos dependentes até a fase adulta.',
     getValue: (r: LifeInsuranceAssessmentResult) => r.educationCostsAmount,
   },
   {
-    label: 'ITCMD (Imposto Heran\u00e7a)',
+    label: 'ITCMD (Imposto Herança)',
     color: 'bg-orange-500',
-    explanation: 'Imposto estadual sobre transmiss\u00e3o de bens que incide sobre o patrim\u00f4nio.',
+    explanation: 'Imposto estadual sobre transmissão de bens que incide sobre o patrimônio.',
     getValue: (r: LifeInsuranceAssessmentResult) => r.itcmdCostAmount,
   },
   {
-    label: 'Custos de Invent\u00e1rio',
+    label: 'Custos de Inventário',
     color: 'bg-rose-500',
-    explanation: 'Despesas legais e cart\u00e1rias para o processo de invent\u00e1rio.',
+    explanation: 'Despesas legais e cartárias para o processo de inventário.',
     getValue: (r: LifeInsuranceAssessmentResult) => r.inventoryCostAmount,
   },
 ]
@@ -693,7 +693,7 @@ function ScoreRow({
 }) {
   const scoreColor = score < 30 ? 'text-red-600' : score < 70 ? 'text-amber-600' : 'text-emerald-600'
   const barColor = score < 30 ? 'from-red-400 to-red-500' : score < 70 ? 'from-amber-400 to-amber-500' : 'from-emerald-400 to-emerald-500'
-  const scoreLabel = score < 30 ? 'Cr\u00edtico' : score < 70 ? 'Moderado' : 'Adequado'
+  const scoreLabel = score < 30 ? 'Crítico' : score < 70 ? 'Moderado' : 'Adequado'
   const scoreBadge = score < 30 ? 'bg-red-100 text-red-700' : score < 70 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'
 
   return (
@@ -770,7 +770,7 @@ const INSIGHT_META: Record<InsightCategory, {
     borderColor: 'border-violet-100', badgeBg: 'bg-violet-50', badgeText: 'text-violet-700',
   },
   OBJECAO_PREVISTA: {
-    label: 'Obje\u00e7\u00e3o Prevista',
+    label: 'Objeção Prevista',
     icon: HelpCircle,
     iconBg: 'bg-amber-50', iconColor: 'text-amber-600',
     borderColor: 'border-amber-100', badgeBg: 'bg-amber-50', badgeText: 'text-amber-700',
@@ -782,7 +782,7 @@ const INSIGHT_META: Record<InsightCategory, {
     borderColor: 'border-emerald-100', badgeBg: 'bg-emerald-50', badgeText: 'text-emerald-700',
   },
   PROXIMO_PASSO: {
-    label: 'Pr\u00f3ximo Passo',
+    label: 'Próximo Passo',
     icon: ArrowRight,
     iconBg: 'bg-brand-50', iconColor: 'text-brand-600',
     borderColor: 'border-brand-100', badgeBg: 'bg-brand-50', badgeText: 'text-brand-700',
@@ -791,7 +791,7 @@ const INSIGHT_META: Record<InsightCategory, {
 
 const PRIORITY_BADGE: Record<string, { label: string; className: string }> = {
   ALTA:  { label: 'Prioridade Alta',  className: 'bg-red-100 text-red-700' },
-  MEDIA: { label: 'Prioridade M\u00e9dia', className: 'bg-amber-100 text-amber-700' },
+  MEDIA: { label: 'Prioridade Média', className: 'bg-amber-100 text-amber-700' },
   BAIXA: { label: 'Prioridade Baixa', className: 'bg-slate-100 text-slate-600' },
 }
 
