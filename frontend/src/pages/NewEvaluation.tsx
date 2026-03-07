@@ -33,14 +33,14 @@ const STEPS = [
     description: 'Perfil demográfico e de risco individual do segurado',
   },
   {
-    label: 'Financeiro',
-    icon: Banknote,
-    description: 'Renda, cobertura atual e passivos para cálculo do gap de proteção',
-  },
-  {
     label: 'Família',
     icon: Users,
     description: 'Dependentes e estrutura familiar para dimensionar a proteção necessária',
+  },
+  {
+    label: 'Financeiro',
+    icon: Banknote,
+    description: 'Renda, cobertura atual e passivos para cálculo do gap de proteção',
   },
   {
     label: 'Operacional',
@@ -119,9 +119,6 @@ export default function NewEvaluation() {
       else if (ageNum < 18 || ageNum > 99) errors.age = 'Deve estar entre 18 e 99 anos.'
     }
     if (s === 1) {
-      if (parseCurrency(income) === 0) errors.income = 'Renda mensal é obrigatória e deve ser maior que zero.'
-    }
-    if (s === 2) {
       const count = Number(dependentsCount)
       if (count > 0) {
         dependentsAges.forEach((a, i) => {
@@ -130,6 +127,9 @@ export default function NewEvaluation() {
           else if (n < 0 || n > 99) errors[`depAge_${i}`] = 'Idade inválida (0–99 anos).'
         })
       }
+    }
+    if (s === 2) {
+      if (parseCurrency(income) === 0) errors.income = 'Renda mensal é obrigatória e deve ser maior que zero.'
     }
     if (s === 3) {
       if (!consentId.trim()) errors.consentId = 'ID de consentimento é obrigatório (LGPD).'
@@ -363,8 +363,102 @@ export default function NewEvaluation() {
               </div>
             )}
 
-            {/* ── Step 1: Financial ── */}
+            {/* ── Step 1: Family ── */}
             {step === 1 && (
+              <div className="space-y-6">
+                <Field
+                  label="Número de Dependentes *"
+                  hint="Filhos, cônjuge sem renda própria e outros que dependem financeiramente do segurado. Cada dependente acrescenta anos ao cálculo de proteção."
+                >
+                  <div className="flex items-center gap-4">
+                    <button
+                      type="button"
+                      onClick={() => setDepCount(-1)}
+                      className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-xl font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+                    >−</button>
+                    <div className="flex h-11 w-24 items-center justify-center rounded-xl border-2 border-brand-200 bg-brand-50 text-2xl font-bold text-brand-700">
+                      {dependentsCount}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setDepCount(+1)}
+                      className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-xl font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+                    >+</button>
+                    <span className="text-sm font-medium text-slate-600">
+                      {Number(dependentsCount) === 0 ? 'Sem dependentes' :
+                       Number(dependentsCount) === 1 ? '1 dependente' :
+                       `${dependentsCount} dependentes`}
+                    </span>
+                  </div>
+                </Field>
+
+                {Number(dependentsCount) > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold text-slate-600">
+                      Idade de cada dependente *
+                    </p>
+                    <p className="text-[11px] text-slate-400">
+                      Dependentes mais jovens aumentam o horizonte de proteção calculado pelo motor.
+                    </p>
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                      {dependentsAges.map((depAge, i) => (
+                        <div key={i} className="space-y-1.5">
+                          <label className="text-[11px] font-semibold text-slate-500">
+                            Dependente {i + 1}
+                          </label>
+                          <div className="relative">
+                            <input
+                              type="number"
+                              min="0"
+                              max="99"
+                              value={depAge}
+                              onChange={(e) => setDepAge(i, e.target.value)}
+                              placeholder="Ex: 8"
+                              className={`${cls(!!fieldErrors[`depAge_${i}`])} pr-14`}
+                            />
+                            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">
+                              anos
+                            </span>
+                          </div>
+                          {fieldErrors[`depAge_${i}`] && (
+                            <p className="text-[11px] font-semibold text-red-600">
+                              {fieldErrors[`depAge_${i}`]}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className={`rounded-xl border p-4 ${
+                  Number(dependentsCount) === 0
+                    ? 'border-slate-200 bg-slate-50'
+                    : 'border-brand-100 bg-brand-50'
+                }`}>
+                  <p className={`mb-2 text-xs font-semibold ${Number(dependentsCount) === 0 ? 'text-slate-600' : 'text-brand-800'}`}>
+                    Como isso afeta o diagnóstico
+                  </p>
+                  <ul className={`space-y-1.5 text-xs ${Number(dependentsCount) === 0 ? 'text-slate-500' : 'text-brand-700'}`}>
+                    {Number(dependentsCount) === 0 ? (
+                      <>
+                        <li>• Motor usa multiplicador base para segurados sem dependentes.</li>
+                        <li>• Capital recomendado tende a ser menor (foco na reposição da própria renda).</li>
+                      </>
+                    ) : (
+                      <>
+                        <li>• {dependentsCount} dependente(s): +{Math.min(Number(dependentsCount), 3)} anos de renda acrescidos ao cálculo base.</li>
+                        <li>• A cobertura recomendada cobre os dependentes até a independência financeira.</li>
+                        {dependentsAges.some((a) => a) && <li>• Idades informadas permitem ajuste fino no horizonte de proteção.</li>}
+                      </>
+                    )}
+                  </ul>
+                </div>
+              </div>
+            )}
+
+            {/* ── Step 2: Financial ── */}
+            {step === 2 && (
               <div className="space-y-6">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Field
@@ -470,10 +564,10 @@ export default function NewEvaluation() {
                       pois em caso de sinistro precisariam ser quitados.
                     </p>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <Field label="Total de Dívidas" hint="Saldo devedor consolidado (imóvel, veículo, consignado etc.).">
-                      <CurrencyInput value={debtTotal} onChange={setDebtTotal} placeholder="150.000,00" />
-                    </Field>
+                  <Field label="Total de Dívidas" hint="Saldo devedor consolidado (imóvel, veículo, consignado etc.).">
+                    <CurrencyInput value={debtTotal} onChange={setDebtTotal} placeholder="150.000,00" />
+                  </Field>
+                  {debtTotal && parseCurrency(debtTotal) > 0 && (
                     <Field label="Prazo Restante" hint="Meses até quitar todas as dívidas listadas.">
                       <div className="relative">
                         <input
@@ -486,24 +580,26 @@ export default function NewEvaluation() {
                         <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">meses</span>
                       </div>
                     </Field>
-                  </div>
+                  )}
                 </div>
 
-                <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 space-y-4">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Custos de Educação</p>
-                      <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-medium text-slate-500">opcional</span>
+                {Number(dependentsCount) > 0 && (
+                  <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 space-y-4">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Custos de Educação</p>
+                        <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-medium text-slate-500">opcional</span>
+                      </div>
+                      <p className="text-xs text-slate-500">
+                        Custo total estimado de educação dos {dependentsCount} dependente(s) (escola, faculdade, cursos).
+                        O motor adiciona esse valor ao capital segurado recomendado.
+                      </p>
                     </div>
-                    <p className="text-xs text-slate-500">
-                      Custo total estimado de educação dos dependentes (escola, faculdade, cursos).
-                      O motor adiciona esse valor ao capital segurado recomendado.
-                    </p>
+                    <Field label="Custo Total Estimado" hint="Soma de mensalidades até a formação de todos os dependentes.">
+                      <CurrencyInput value={educationCost} onChange={setEducationCost} placeholder="200.000,00" />
+                    </Field>
                   </div>
-                  <Field label="Custo Total Estimado" hint="Soma de mensalidades até a formação de todos os dependentes.">
-                    <CurrencyInput value={educationCost} onChange={setEducationCost} placeholder="200.000,00" />
-                  </Field>
-                </div>
+                )}
 
                 <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 space-y-4">
                   <div>
@@ -516,108 +612,14 @@ export default function NewEvaluation() {
                       automaticamente o ITCMD (imposto estadual sobre herança) e custos de inventário.
                     </p>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <Field label="Valor Total do Patrimônio" hint="Soma de imóveis, veículos, investimentos e outros bens.">
-                      <CurrencyInput value={estateValue} onChange={setEstateValue} placeholder="1.000.000,00" />
-                    </Field>
+                  <Field label="Valor Total do Patrimônio" hint="Soma de imóveis, veículos, investimentos e outros bens.">
+                    <CurrencyInput value={estateValue} onChange={setEstateValue} placeholder="1.000.000,00" />
+                  </Field>
+                  {estateValue && parseCurrency(estateValue) > 0 && (
                     <Field label="Estado (UF)" hint="O ITCMD varia de 2% a 8% conforme o estado. Alíquota padrão: 4%.">
                       <StateCombobox value={estateState} onChange={setEstateState} />
                     </Field>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* ── Step 2: Family ── */}
-            {step === 2 && (
-              <div className="space-y-6">
-                <Field
-                  label="Número de Dependentes *"
-                  hint="Filhos, cônjuge sem renda própria e outros que dependem financeiramente do segurado. Cada dependente acrescenta anos ao cálculo de proteção."
-                >
-                  <div className="flex items-center gap-4">
-                    <button
-                      type="button"
-                      onClick={() => setDepCount(-1)}
-                      className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-xl font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
-                    >−</button>
-                    <div className="flex h-11 w-24 items-center justify-center rounded-xl border-2 border-brand-200 bg-brand-50 text-2xl font-bold text-brand-700">
-                      {dependentsCount}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setDepCount(+1)}
-                      className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-xl font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
-                    >+</button>
-                    <span className="text-sm font-medium text-slate-600">
-                      {Number(dependentsCount) === 0 ? 'Sem dependentes' :
-                       Number(dependentsCount) === 1 ? '1 dependente' :
-                       `${dependentsCount} dependentes`}
-                    </span>
-                  </div>
-                </Field>
-
-                {Number(dependentsCount) > 0 && (
-                  <div className="space-y-2">
-                    <p className="text-xs font-semibold text-slate-600">
-                      Idade de cada dependente *
-                    </p>
-                    <p className="text-[11px] text-slate-400">
-                      Dependentes mais jovens aumentam o horizonte de proteção calculado pelo motor.
-                    </p>
-                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                      {dependentsAges.map((depAge, i) => (
-                        <div key={i} className="space-y-1.5">
-                          <label className="text-[11px] font-semibold text-slate-500">
-                            Dependente {i + 1}
-                          </label>
-                          <div className="relative">
-                            <input
-                              type="number"
-                              min="0"
-                              max="99"
-                              value={depAge}
-                              onChange={(e) => setDepAge(i, e.target.value)}
-                              placeholder="Ex: 8"
-                              className={`${cls(!!fieldErrors[`depAge_${i}`])} pr-14`}
-                            />
-                            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">
-                              anos
-                            </span>
-                          </div>
-                          {fieldErrors[`depAge_${i}`] && (
-                            <p className="text-[11px] font-semibold text-red-600">
-                              {fieldErrors[`depAge_${i}`]}
-                            </p>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <div className={`rounded-xl border p-4 ${
-                  Number(dependentsCount) === 0
-                    ? 'border-slate-200 bg-slate-50'
-                    : 'border-brand-100 bg-brand-50'
-                }`}>
-                  <p className={`mb-2 text-xs font-semibold ${Number(dependentsCount) === 0 ? 'text-slate-600' : 'text-brand-800'}`}>
-                    Como isso afeta o diagnóstico
-                  </p>
-                  <ul className={`space-y-1.5 text-xs ${Number(dependentsCount) === 0 ? 'text-slate-500' : 'text-brand-700'}`}>
-                    {Number(dependentsCount) === 0 ? (
-                      <>
-                        <li>• Motor usa multiplicador base para segurados sem dependentes.</li>
-                        <li>• Capital recomendado tende a ser menor (foco na reposição da própria renda).</li>
-                      </>
-                    ) : (
-                      <>
-                        <li>• {dependentsCount} dependente(s): +{Math.min(Number(dependentsCount), 3)} anos de renda acrescidos ao cálculo base.</li>
-                        <li>• A cobertura recomendada cobre os dependentes até a independência financeira.</li>
-                        {dependentsAges.some((a) => a) && <li>• Idades informadas permitem ajuste fino no horizonte de proteção.</li>}
-                      </>
-                    )}
-                  </ul>
+                  )}
                 </div>
               </div>
             )}
