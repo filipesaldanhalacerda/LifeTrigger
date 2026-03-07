@@ -223,7 +223,7 @@ export default function NewTrigger() {
 
   // Consent
   const [consent, setConsent] = useState(false)
-  const [consentId] = useState(`consent-trigger-${Date.now()}`)
+  const [consentId, setConsentId] = useState(`consent-trigger-${Date.now()}`)
 
   const activeTrigger = TRIGGER_TYPES.find((t) => t.value === triggerType)!
 
@@ -278,6 +278,11 @@ export default function NewTrigger() {
       if (prefill.financialContext.estate.state) {
         setEstateState(prefill.financialContext.estate.state)
       }
+    }
+
+    // Preserve consentId from original evaluation for grouping
+    if (prefill.operationalData.consentId) {
+      setConsentId(prefill.operationalData.consentId)
     }
 
     // Consent already given in original evaluation
