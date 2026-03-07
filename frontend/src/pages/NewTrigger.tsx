@@ -1227,7 +1227,7 @@ function Field({
   children: React.ReactNode
 }) {
   return (
-    <div className={`space-y-1.5 ${highlight ? 'rounded-lg border border-amber-300 bg-amber-50/50 p-2.5 -m-2.5' : ''}`}>
+    <div className={`space-y-1.5 ${highlight ? 'rounded-lg ring-1 ring-amber-300 bg-amber-50/50 p-2.5' : ''}`}>
       <div className="flex items-center gap-1.5">
         <label className="text-xs font-semibold text-slate-600">{label}</label>
         {highlight && <span className="rounded-full bg-amber-200 px-1.5 py-0.5 text-[9px] font-bold text-amber-700">REVISAR</span>}
