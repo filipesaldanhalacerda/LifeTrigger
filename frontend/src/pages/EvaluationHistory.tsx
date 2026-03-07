@@ -343,56 +343,78 @@ export default function EvaluationHistory() {
             )}
 
             {/* Mobile card list */}
-            <div className="divide-y divide-slate-100 sm:hidden">
-              {grouped.map((group) => (
-                <div key={group[0].id}>
-                  {group.map((ev, idx) => {
-                    const ActionIcon = ACTION_ICONS[ev.action]
-                    const iconBg = ev.risk === 'CRITICO' ? 'bg-red-50' : ev.risk === 'MODERADO' ? 'bg-amber-50' : 'bg-emerald-50'
-                    const iconColor = ev.risk === 'CRITICO' ? 'text-red-500' : ev.risk === 'MODERADO' ? 'text-amber-500' : 'text-emerald-500'
-                    const isChild = idx > 0 && ev.isTrigger
-                    return (
-                      <div
-                        key={ev.id}
-                        onClick={() => navigate(`/evaluations/${ev.id}`)}
-                        className={`flex items-start gap-3 px-4 py-3 cursor-pointer active:bg-slate-50 ${isChild ? 'ml-4 border-l-2 border-amber-200 bg-amber-50/30' : ''}`}
-                      >
-                        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${ev.isTrigger ? 'bg-amber-100' : iconBg} mt-0.5`}>
-                          {ev.isTrigger
-                            ? <Zap className="h-4 w-4 text-amber-600" />
-                            : <ActionIcon className={`h-4 w-4 ${iconColor}`} />
-                          }
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-2">
-                            <p className="text-xs font-medium text-slate-700 truncate">{formatDate(ev.timestamp)}</p>
-                            <ChevronRight className="h-4 w-4 shrink-0 text-slate-300" />
-                          </div>
-                          <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                            {ev.isTrigger && (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
-                                <Zap className="h-2.5 w-2.5" />Gatilho
-                              </span>
+            <div className="sm:hidden">
+              {grouped.map((group, gIdx) => {
+                const hasChildren = group.length > 1
+                return (
+                  <div key={group[0].id} className={gIdx > 0 ? 'border-t-2 border-slate-100' : ''}>
+                    {group.map((ev, idx) => {
+                      const ActionIcon = ACTION_ICONS[ev.action]
+                      const iconBg = ev.risk === 'CRITICO' ? 'bg-red-50' : ev.risk === 'MODERADO' ? 'bg-amber-50' : 'bg-emerald-50'
+                      const iconColor = ev.risk === 'CRITICO' ? 'text-red-500' : ev.risk === 'MODERADO' ? 'text-amber-500' : 'text-emerald-500'
+                      const isChild = idx > 0 && ev.isTrigger
+                      const isLastChild = isChild && idx === group.length - 1
+                      return (
+                        <div
+                          key={ev.id}
+                          onClick={() => navigate(`/evaluations/${ev.id}`)}
+                          className={`relative cursor-pointer active:bg-slate-50 ${isChild ? 'bg-amber-50/20' : ''} ${idx > 0 ? 'border-t border-slate-100' : ''}`}
+                        >
+                          {/* Vertical connector line for groups */}
+                          {isChild && (
+                            <div className="absolute left-6 top-0 w-px bg-amber-300" style={{ bottom: isLastChild ? '50%' : 0 }} />
+                          )}
+                          {hasChildren && idx === 0 && group.some(e => e.isTrigger) && (
+                            <div className="absolute left-6 bottom-0 w-px bg-amber-300" style={{ top: '50%' }} />
+                          )}
+                          <div className={`flex items-start gap-3 py-3 ${isChild ? 'pl-10 pr-4' : 'px-4'}`}>
+                            {/* Horizontal connector for children */}
+                            {isChild && (
+                              <div className="absolute left-6 top-1/2 w-4 h-px bg-amber-300" />
                             )}
-                            <Badge className={riskColors(ev.risk)} size="sm">{riskLabel(ev.risk)}</Badge>
-                            <Badge className={actionColors(ev.action)} size="sm">{actionLabel(ev.action)}</Badge>
-                          </div>
-                          <div className="mt-1.5 flex items-center gap-3">
-                            <ScoreBar score={ev.score} />
-                            <span className={`text-[11px] font-semibold tabular-nums ${ev.gapPct > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
-                              {ev.gapPct === 0 ? 'Alinhado' : `Gap ${ev.gapPct > 0 ? '+' : ''}${ev.gapPct.toFixed(1)}%`}
-                            </span>
-                          </div>
-                          <div className="mt-1 flex items-center gap-2 text-[11px] text-slate-400">
-                            <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500">{ev.channel}</span>
-                            {isManagerPlus && <span>{brokerLabel(ev.createdByUserId)}</span>}
+                            <div className={`relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg mt-0.5 ${ev.isTrigger ? 'bg-amber-100 ring-2 ring-amber-200' : iconBg}`}>
+                              {ev.isTrigger
+                                ? <Zap className="h-4 w-4 text-amber-600" />
+                                : <ActionIcon className={`h-4 w-4 ${iconColor}`} />
+                              }
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between gap-2">
+                                <p className="text-xs font-medium text-slate-700 truncate">{formatDate(ev.timestamp)}</p>
+                                <ChevronRight className="h-4 w-4 shrink-0 text-slate-300" />
+                              </div>
+                              <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                                {ev.isTrigger && (
+                                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
+                                    <Zap className="h-2.5 w-2.5" />Gatilho
+                                  </span>
+                                )}
+                                {!ev.isTrigger && hasChildren && (
+                                  <span className="inline-flex items-center gap-1 rounded-full bg-brand-100 px-2 py-0.5 text-[10px] font-semibold text-brand-700">
+                                    Avaliação Original
+                                  </span>
+                                )}
+                                <Badge className={riskColors(ev.risk)} size="sm">{riskLabel(ev.risk)}</Badge>
+                                <Badge className={actionColors(ev.action)} size="sm">{actionLabel(ev.action)}</Badge>
+                              </div>
+                              <div className="mt-1.5 flex items-center gap-3">
+                                <ScoreBar score={ev.score} />
+                                <span className={`text-[11px] font-semibold tabular-nums ${ev.gapPct > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
+                                  {ev.gapPct === 0 ? 'Alinhado' : `Gap ${ev.gapPct > 0 ? '+' : ''}${ev.gapPct.toFixed(1)}%`}
+                                </span>
+                              </div>
+                              <div className="mt-1 flex items-center gap-2 text-[11px] text-slate-400">
+                                <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500">{ev.channel}</span>
+                                {isManagerPlus && <span>{brokerLabel(ev.createdByUserId)}</span>}
+                              </div>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              ))}
+                      )
+                    })}
+                  </div>
+                )
+              })}
             </div>
 
             <div className="hidden sm:block overflow-x-auto">
@@ -428,120 +450,149 @@ export default function EvaluationHistory() {
                   <th className="px-4 py-3 w-8" />
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
-                {grouped.flatMap((group) => group.map((ev, idx) => {
-                  const ActionIcon = ACTION_ICONS[ev.action]
-                  const isChild = idx > 0 && ev.isTrigger
-                  const iconBg = ev.isTrigger ? 'bg-amber-50'
-                    : ev.risk === 'CRITICO' ? 'bg-red-50'
-                    : ev.risk === 'MODERADO' ? 'bg-amber-50'
-                    : 'bg-emerald-50'
-                  const iconColor = ev.isTrigger ? 'text-amber-600'
-                    : ev.risk === 'CRITICO' ? 'text-red-500'
-                    : ev.risk === 'MODERADO' ? 'text-amber-500'
-                    : 'text-emerald-500'
+              <tbody>
+                {grouped.map((group, gIdx) => {
+                  const hasChildren = group.some((e, i) => i > 0 && e.isTrigger)
+                  return group.map((ev, idx) => {
+                    const ActionIcon = ACTION_ICONS[ev.action]
+                    const isChild = idx > 0 && ev.isTrigger
+                    const isLastChild = isChild && idx === group.length - 1
+                    const isParentWithChildren = idx === 0 && hasChildren
+                    const iconBg = ev.isTrigger ? 'bg-amber-50'
+                      : ev.risk === 'CRITICO' ? 'bg-red-50'
+                      : ev.risk === 'MODERADO' ? 'bg-amber-50'
+                      : 'bg-emerald-50'
+                    const iconColor = ev.isTrigger ? 'text-amber-600'
+                      : ev.risk === 'CRITICO' ? 'text-red-500'
+                      : ev.risk === 'MODERADO' ? 'text-amber-500'
+                      : 'text-emerald-500'
 
-                  return (
-                    <tr
-                      key={ev.id}
-                      onClick={() => navigate(`/evaluations/${ev.id}`)}
-                      className={`group cursor-pointer hover:bg-slate-50 transition-colors ${isChild ? 'bg-amber-50/30' : ''}`}
-                    >
-                      {/* ID + date */}
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          {isChild && (
-                            <div className="flex items-center gap-1 mr-1">
-                              <div className="w-4 h-px bg-amber-300" />
-                            </div>
-                          )}
-                          <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${iconBg}`}>
-                            {ev.isTrigger
-                              ? <Zap className={`h-3.5 w-3.5 ${iconColor}`} />
-                              : <ActionIcon className={`h-3.5 w-3.5 ${iconColor}`} />
-                            }
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-1.5">
-                              <p className="font-mono text-xs text-slate-700">{ev.id.slice(0, 18)}…</p>
-                              {ev.isTrigger && (
-                                <span className="inline-flex items-center gap-0.5 rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-semibold text-amber-700">
-                                  <Zap className="h-2.5 w-2.5" />Gatilho
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-[11px] text-slate-400">{formatDate(ev.timestamp)}</p>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={(e) => copyId(e, ev.id)}
-                            title="Copiar ID completo"
-                            className="ml-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            {copiedId === ev.id
-                              ? <Check className="h-3.5 w-3.5 text-emerald-500" />
-                              : <Copy className="h-3.5 w-3.5 text-slate-400 hover:text-slate-600" />
-                            }
-                          </button>
-                        </div>
-                      </td>
-
-                      {/* Risk badge */}
-                      <td className="px-4 py-3">
-                        <Badge className={riskColors(ev.risk)} size="sm">{riskLabel(ev.risk)}</Badge>
-                      </td>
-
-                      {/* Action badge */}
-                      <td className="px-4 py-3">
-                        <Badge className={actionColors(ev.action)} size="sm">{actionLabel(ev.action)}</Badge>
-                      </td>
-
-                      {/* Score bar */}
-                      <td className="px-4 py-3">
-                        <ScoreBar score={ev.score} />
-                      </td>
-
-                      {/* Gap */}
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-1.5">
-                          {ev.gapPct > 0
-                            ? <TrendingDown className="h-3.5 w-3.5 text-red-500" />
-                            : ev.gapPct < 0
-                              ? <TrendingUp className="h-3.5 w-3.5 text-emerald-500" />
-                              : <CheckCircle className="h-3.5 w-3.5 text-emerald-500" />
-                          }
-                          <span className={`text-xs font-semibold tabular-nums ${ev.gapPct > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
-                            {ev.gapPct > 0 ? '+' : ''}{ev.gapPct.toFixed(1)}%
-                          </span>
-                          <span className="text-[10px] text-slate-400">
-                            {ev.gapPct > 0 ? 'déficit' : ev.gapPct < 0 ? 'excedente' : 'alinhado'}
-                          </span>
-                        </div>
-                      </td>
-
-                      {/* Channel */}
-                      <td className="px-4 py-3">
-                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600">
-                          {ev.channel}
-                        </span>
-                      </td>
-
-                      {/* Broker (Manager+ only) */}
-                      {isManagerPlus && (
+                    return (
+                      <tr
+                        key={ev.id}
+                        onClick={() => navigate(`/evaluations/${ev.id}`)}
+                        className={`group cursor-pointer transition-colors ${
+                          isChild
+                            ? 'bg-amber-50/20 hover:bg-amber-50/40'
+                            : 'hover:bg-slate-50'
+                        } ${idx === 0 && gIdx > 0 ? 'border-t-2 border-slate-100' : idx > 0 ? 'border-t border-slate-50' : ''}`}
+                      >
+                        {/* ID + date + tree connector */}
                         <td className="px-4 py-3">
-                          <span className="text-xs text-slate-500">
-                            {brokerLabel(ev.createdByUserId)}
+                          <div className="flex items-center gap-2">
+                            {/* Tree connector column */}
+                            {(isChild || isParentWithChildren) && (
+                              <div className="relative flex items-center justify-center w-5 shrink-0 self-stretch -my-3">
+                                {/* Vertical line */}
+                                {isParentWithChildren && (
+                                  <div className="absolute left-1/2 -translate-x-1/2 bg-amber-300 w-px" style={{ top: '50%', bottom: '-12px' }} />
+                                )}
+                                {isChild && (
+                                  <div className="absolute left-1/2 -translate-x-1/2 bg-amber-300 w-px" style={{ top: '-12px', bottom: isLastChild ? '50%' : '-12px' }} />
+                                )}
+                                {/* Horizontal branch for children */}
+                                {isChild && (
+                                  <div className="absolute left-1/2 top-1/2 -translate-y-1/2 bg-amber-300 h-px" style={{ width: '10px' }} />
+                                )}
+                                {/* Node dot */}
+                                {isChild && (
+                                  <div className="absolute right-0 top-1/2 -translate-y-1/2 h-1.5 w-1.5 rounded-full bg-amber-400" />
+                                )}
+                              </div>
+                            )}
+                            <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${iconBg} ${ev.isTrigger ? 'ring-1 ring-amber-200' : ''}`}>
+                              {ev.isTrigger
+                                ? <Zap className={`h-3.5 w-3.5 ${iconColor}`} />
+                                : <ActionIcon className={`h-3.5 w-3.5 ${iconColor}`} />
+                              }
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-1.5">
+                                <p className="font-mono text-xs text-slate-700">{ev.id.slice(0, 18)}…</p>
+                                {ev.isTrigger && (
+                                  <span className="inline-flex items-center gap-0.5 rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-semibold text-amber-700">
+                                    <Zap className="h-2.5 w-2.5" />Gatilho
+                                  </span>
+                                )}
+                                {isParentWithChildren && !ev.isTrigger && (
+                                  <span className="inline-flex items-center rounded-full bg-brand-50 px-1.5 py-0.5 text-[9px] font-semibold text-brand-600 ring-1 ring-brand-200">
+                                    Original
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[11px] text-slate-400">{formatDate(ev.timestamp)}</p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={(e) => copyId(e, ev.id)}
+                              title="Copiar ID completo"
+                              className="ml-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              {copiedId === ev.id
+                                ? <Check className="h-3.5 w-3.5 text-emerald-500" />
+                                : <Copy className="h-3.5 w-3.5 text-slate-400 hover:text-slate-600" />
+                              }
+                            </button>
+                          </div>
+                        </td>
+
+                        {/* Risk badge */}
+                        <td className="px-4 py-3">
+                          <Badge className={riskColors(ev.risk)} size="sm">{riskLabel(ev.risk)}</Badge>
+                        </td>
+
+                        {/* Action badge */}
+                        <td className="px-4 py-3">
+                          <Badge className={actionColors(ev.action)} size="sm">{actionLabel(ev.action)}</Badge>
+                        </td>
+
+                        {/* Score bar */}
+                        <td className="px-4 py-3">
+                          <ScoreBar score={ev.score} />
+                        </td>
+
+                        {/* Gap */}
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-1.5">
+                            {ev.gapPct > 0
+                              ? <TrendingDown className="h-3.5 w-3.5 text-red-500" />
+                              : ev.gapPct < 0
+                                ? <TrendingUp className="h-3.5 w-3.5 text-emerald-500" />
+                                : <CheckCircle className="h-3.5 w-3.5 text-emerald-500" />
+                            }
+                            <span className={`text-xs font-semibold tabular-nums ${ev.gapPct > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
+                              {ev.gapPct > 0 ? '+' : ''}{ev.gapPct.toFixed(1)}%
+                            </span>
+                            <span className="text-[10px] text-slate-400">
+                              {ev.gapPct > 0 ? 'déficit' : ev.gapPct < 0 ? 'excedente' : 'alinhado'}
+                            </span>
+                          </div>
+                        </td>
+
+                        {/* Channel */}
+                        <td className="px-4 py-3">
+                          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600">
+                            {ev.channel}
                           </span>
                         </td>
-                      )}
 
-                      {/* Arrow */}
-                      <td className="px-4 py-3 text-right">
-                        <ChevronRight className="h-4 w-4 text-slate-300 group-hover:text-slate-500 transition-colors" />
-                      </td>
-                    </tr>
-                  )
-                }))}
+                        {/* Broker (Manager+ only) */}
+                        {isManagerPlus && (
+                          <td className="px-4 py-3">
+                            <span className="text-xs text-slate-500">
+                              {brokerLabel(ev.createdByUserId)}
+                            </span>
+                          </td>
+                        )}
+
+                        {/* Arrow */}
+                        <td className="px-4 py-3 text-right">
+                          <ChevronRight className="h-4 w-4 text-slate-300 group-hover:text-slate-500 transition-colors" />
+                        </td>
+                      </tr>
+                    )
+                  })
+                })}
               </tbody>
             </table>
             </div>
