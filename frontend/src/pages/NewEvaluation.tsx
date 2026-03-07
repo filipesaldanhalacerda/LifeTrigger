@@ -457,7 +457,7 @@ export default function NewEvaluation() {
                       </>
                     ) : (
                       <>
-                        <li>• {dependentsCount} dependente(s): +{Math.min(Number(dependentsCount), 3)} anos de renda acrescidos ao cálculo base.</li>
+                        <li>• {dependentsCount} {Number(dependentsCount) === 1 ? 'dependente' : 'dependentes'}: +{Math.min(Number(dependentsCount), 3)} {Math.min(Number(dependentsCount), 3) === 1 ? 'ano de renda acrescido' : 'anos de renda acrescidos'} ao cálculo base.</li>
                         <li>• A cobertura recomendada cobre os dependentes até a independência financeira.</li>
                         {dependentsAges.some((a) => a) && <li>• Idades informadas permitem ajuste fino no horizonte de proteção.</li>}
                       </>
@@ -602,7 +602,7 @@ export default function NewEvaluation() {
                         <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-medium text-slate-500">opcional</span>
                       </div>
                       <p className="text-xs text-slate-500">
-                        Custo total estimado de educação dos {dependentsCount} dependente(s) (escola, faculdade, cursos).
+                        Custo total estimado de educação {Number(dependentsCount) === 1 ? `do ${dependentsCount} dependente` : `dos ${dependentsCount} dependentes`} (escola, faculdade, cursos).
                         O motor adiciona esse valor ao capital segurado recomendado.
                       </p>
                     </div>
