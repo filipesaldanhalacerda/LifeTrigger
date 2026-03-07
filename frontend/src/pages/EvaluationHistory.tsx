@@ -142,6 +142,27 @@ export default function EvaluationHistory() {
 
   const hasActiveFilters = !!(search || filterAction || filterRisk || filterUser || filterType)
 
+  // Group filtered items by consentId for visual threading
+  const grouped = (() => {
+    const map = new Map<string, typeof filtered>()
+    for (const ev of filtered) {
+      const key = ev.consentId || ev.id // fallback to own id if no consentId
+      if (!map.has(key)) map.set(key, [])
+      map.get(key)!.push(ev)
+    }
+    // Sort each group: non-triggers first, then by timestamp desc
+    for (const [, group] of map) {
+      group.sort((a, b) => {
+        if (a.isTrigger !== b.isTrigger) return a.isTrigger ? 1 : -1
+        return new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+      })
+    }
+    // Return groups ordered by earliest timestamp
+    return [...map.values()].sort((a, b) =>
+      new Date(b[0].timestamp).getTime() - new Date(a[0].timestamp).getTime()
+    )
+  })()
+
   // Helper: email curto do corretor por userId
   function brokerLabel(userId?: string): string {
     if (!userId) return '—'
@@ -323,47 +344,55 @@ export default function EvaluationHistory() {
 
             {/* Mobile card list */}
             <div className="divide-y divide-slate-100 sm:hidden">
-              {filtered.map((ev) => {
-                const ActionIcon = ACTION_ICONS[ev.action]
-                const iconBg = ev.risk === 'CRITICO' ? 'bg-red-50' : ev.risk === 'MODERADO' ? 'bg-amber-50' : 'bg-emerald-50'
-                const iconColor = ev.risk === 'CRITICO' ? 'text-red-500' : ev.risk === 'MODERADO' ? 'text-amber-500' : 'text-emerald-500'
-                return (
-                  <div
-                    key={ev.id}
-                    onClick={() => navigate(`/evaluations/${ev.id}`)}
-                    className="flex items-start gap-3 px-4 py-3 cursor-pointer active:bg-slate-50"
-                  >
-                    <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${iconBg} mt-0.5`}>
-                      <ActionIcon className={`h-4 w-4 ${iconColor}`} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="text-xs font-medium text-slate-700 truncate">{formatDate(ev.timestamp)}</p>
-                        <ChevronRight className="h-4 w-4 shrink-0 text-slate-300" />
+              {grouped.map((group) => (
+                <div key={group[0].id}>
+                  {group.map((ev, idx) => {
+                    const ActionIcon = ACTION_ICONS[ev.action]
+                    const iconBg = ev.risk === 'CRITICO' ? 'bg-red-50' : ev.risk === 'MODERADO' ? 'bg-amber-50' : 'bg-emerald-50'
+                    const iconColor = ev.risk === 'CRITICO' ? 'text-red-500' : ev.risk === 'MODERADO' ? 'text-amber-500' : 'text-emerald-500'
+                    const isChild = idx > 0 && ev.isTrigger
+                    return (
+                      <div
+                        key={ev.id}
+                        onClick={() => navigate(`/evaluations/${ev.id}`)}
+                        className={`flex items-start gap-3 px-4 py-3 cursor-pointer active:bg-slate-50 ${isChild ? 'ml-4 border-l-2 border-amber-200 bg-amber-50/30' : ''}`}
+                      >
+                        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${ev.isTrigger ? 'bg-amber-100' : iconBg} mt-0.5`}>
+                          {ev.isTrigger
+                            ? <Zap className="h-4 w-4 text-amber-600" />
+                            : <ActionIcon className={`h-4 w-4 ${iconColor}`} />
+                          }
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-xs font-medium text-slate-700 truncate">{formatDate(ev.timestamp)}</p>
+                            <ChevronRight className="h-4 w-4 shrink-0 text-slate-300" />
+                          </div>
+                          <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                            {ev.isTrigger && (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
+                                <Zap className="h-2.5 w-2.5" />Gatilho
+                              </span>
+                            )}
+                            <Badge className={riskColors(ev.risk)} size="sm">{riskLabel(ev.risk)}</Badge>
+                            <Badge className={actionColors(ev.action)} size="sm">{actionLabel(ev.action)}</Badge>
+                          </div>
+                          <div className="mt-1.5 flex items-center gap-3">
+                            <ScoreBar score={ev.score} />
+                            <span className={`text-[11px] font-semibold tabular-nums ${ev.gapPct > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
+                              {ev.gapPct === 0 ? 'Alinhado' : `Gap ${ev.gapPct > 0 ? '+' : ''}${ev.gapPct.toFixed(1)}%`}
+                            </span>
+                          </div>
+                          <div className="mt-1 flex items-center gap-2 text-[11px] text-slate-400">
+                            <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500">{ev.channel}</span>
+                            {isManagerPlus && <span>{brokerLabel(ev.createdByUserId)}</span>}
+                          </div>
+                        </div>
                       </div>
-                      <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                        {ev.isTrigger && (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
-                            <Zap className="h-2.5 w-2.5" />Gatilho
-                          </span>
-                        )}
-                        <Badge className={riskColors(ev.risk)} size="sm">{riskLabel(ev.risk)}</Badge>
-                        <Badge className={actionColors(ev.action)} size="sm">{actionLabel(ev.action)}</Badge>
-                      </div>
-                      <div className="mt-1.5 flex items-center gap-3">
-                        <ScoreBar score={ev.score} />
-                        <span className={`text-[11px] font-semibold tabular-nums ${ev.gapPct > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
-                          {ev.gapPct === 0 ? 'Alinhado' : `Gap ${ev.gapPct > 0 ? '+' : ''}${ev.gapPct.toFixed(1)}%`}
-                        </span>
-                      </div>
-                      <div className="mt-1 flex items-center gap-2 text-[11px] text-slate-400">
-                        <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500">{ev.channel}</span>
-                        {isManagerPlus && <span>{brokerLabel(ev.createdByUserId)}</span>}
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
+                    )
+                  })}
+                </div>
+              ))}
             </div>
 
             <div className="hidden sm:block overflow-x-auto">
@@ -400,14 +429,15 @@ export default function EvaluationHistory() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {filtered.map((ev) => {
+                {grouped.flatMap((group) => group.map((ev, idx) => {
                   const ActionIcon = ACTION_ICONS[ev.action]
-                  const iconBg =
-                    ev.risk === 'CRITICO' ? 'bg-red-50'
+                  const isChild = idx > 0 && ev.isTrigger
+                  const iconBg = ev.isTrigger ? 'bg-amber-50'
+                    : ev.risk === 'CRITICO' ? 'bg-red-50'
                     : ev.risk === 'MODERADO' ? 'bg-amber-50'
                     : 'bg-emerald-50'
-                  const iconColor =
-                    ev.risk === 'CRITICO' ? 'text-red-500'
+                  const iconColor = ev.isTrigger ? 'text-amber-600'
+                    : ev.risk === 'CRITICO' ? 'text-red-500'
                     : ev.risk === 'MODERADO' ? 'text-amber-500'
                     : 'text-emerald-500'
 
@@ -415,13 +445,21 @@ export default function EvaluationHistory() {
                     <tr
                       key={ev.id}
                       onClick={() => navigate(`/evaluations/${ev.id}`)}
-                      className="group cursor-pointer hover:bg-slate-50 transition-colors"
+                      className={`group cursor-pointer hover:bg-slate-50 transition-colors ${isChild ? 'bg-amber-50/30' : ''}`}
                     >
                       {/* ID + date */}
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
+                          {isChild && (
+                            <div className="flex items-center gap-1 mr-1">
+                              <div className="w-4 h-px bg-amber-300" />
+                            </div>
+                          )}
                           <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${iconBg}`}>
-                            <ActionIcon className={`h-3.5 w-3.5 ${iconColor}`} />
+                            {ev.isTrigger
+                              ? <Zap className={`h-3.5 w-3.5 ${iconColor}`} />
+                              : <ActionIcon className={`h-3.5 w-3.5 ${iconColor}`} />
+                            }
                           </div>
                           <div>
                             <div className="flex items-center gap-1.5">
@@ -503,7 +541,7 @@ export default function EvaluationHistory() {
                       </td>
                     </tr>
                   )
-                })}
+                }))}
               </tbody>
             </table>
             </div>
