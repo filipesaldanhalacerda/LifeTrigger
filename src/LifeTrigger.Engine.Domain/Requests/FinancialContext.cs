@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace LifeTrigger.Engine.Domain.Requests;
 
 public record FinancialContext(
@@ -6,5 +8,6 @@ public record FinancialContext(
     DebtData? Debts,
     CurrentInsuranceData? CurrentLifeInsurance,
     EducationData? EducationCosts = null,
-    EstateData? Estate = null
+    EstateData? Estate = null,
+    IReadOnlyList<CurrentInsuranceData>? Policies = null
 );

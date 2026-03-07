@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import {
   ChevronRight, ChevronLeft, Send, AlertCircle,
   User, Banknote, Users, ClipboardCheck,
-  ChevronDown, Check, ShieldCheck, ShieldAlert, ShieldOff,
+  ChevronDown, Check, ShieldCheck, ShieldAlert, ShieldOff, Plus, Trash2,
 } from 'lucide-react'
 import { TopBar } from '../components/layout/TopBar'
 import { postEvaluation, getActiveTenantId } from '../lib/api'
@@ -65,8 +65,7 @@ export default function NewEvaluation() {
 
   // Financial (raw digit strings — formatted for display via CurrencyInput)
   const [income, setIncome] = useState('')
-  const [currentCoverage, setCurrentCoverage] = useState('')
-  const [policyType, setPolicyType] = useState('')
+  const [policies, setPolicies] = useState([{ coverage: '', policyType: '' }])
   const [debtTotal, setDebtTotal] = useState('')
   const [debtMonths, setDebtMonths] = useState('')
   const [emergencyFund, setEmergencyFund] = useState('')
@@ -169,10 +168,12 @@ export default function NewEvaluation() {
         },
         financialContext: {
           monthlyIncome: { exactValue: parseCurrency(income) },
-          currentLifeInsurance: currentCoverage ? {
-            coverageAmount: parseCurrency(currentCoverage),
-            policyType: policyType as never || undefined,
-          } : undefined,
+          policies: policies
+            .filter((p) => p.coverage && parseCurrency(p.coverage) > 0)
+            .map((p) => ({
+              coverageAmount: parseCurrency(p.coverage),
+              policyType: (p.policyType as never) || undefined,
+            })),
           debts: debtTotal ? {
             totalAmount: parseCurrency(debtTotal),
             remainingTermMonths: debtMonths ? Number(debtMonths) : undefined,
@@ -398,22 +399,64 @@ export default function NewEvaluation() {
                 <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 space-y-4">
                   <div>
                     <div className="flex items-center gap-2 mb-1">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Seguro de Vida Atual</p>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Seguros de Vida Atuais</p>
                       <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-medium text-slate-500">opcional</span>
                     </div>
                     <p className="text-xs text-slate-500">
-                      Preencha se o cliente já possui apólice vigente. O motor calcula o gap entre a cobertura atual e a ideal.
-                      Deixe em branco se não tiver seguro — o motor assumirá cobertura zero.
+                      Preencha todas as apólices vigentes do cliente. O motor soma a cobertura efetiva de cada uma
+                      e calcula o gap total. Deixe em branco se não tiver seguro — o motor assumirá cobertura zero.
                     </p>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <Field label="Capital Segurado Atual" hint="Valor total da cobertura da apólice vigente.">
-                      <CurrencyInput value={currentCoverage} onChange={setCurrentCoverage} placeholder="200.000,00" />
-                    </Field>
-                    <Field label="Tipo de Apólice" hint="Modalidade contratual do seguro vigente. Afeta como o motor contabiliza a cobertura.">
-                      <PolicyTypeSelector value={policyType} onChange={setPolicyType} />
-                    </Field>
-                  </div>
+
+                  {policies.map((policy, idx) => (
+                    <div key={idx} className="space-y-3">
+                      {policies.length > 1 && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-semibold text-slate-500">Apólice {idx + 1}</span>
+                          <button
+                            type="button"
+                            onClick={() => setPolicies(policies.filter((_, i) => i !== idx))}
+                            className="flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-medium text-red-500 hover:bg-red-50 transition-colors"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                            Remover
+                          </button>
+                        </div>
+                      )}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <Field label="Capital Segurado" hint="Valor total da cobertura desta apólice.">
+                          <CurrencyInput
+                            value={policy.coverage}
+                            onChange={(v) => {
+                              const next = [...policies]
+                              next[idx] = { ...next[idx], coverage: v }
+                              setPolicies(next)
+                            }}
+                            placeholder="200.000,00"
+                          />
+                        </Field>
+                        <Field label="Tipo de Apólice" hint="Modalidade contratual. Afeta como o motor contabiliza a cobertura.">
+                          <PolicyTypeSelector
+                            value={policy.policyType}
+                            onChange={(v) => {
+                              const next = [...policies]
+                              next[idx] = { ...next[idx], policyType: v }
+                              setPolicies(next)
+                            }}
+                          />
+                        </Field>
+                      </div>
+                    </div>
+                  ))}
+
+                  <button
+                    type="button"
+                    onClick={() => setPolicies([...policies, { coverage: '', policyType: '' }])}
+                    className="flex items-center gap-1.5 rounded-lg border border-dashed border-slate-300 px-3 py-2 text-xs font-medium text-slate-500 hover:border-brand-400 hover:text-brand-600 transition-colors w-full justify-center"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    Adicionar outra apólice
+                  </button>
                 </div>
 
                 <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 space-y-4">
@@ -889,7 +932,7 @@ const POLICY_TYPE_OPTIONS = [
   {
     value: '',
     label: 'Não informado',
-    desc: 'O cliente não sabe ou não informou o tipo. O motor assumirá cobertura integral (fator 1.0×).',
+    desc: 'O cliente não sabe ou não informou o tipo. O motor assumirá cobertura integral.',
 
     icon: ShieldCheck,
     color: 'text-slate-400',

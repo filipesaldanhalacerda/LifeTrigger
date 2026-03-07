@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using LifeTrigger.Engine.Application.Interfaces;
 using LifeTrigger.Engine.Domain.Entities;
 using LifeTrigger.Engine.Domain.Enums;
+using LifeTrigger.Engine.Domain.Requests;
 using LifeTrigger.Engine.Domain.ValueObjects;
 
 namespace LifeTrigger.Engine.Application.Services;
@@ -478,21 +480,86 @@ public sealed class BrokerInsightGenerator : IBrokerInsightGenerator
         LifeInsuranceAssessmentResult result,
         LifeInsuranceAssessmentRequest request)
     {
-        var action   = result.RecommendedAction;
-        var risk     = result.RiskClassification;
-        var age      = request.PersonalContext.Age;
-        var deps     = request.FamilyContext.DependentsCount;
-        var profRisk = request.PersonalContext.ProfessionRiskLevel;
-        var hasDebt  = (request.FinancialContext.Debts?.TotalAmount ?? 0m) > 0m;
-        var debt     = request.FinancialContext.Debts?.TotalAmount ?? 0m;
-        var isSmoker = request.PersonalContext.IsSmoker ?? false;
-        var gap      = Math.Abs(result.ProtectionGapAmount);
+        var action    = result.RecommendedAction;
+        var risk      = result.RiskClassification;
+        var age       = request.PersonalContext.Age;
+        var deps      = request.FamilyContext.DependentsCount;
+        var profRisk  = request.PersonalContext.ProfessionRiskLevel;
+        var hasDebt   = (request.FinancialContext.Debts?.TotalAmount ?? 0m) > 0m;
+        var debt      = request.FinancialContext.Debts?.TotalAmount ?? 0m;
+        var isSmoker  = request.PersonalContext.IsSmoker ?? false;
+        var gap       = Math.Abs(result.ProtectionGapAmount);
+        // Resolve policies: use Policies array if present, fall back to single CurrentLifeInsurance
+        var policies = request.FinancialContext.Policies is { Count: > 0 }
+            ? request.FinancialContext.Policies
+            : request.FinancialContext.CurrentLifeInsurance != null
+                ? new[] { request.FinancialContext.CurrentLifeInsurance }
+                : Array.Empty<CurrentInsuranceData>();
+
+        var policyTypes = policies
+            .Where(p => p.CoverageAmount > 0 && p.PolicyType.HasValue)
+            .Select(p => p.PolicyType!.Value)
+            .Distinct()
+            .ToList();
+
+        var hasAP         = policyTypes.Contains(PolicyType.ACIDENTES_PESSOAIS);
+        var hasPrestamista = policyTypes.Contains(PolicyType.PRESTAMISTA);
+        var hasGrupo      = policyTypes.Contains(PolicyType.GRUPO_EMPRESARIAL);
 
         var priority = risk == RiskClassification.CRITICO ? InsightPriority.ALTA : InsightPriority.MEDIA;
 
         string headline, body;
 
-        if (action == RecommendedAction.MANTER)
+        // Coverage type-specific warnings take priority
+        if (hasAP && action != RecommendedAction.MANTER)
+        {
+            var apPolicy = policies.First(p => p.PolicyType == PolicyType.ACIDENTES_PESSOAIS);
+            headline = "Cliente possui apólice de Acidentes Pessoais — não é seguro de vida";
+            body =
+                $"O cliente declarou {Brl(apPolicy.CoverageAmount)} em cobertura de Acidentes Pessoais. " +
+                $"Este tipo de produto cobre exclusivamente morte acidental (acidente de trânsito, queda, etc.) " +
+                $"e NÃO cobre as causas mais comuns de óbito: infarto, AVC, câncer e demais doenças. " +
+                $"Estatisticamente, cerca de 75% dos óbitos prematuros na PEA são por causas naturais. " +
+                $"O motor considerou apenas {Brl(apPolicy.CoverageAmount * 0.25m)} como cobertura efetiva. " +
+                (policies.Count > 1
+                    ? $"O cliente possui {policies.Count} apólices no total — mas a de AP não substitui um Seguro de Vida. "
+                    : "") +
+                $"Argumento: 'O seguro de acidentes protege contra uma parcela pequena dos riscos. " +
+                $"Para uma proteção real, é necessário um Seguro de Vida que cubra qualquer causa.'";
+        }
+        else if (hasPrestamista && action != RecommendedAction.MANTER)
+        {
+            var prestPolicy = policies.First(p => p.PolicyType == PolicyType.PRESTAMISTA);
+            headline = "Cliente possui Prestamista — paga o banco, não a família";
+            body =
+                $"O cliente declarou {Brl(prestPolicy.CoverageAmount)} em cobertura Prestamista. " +
+                $"Este tipo de seguro paga exclusivamente ao credor (banco ou financeira) para quitar a dívida — " +
+                $"a família não recebe nenhum valor. O motor desconsiderou este valor da proteção familiar. " +
+                (policies.Count > 1
+                    ? $"Das {policies.Count} apólices declaradas, o Prestamista não conta como proteção familiar. "
+                    : "") +
+                $"Argumento: 'O seguro do seu financiamento protege o banco, não a sua família. " +
+                $"Se algo acontecer, a dívida é quitada, mas quem sustenta seus dependentes?' " +
+                $"Apresente o Seguro de Vida como produto complementar e indispensável.";
+        }
+        else if (hasGrupo && action != RecommendedAction.MANTER)
+        {
+            var grupoPolicy = policies.First(p => p.PolicyType == PolicyType.GRUPO_EMPRESARIAL);
+            headline = "Cliente possui Seguro em Grupo — risco de portabilidade";
+            body =
+                $"O cliente possui {Brl(grupoPolicy.CoverageAmount)} em Seguro de Vida em Grupo (empresarial). " +
+                $"A cobertura é válida enquanto durar o vínculo empregatício, mas apresenta dois riscos críticos: " +
+                $"1. Desligamento: demissão, transição de carreira ou aposentadoria encerram a cobertura imediatamente. " +
+                $"2. Recontratação: ao sair do grupo, o cliente pode não conseguir contratar individualmente " +
+                $"pelo mesmo valor (idade maior, condições de saúde que surgiram). " +
+                (policies.Count > 1
+                    ? $"O cliente tem {policies.Count} apólices — bom, mas a cobertura em grupo não é garantida. "
+                    : "") +
+                $"Argumento: 'A cobertura do trabalho é boa enquanto dura — " +
+                $"mas se você sair da empresa amanhã, sua família fica sem proteção no mesmo dia. " +
+                $"Um seguro individual complementar garante que isso nunca aconteça.'";
+        }
+        else if (action == RecommendedAction.MANTER)
         {
             headline = "Cross-sell natural com cliente bem estruturado";
             body =

@@ -58,6 +58,7 @@ export interface EstateData {
 export interface FinancialContext {
   monthlyIncome: IncomeData
   currentLifeInsurance?: CurrentInsuranceData
+  policies?: CurrentInsuranceData[]
   debts?: DebtData
   emergencyFundMonths?: number
   educationCosts?: EducationData

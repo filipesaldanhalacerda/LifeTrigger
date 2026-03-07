@@ -303,10 +303,16 @@ export default function EvaluationResult() {
                   <ContextCard
                     icon={ShieldCheck}
                     label="Cobertura atual"
-                    value={req.financialContext.currentLifeInsurance?.coverageAmount != null
-                      ? formatCurrency(req.financialContext.currentLifeInsurance.coverageAmount)
-                      : 'Sem apólice'
-                    }
+                    value={(() => {
+                      const pols = req.financialContext.policies
+                      if (pols && pols.length > 0) {
+                        const total = pols.reduce((s, p) => s + (p.coverageAmount ?? 0), 0)
+                        return total > 0 ? `${formatCurrency(total)} (${pols.length} apólice${pols.length > 1 ? 's' : ''})` : 'Sem apólice'
+                      }
+                      return req.financialContext.currentLifeInsurance?.coverageAmount != null
+                        ? formatCurrency(req.financialContext.currentLifeInsurance.coverageAmount)
+                        : 'Sem apólice'
+                    })()}
                   />
                   <ContextCard icon={Baby}     label="Dependentes"       value={`${req.familyContext.dependentsCount}`} />
                   <ContextCard icon={Shield}   label="Risco profissional" value={req.personalContext.professionRiskLevel} />

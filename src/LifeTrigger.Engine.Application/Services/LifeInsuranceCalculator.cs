@@ -65,41 +65,53 @@ public class LifeInsuranceCalculator : ILifeInsuranceCalculator
 
         decimal finalRecommendedCoverage = ApplyGuardrails(rawRecommendedCoverage, annualIncome, evalRecorder, tenantSettings);
 
-        decimal declaredCoverage = request.FinancialContext.CurrentLifeInsurance?.CoverageAmount ?? 0m;
-        var policyType = request.FinancialContext.CurrentLifeInsurance?.PolicyType;
-        decimal effectiveFactor = CalculationRules.GetCoverageEffectiveFactor(policyType);
-        decimal currentCoverage = declaredCoverage * effectiveFactor;
+        // Resolve policies: use Policies array if present, fall back to single CurrentLifeInsurance (backwards compat)
+        var policies = request.FinancialContext.Policies is { Count: > 0 }
+            ? request.FinancialContext.Policies
+            : request.FinancialContext.CurrentLifeInsurance != null
+                ? new[] { request.FinancialContext.CurrentLifeInsurance }
+                : Array.Empty<CurrentInsuranceData>();
 
-        // Track coverage type warnings
-        if (declaredCoverage > 0 && policyType.HasValue)
+        decimal currentCoverage = 0m;
+        foreach (var policy in policies)
         {
-            switch (policyType.Value)
+            if (policy.CoverageAmount <= 0) continue;
+
+            decimal factor = CalculationRules.GetCoverageEffectiveFactor(policy.PolicyType);
+            decimal effective = policy.CoverageAmount * factor;
+            currentCoverage += effective;
+
+            // Track coverage type warnings per policy
+            if (policy.PolicyType.HasValue)
             {
-                case PolicyType.ACIDENTES_PESSOAIS:
-                    evalRecorder.TrackRule(_ruleJustificationProvider.Build(
-                        EngineRuleId.RULE_COVERAGE_TYPE_AP_ONLY,
-                        new Dictionary<string, RuleArgValue>
-                        {
-                            { "declaredCoverage", declaredCoverage },
-                            { "effectiveCoverage", currentCoverage },
-                        }));
-                    break;
-                case PolicyType.GRUPO_EMPRESARIAL:
-                    evalRecorder.TrackRule(_ruleJustificationProvider.Build(
-                        EngineRuleId.RULE_COVERAGE_TYPE_GROUP_PORTABILITY_RISK,
-                        new Dictionary<string, RuleArgValue>
-                        {
-                            { "coverageAmount", declaredCoverage },
-                        }));
-                    break;
-                case PolicyType.PRESTAMISTA:
-                    evalRecorder.TrackRule(_ruleJustificationProvider.Build(
-                        EngineRuleId.RULE_COVERAGE_TYPE_PRESTAMISTA_NOT_FAMILY,
-                        new Dictionary<string, RuleArgValue>
-                        {
-                            { "declaredCoverage", declaredCoverage },
-                        }));
-                    break;
+                switch (policy.PolicyType.Value)
+                {
+                    case PolicyType.ACIDENTES_PESSOAIS:
+                        evalRecorder.TrackRule(_ruleJustificationProvider.Build(
+                            EngineRuleId.RULE_COVERAGE_TYPE_AP_ONLY,
+                            new Dictionary<string, RuleArgValue>
+                            {
+                                { "declaredCoverage", policy.CoverageAmount },
+                                { "effectiveCoverage", effective },
+                            }));
+                        break;
+                    case PolicyType.GRUPO_EMPRESARIAL:
+                        evalRecorder.TrackRule(_ruleJustificationProvider.Build(
+                            EngineRuleId.RULE_COVERAGE_TYPE_GROUP_PORTABILITY_RISK,
+                            new Dictionary<string, RuleArgValue>
+                            {
+                                { "coverageAmount", policy.CoverageAmount },
+                            }));
+                        break;
+                    case PolicyType.PRESTAMISTA:
+                        evalRecorder.TrackRule(_ruleJustificationProvider.Build(
+                            EngineRuleId.RULE_COVERAGE_TYPE_PRESTAMISTA_NOT_FAMILY,
+                            new Dictionary<string, RuleArgValue>
+                            {
+                                { "declaredCoverage", policy.CoverageAmount },
+                            }));
+                        break;
+                }
             }
         }
 
