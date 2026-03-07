@@ -5,6 +5,7 @@ import {
   Heart, Baby, Home, TrendingUp, Scissors, Sunset, Pencil,
   Info, Zap, User, Banknote, Users, ClipboardCheck,
   ChevronDown, Check, ShieldCheck, ShieldAlert, ShieldOff, Plus, Trash2,
+  Calculator, GraduationCap,
 } from 'lucide-react'
 import { TopBar } from '../components/layout/TopBar'
 import { DatePicker } from '../components/ui/DateRangePicker'
@@ -105,6 +106,11 @@ export default function NewTrigger() {
         ? [...prev, ...Array<string>(newCount - prev.length).fill('')]
         : prev.slice(0, newCount),
     )
+    setEduTuitions((prev) =>
+      newCount > prev.length
+        ? [...prev, ...Array<string>(newCount - prev.length).fill('')]
+        : prev.slice(0, newCount),
+    )
   }
 
   function setDepAge(index: number, value: string) {
@@ -119,6 +125,10 @@ export default function NewTrigger() {
   const [debtMonths, setDebtMonths] = useState('')
   const [emergencyFund, setEmergencyFund] = useState('')
   const [educationCost, setEducationCost] = useState('')
+  const [eduMode, setEduMode] = useState<'manual' | 'calc'>('calc')
+  const [eduTuitions, setEduTuitions] = useState<string[]>([])
+  const [eduAnnualIncrease, setEduAnnualIncrease] = useState('8')
+  const [eduTargetAge, setEduTargetAge] = useState('21')
   const [estateValue, setEstateValue] = useState('')
   const [estateState, setEstateState] = useState('')
 
@@ -692,6 +702,7 @@ export default function NewTrigger() {
                   <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 space-y-4">
                     <div>
                       <div className="flex items-center gap-2 mb-1">
+                        <GraduationCap className="h-4 w-4 text-slate-500" />
                         <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Custos de Educação</p>
                         <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-medium text-slate-500">opcional</span>
                       </div>
@@ -700,9 +711,127 @@ export default function NewTrigger() {
                         O motor adiciona esse valor ao capital segurado recomendado.
                       </p>
                     </div>
-                    <Field label="Custo Total Estimado" hint="Soma de mensalidades até a formação de todos os dependentes.">
-                      <CurrencyInput value={educationCost} onChange={setEducationCost} placeholder="200.000,00" />
-                    </Field>
+
+                    {/* Mode toggle */}
+                    <div className="flex gap-1 rounded-lg bg-slate-200/60 p-0.5">
+                      <button
+                        type="button"
+                        onClick={() => setEduMode('calc')}
+                        className={`flex-1 flex items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
+                          eduMode === 'calc' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                        }`}
+                      >
+                        <Calculator className="h-3.5 w-3.5" />
+                        Calculadora
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEduMode('manual')}
+                        className={`flex-1 flex items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
+                          eduMode === 'manual' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                        }`}
+                      >
+                        Valor manual
+                      </button>
+                    </div>
+
+                    {eduMode === 'calc' ? (
+                      <div className="space-y-4">
+                        {/* Per-dependent tuition */}
+                        <div className="space-y-3">
+                          {dependentsAges.map((depAge, i) => {
+                            const ageNum = Number(depAge) || 0
+                            const targetNum = Number(eduTargetAge) || 21
+                            const yearsLeft = Math.max(0, targetNum - ageNum)
+                            return (
+                              <div key={i} className="rounded-lg border border-slate-200 bg-white p-3 space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-xs font-semibold text-slate-700">
+                                    Dependente {i + 1} — {ageNum > 0 ? `${ageNum} anos` : 'idade não informada'}
+                                  </span>
+                                  <span className="text-[10px] font-medium text-slate-400">
+                                    {yearsLeft > 0 ? `${yearsLeft} anos restantes` : 'já formado'}
+                                  </span>
+                                </div>
+                                <Field label="Mensalidade escolar/faculdade" hint="">
+                                  <CurrencyInput
+                                    value={eduTuitions[i] || ''}
+                                    onChange={(v) => {
+                                      setEduTuitions((prev) => prev.map((t, j) => (j === i ? v : t)))
+                                    }}
+                                    placeholder="2.500,00"
+                                  />
+                                </Field>
+                              </div>
+                            )
+                          })}
+                        </div>
+
+                        {/* Calculator params */}
+                        <div className="grid grid-cols-2 gap-3">
+                          <Field label="Reajuste anual" hint="">
+                            <div className="relative">
+                              <input
+                                type="number" min="0" max="30" step="1"
+                                value={eduAnnualIncrease}
+                                onChange={(e) => setEduAnnualIncrease(e.target.value)}
+                                className={`${cls()} pr-8`}
+                              />
+                              <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">%</span>
+                            </div>
+                          </Field>
+                          <Field label="Idade limite" hint="">
+                            <div className="relative">
+                              <input
+                                type="number" min="16" max="30"
+                                value={eduTargetAge}
+                                onChange={(e) => setEduTargetAge(e.target.value)}
+                                className={`${cls()} pr-12`}
+                              />
+                              <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">anos</span>
+                            </div>
+                          </Field>
+                        </div>
+
+                        {/* Computed total */}
+                        {(() => {
+                          const rate = (Number(eduAnnualIncrease) || 0) / 100
+                          const target = Number(eduTargetAge) || 21
+                          let total = 0
+                          dependentsAges.forEach((depAge, i) => {
+                            const ageNum = Number(depAge) || 0
+                            const monthlyTuition = parseCurrency(eduTuitions[i] || '')
+                            if (monthlyTuition <= 0) return
+                            const yearsLeft = Math.max(0, target - ageNum)
+                            for (let y = 0; y < yearsLeft; y++) {
+                              total += monthlyTuition * 12 * Math.pow(1 + rate, y)
+                            }
+                          })
+                          const totalCents = Math.round(total * 100)
+                          // Sync to educationCost state
+                          if (String(totalCents) !== educationCost) {
+                            setTimeout(() => setEducationCost(totalCents > 0 ? String(totalCents) : ''), 0)
+                          }
+                          return total > 0 ? (
+                            <div className="flex items-center justify-between rounded-lg border border-brand-200 bg-brand-50 px-4 py-3">
+                              <div>
+                                <p className="text-xs font-medium text-brand-700">Total estimado de educação</p>
+                                <p className="text-[10px] text-brand-500">
+                                  Reajuste de {eduAnnualIncrease}% a.a. até os {eduTargetAge} anos
+                                </p>
+                              </div>
+                              <p className="text-base font-bold tabular-nums text-brand-800">
+                                R$ {total.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </p>
+                            </div>
+                          ) : null
+                        })()}
+                      </div>
+                    ) : (
+                      <Field label="Custo Total Estimado" hint="Soma de mensalidades até a formação de todos os dependentes.">
+                        <CurrencyInput value={educationCost} onChange={setEducationCost} placeholder="200.000,00" />
+                      </Field>
+                    )}
                   </div>
                 )}
 
