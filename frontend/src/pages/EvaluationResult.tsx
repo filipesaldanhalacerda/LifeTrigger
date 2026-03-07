@@ -67,6 +67,7 @@ export default function EvaluationResult() {
   const [result, setResult]   = useState<LifeInsuranceAssessmentResult | null>(null)
   const [loading, setLoading] = useState(true)
   const [copiedHash, setCopiedHash] = useState(false)
+  const [copiedId, setCopiedId] = useState(false)
   const [activeTab, setActiveTab] = useState<TabId>('resultado')
   const [previousResult, setPreviousResult] = useState<LifeInsuranceAssessmentResult | null>(null)
 
@@ -151,19 +152,36 @@ export default function EvaluationResult() {
     <div>
       <TopBar
         title="Resultado da Avaliação"
-        subtitle={id ? `ID: ${id.slice(0, 18)}...` : 'Avaliação recém-gerada'}
+        subtitle={record?.request.operationalData.recentLifeTrigger ? 'Gatilho de Vida' : undefined}
       />
 
       <div className="animate-fadeIn p-4 sm:p-6 space-y-4 sm:space-y-5">
 
-        {/* Back */}
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 transition-colors"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Voltar
-        </button>
+        {/* Back + ID */}
+        <div className="flex items-center justify-between gap-3">
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Voltar
+          </button>
+          {id && (
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(id)
+                setCopiedId(true)
+                setTimeout(() => setCopiedId(false), 1500)
+              }}
+              className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-500 hover:bg-slate-100 transition-colors"
+              title="Copiar ID completo"
+            >
+              <span className="font-mono text-[11px] text-slate-600 hidden sm:inline">{id}</span>
+              <span className="font-mono text-[11px] text-slate-600 sm:hidden">{id.slice(0, 12)}…</span>
+              {copiedId ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
+            </button>
+          )}
+        </div>
 
         {/* ── Diagnosis / recommendation card — always visible ── */}
         <div className={`rounded-2xl border p-5 sm:p-6 shadow-card ${actionTheme.border} ${actionTheme.bg}`}>
@@ -524,24 +542,33 @@ export default function EvaluationResult() {
               </div>
             )}
 
-            {/* 7. CTAs */}
-            <div className="flex flex-wrap gap-3">
-              {record && (
-                <button
-                  onClick={() => navigate('/triggers/new', { state: { prefill: record.request } })}
-                  className="flex items-center gap-2 rounded-xl border border-brand-200 bg-brand-50 px-5 py-3 text-sm font-semibold text-brand-700 hover:bg-brand-100 transition-colors"
-                >
-                  <Zap className="h-4 w-4" />
-                  Registrar Gatilho de Vida
-                </button>
-              )}
-              <button
-                onClick={() => navigate('/evaluations/new')}
-                className="flex items-center gap-2 rounded-xl border border-brand-200 bg-brand-50 px-5 py-3 text-sm font-semibold text-brand-700 hover:bg-brand-100 transition-colors"
-              >
-                Nova Avaliação
-              </button>
-            </div>
+            {/* 7. CTA — Trigger */}
+            {record && (
+              <div className="rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-50 to-white p-5 sm:p-6 shadow-card">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                  <div className="flex items-start gap-3 flex-1">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100">
+                      <Zap className="h-5 w-5 text-amber-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-amber-900">Houve mudança na vida do cliente?</p>
+                      <p className="mt-1 text-xs text-amber-700 leading-relaxed">
+                        Casamento, nascimento de filho, compra de imóvel, promoção ou aposentadoria —
+                        registre um gatilho de vida para recalcular a proteção com os dados já preenchidos.
+                        O motor compara automaticamente o antes e o depois.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => navigate('/triggers/new', { state: { prefill: record.request } })}
+                    className="flex items-center justify-center gap-2 rounded-xl bg-amber-500 px-6 py-3 text-sm font-bold text-white shadow-sm hover:bg-amber-600 transition-colors shrink-0"
+                  >
+                    <Zap className="h-4 w-4" />
+                    Registrar Gatilho
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
