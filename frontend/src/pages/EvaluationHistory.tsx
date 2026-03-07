@@ -480,7 +480,7 @@ export default function EvaluationHistory() {
                   <>
                     <p className="text-sm font-semibold text-slate-700">Nenhuma avaliação encontrada</p>
                     <p className="mt-1 text-xs text-slate-400">
-                      Realize a primeira avaliação usando Nova Avaliação ou Gatilho de Vida.
+                      Realize a primeira avaliação usando Nova Avaliação. Após o resultado, você poderá registrar gatilhos de vida.
                     </p>
                     <button
                       onClick={() => navigate('/evaluations/new')}

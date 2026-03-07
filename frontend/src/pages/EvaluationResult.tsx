@@ -454,13 +454,15 @@ export default function EvaluationResult() {
 
             {/* 7. CTAs */}
             <div className="flex flex-wrap gap-3">
-              <button
-                onClick={() => navigate('/triggers/new', { state: { prefill: data!.request } })}
-                className="flex items-center gap-2 rounded-xl border border-brand-200 bg-brand-50 px-5 py-3 text-sm font-semibold text-brand-700 hover:bg-brand-100 transition-colors"
-              >
-                <Zap className="h-4 w-4" />
-                Registrar Gatilho de Vida
-              </button>
+              {record && (
+                <button
+                  onClick={() => navigate('/triggers/new', { state: { prefill: record.request } })}
+                  className="flex items-center gap-2 rounded-xl border border-brand-200 bg-brand-50 px-5 py-3 text-sm font-semibold text-brand-700 hover:bg-brand-100 transition-colors"
+                >
+                  <Zap className="h-4 w-4" />
+                  Registrar Gatilho de Vida
+                </button>
+              )}
               <button
                 onClick={() => navigate('/evaluations/new')}
                 className="flex items-center gap-2 rounded-xl border border-brand-200 bg-brand-50 px-5 py-3 text-sm font-semibold text-brand-700 hover:bg-brand-100 transition-colors"

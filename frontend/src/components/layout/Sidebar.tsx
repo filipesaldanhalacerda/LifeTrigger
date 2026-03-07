@@ -3,7 +3,6 @@ import {
   LayoutDashboard,
   FilePlus,
   History,
-  Zap,
   Settings,
   Shield,
   Cpu,
@@ -58,7 +57,6 @@ const sections: NavSection[] = [
     label: 'Operações',
     items: [
       { to: '/evaluations/new', label: 'Nova Avaliação',  icon: FilePlus, minRole: 'Broker', tenantOnly: true },
-      { to: '/triggers/new',    label: 'Gatilhos de Vida', icon: Zap,      minRole: 'Broker', tenantOnly: true },
       { to: '/evaluations',     label: 'Histórico',        icon: History,  end: true, tenantOnly: true },
       { to: '/clients',         label: 'Meus Clientes',    icon: UserCheck, minRole: 'Broker', tenantOnly: true },
     ],

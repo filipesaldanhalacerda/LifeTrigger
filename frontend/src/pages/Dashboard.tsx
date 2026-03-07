@@ -363,15 +363,15 @@ export default function Dashboard() {
                       </div>
                     </button>
                     <button
-                      onClick={() => navigate('/triggers/new')}
+                      onClick={() => navigate('/evaluations')}
                       className="group flex w-full items-center gap-3 rounded-xl border border-slate-200 p-3 text-left hover:border-accent-200 hover:bg-accent-50 transition-all"
                     >
                       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-600 shadow-sm group-hover:scale-105 transition-transform">
-                        <Zap className="h-4 w-4 text-white" />
+                        <Clock className="h-4 w-4 text-white" />
                       </div>
                       <div className="min-w-0">
-                        <p className="text-xs font-bold text-slate-800 group-hover:text-accent-700 transition-colors">Registrar Gatilho</p>
-                        <p className="text-[11px] text-slate-400">Evento de vida do cliente</p>
+                        <p className="text-xs font-bold text-slate-800 group-hover:text-accent-700 transition-colors">Ver Histórico</p>
+                        <p className="text-[11px] text-slate-400">Avaliações e gatilhos registrados</p>
                       </div>
                     </button>
                   </div>
