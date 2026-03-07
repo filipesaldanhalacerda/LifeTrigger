@@ -11,18 +11,18 @@ public class TenantSettings
     public Guid TenantId { get; set; }
     
     // Substituição de Renda (Income Replacement)
-    public int IncomeReplacementYearsSingle { get; set; } = 2;
+    public int IncomeReplacementYearsSingle { get; set; } = 3;
     public int IncomeReplacementYearsWithDependents { get; set; } = 5;
-    
+
     // Reserva e Gaps
     public int EmergencyFundBufferMonths { get; set; } = 6;
-    
+
     // Guardrails de Venda
     public decimal MaxTotalCoverageMultiplier { get; set; } = 20.0m;
-    public decimal MinCoverageAnnualIncomeMultiplier { get; set; } = 2.0m;
+    public decimal MinCoverageAnnualIncomeMultiplier { get; set; } = 3.0m;
 
     // Sucessão / Inventário
-    public decimal InventoryRate { get; set; } = 0.10m;
+    public decimal InventoryRate { get; set; } = 0.08m;
 
     // Teto absoluto de anos de reposição de renda
     public int MaxIncomeReplacementYears { get; set; } = 10;

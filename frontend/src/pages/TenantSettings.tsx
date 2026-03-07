@@ -11,12 +11,12 @@ import type { TenantSettings as TSettings } from '../types/api'
 
 // ── Defaults ─────────────────────────────────────────────────────
 const DEFAULTS: Omit<TSettings, 'tenantId'> = {
-  incomeReplacementYearsSingle: 2,
+  incomeReplacementYearsSingle: 3,
   incomeReplacementYearsWithDependents: 5,
   emergencyFundBufferMonths: 6,
   maxTotalCoverageMultiplier: 20,
-  minCoverageAnnualIncomeMultiplier: 2,
-  inventoryRate: 0.10,
+  minCoverageAnnualIncomeMultiplier: 3,
+  inventoryRate: 0.08,
   maxIncomeReplacementYears: 10,
 }
 
