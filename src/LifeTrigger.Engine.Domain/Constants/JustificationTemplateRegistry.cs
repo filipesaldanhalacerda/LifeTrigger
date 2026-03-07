@@ -28,6 +28,9 @@ public static class JustificationTemplateRegistry
         { EngineRuleId.RULE_PENALTY_LOW_COVERAGE_DEPENDENTS, ("RULE_PENALTY_LOW_COVERAGE_DEPENDENTS_V1", "rules.penalty_low_coverage_dependents", new[] { "penaltyPoints" }) },
         { EngineRuleId.RULE_PENALTY_HIGH_DEBT, ("RULE_PENALTY_HIGH_DEBT_V1", "rules.penalty_high_debt", new[] { "penaltyPoints" }) },
         { EngineRuleId.RULE_PENALTY_NO_EMERGENCY_FUND, ("RULE_PENALTY_NO_EMERGENCY_FUND_V1", "rules.penalty_no_emergency_fund", new[] { "penaltyPoints" }) },
+        { EngineRuleId.RULE_EDUCATION_COSTS, ("RULE_EDUCATION_COSTS_V1", "rules.education_costs", new[] { "amount" }) },
+        { EngineRuleId.RULE_ITCMD_ESTATE_TAX, ("RULE_ITCMD_ESTATE_TAX_V1", "rules.itcmd_estate_tax", new[] { "estateValue", "rate", "amount", "state" }) },
+        { EngineRuleId.RULE_INVENTORY_COSTS, ("RULE_INVENTORY_COSTS_V1", "rules.inventory_costs", new[] { "estateValue", "rate", "amount" }) },
         { EngineRuleId.RULE_ACTION_OVERRIDE_OLD_REVIEW, ("RULE_ACTION_OVERRIDE_OLD_REVIEW_V1", "rules.action_override_old_review", Array.Empty<string>()) },
         { EngineRuleId.RULE_ACTION_OVERRIDE_UNCONFIRMED_DATA, ("RULE_ACTION_OVERRIDE_UNCONFIRMED_DATA_V1", "rules.action_override_unconfirmed_data", Array.Empty<string>()) },
         { EngineRuleId.RULE_ACTION_OVERRIDE_RECENT_TRIGGER, ("RULE_ACTION_OVERRIDE_RECENT_TRIGGER_V1", "rules.action_override_recent_trigger", Array.Empty<string>()) }

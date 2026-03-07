@@ -4,5 +4,7 @@ public record FinancialContext(
     IncomeData MonthlyIncome,
     int? EmergencyFundMonths,
     DebtData? Debts,
-    CurrentInsuranceData? CurrentLifeInsurance
+    CurrentInsuranceData? CurrentLifeInsurance,
+    EducationData? EducationCosts = null,
+    EstateData? Estate = null
 );

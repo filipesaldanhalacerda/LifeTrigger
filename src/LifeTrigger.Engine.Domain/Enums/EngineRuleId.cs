@@ -30,6 +30,13 @@ public enum EngineRuleId
     RULE_PENALTY_HIGH_DEBT,
     RULE_PENALTY_NO_EMERGENCY_FUND,
 
+    // Education Costs
+    RULE_EDUCATION_COSTS,
+
+    // Estate / Succession
+    RULE_ITCMD_ESTATE_TAX,
+    RULE_INVENTORY_COSTS,
+
     // Action Overrides
     RULE_ACTION_OVERRIDE_OLD_REVIEW,
     RULE_ACTION_OVERRIDE_UNCONFIRMED_DATA,

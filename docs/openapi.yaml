@@ -95,6 +95,24 @@ components:
                   type: string
                   enum: [TEMPORARIO, VIDA_INTEIRA, ACIDENTES_PESSOAIS, DESCONHECIDO]
                   example: "TEMPORARIO"
+            educationCosts:
+              type: object
+              description: "Custos de educação dos dependentes (opcional)"
+              properties:
+                totalEstimatedCost:
+                  type: number
+                  example: 120000.00
+            estate:
+              type: object
+              description: "Patrimônio para cálculo de ITCMD e inventário (opcional)"
+              properties:
+                totalEstateValue:
+                  type: number
+                  example: 800000.00
+                state:
+                  type: string
+                  description: "Sigla UF do estado (alíquota ITCMD varia de 2-8%)"
+                  example: "SP"
         familyContext:
           type: object
           properties:
@@ -162,6 +180,24 @@ components:
           type: string
           enum: [AUMENTAR, MANTER, REDUZIR, REVISAR]
           example: "AUMENTAR"
+        incomeReplacementAmount:
+          type: number
+          description: "Componente de reposição de renda"
+        debtClearanceAmount:
+          type: number
+          description: "Componente de liquidação de dívidas"
+        transitionReserveAmount:
+          type: number
+          description: "Componente de reserva de transição"
+        educationCostsAmount:
+          type: number
+          description: "Componente de custos de educação"
+        itcmdCostAmount:
+          type: number
+          description: "Componente de ITCMD (imposto sucessório)"
+        inventoryCostAmount:
+          type: number
+          description: "Componente de custos de inventário"
         regrasAplicadas:
           type: array
           description: "Usado para UI Icons / Exibição Front-End"

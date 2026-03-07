@@ -265,6 +265,17 @@ public sealed class BrokerInsightGenerator : IBrokerInsightGenerator
                 $"Esse argumento é especialmente poderoso para clientes com " +
                 $"financiamento imobiliário, empréstimos consignados ou dívidas empresariais.";
         }
+        else if (result.EducationCostsAmount > 0 && deps > 0)
+        {
+            headline = "Educação dos filhos: o compromisso que não pode falhar";
+            body =
+                $"O motor incluiu {Brl(result.EducationCostsAmount)} em custos de educação na cobertura recomendada. " +
+                $"Argumento central: 'Se algo acontecesse com você, quem garantiria a educação " +
+                $"dos seus {deps} filho{(deps > 1 ? "s" : "")}? " +
+                $"O seguro de vida cobre exatamente esse compromisso — escola, faculdade, formação completa — " +
+                $"sem que a família precise abrir mão de nada.' " +
+                $"Esse é o argumento mais emocional e eficaz para pais com filhos em idade escolar.";
+        }
         else if (hasPenaltyFund)
         {
             headline = "Sem reserva de emergência, o seguro é a primeira linha de defesa";
@@ -286,6 +297,19 @@ public sealed class BrokerInsightGenerator : IBrokerInsightGenerator
                 $"e condições preexistentes surgidas até lá podem reduzir a cobertura ou inviabilizá-la. " +
                 $"Frase de impacto: 'A tarifa que você paga hoje é a mais baixa que vai encontrar " +
                 $"em toda a sua vida. Em 10 anos, o mesmo seguro custará entre 60% e 150% a mais.'";
+        }
+        else if (result.ItcmdCostAmount > 0 || result.InventoryCostAmount > 0)
+        {
+            var estateCosts = result.ItcmdCostAmount + result.InventoryCostAmount;
+            headline = "Custos sucessórios: o argumento patrimonial definitivo";
+            body =
+                $"O motor calculou que a família precisaria de {Brl(estateCosts)} " +
+                $"apenas para cobrir ITCMD ({Brl(result.ItcmdCostAmount)}) e custos de inventário " +
+                $"({Brl(result.InventoryCostAmount)}), sem contar a substituição de renda. " +
+                $"Sem seguro, esses custos saem do patrimônio familiar ou exigem venda de bens sob pressão. " +
+                $"Frase de impacto: 'Sabia que sua família precisaria desembolsar {Brl(estateCosts)} " +
+                $"só para receber a herança? O seguro de vida paga esses custos no dia seguinte ao sinistro, " +
+                $"sem precisar vender nenhum bem.'";
         }
         else if (age > 55)
         {

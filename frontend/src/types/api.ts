@@ -46,11 +46,22 @@ export interface PersonalContext {
   isSmoker?: boolean
 }
 
+export interface EducationData {
+  totalEstimatedCost: number
+}
+
+export interface EstateData {
+  totalEstateValue: number
+  state?: string
+}
+
 export interface FinancialContext {
   monthlyIncome: IncomeData
   currentLifeInsurance?: CurrentInsuranceData
   debts?: DebtData
   emergencyFundMonths?: number
+  educationCosts?: EducationData
+  estate?: EstateData
 }
 
 export interface FamilyContext {
@@ -115,6 +126,12 @@ export interface LifeInsuranceAssessmentResult {
   protectionGapPercentage: number
   protectionScore: number
   coverageEfficiencyScore: number
+  incomeReplacementAmount: number
+  debtClearanceAmount: number
+  transitionReserveAmount: number
+  educationCostsAmount: number
+  itcmdCostAmount: number
+  inventoryCostAmount: number
   riskClassification: RiskClassification
   coverageStatus: CoverageStatus
   recommendedAction: RecommendedAction

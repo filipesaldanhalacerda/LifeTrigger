@@ -63,7 +63,7 @@ O sistema não transaciona "vendas financeiras". Ele manipula insights de risco 
 * **Evaluation (Avaliação):** O ato primário do motor. Combina todas as métricas no instante (T) e gera um output fixo bloqueado na versão atual.
 * **Context (Subject/Proponente):** Agrupa os inputs de entrada fragmentados:
   * `PersonalContext`: Idade, Estado Civil, Risco Ocupacional.
-  * `FinancialContext`: Renda canônica `IncomeData`, `DebtData` (passivo) e `EmergencyFundMonths` (liquidez).
+  * `FinancialContext`: Renda canônica `IncomeData`, `DebtData` (passivo), `EmergencyFundMonths` (liquidez), `EducationCosts` (custos de educação dos dependentes) e `Estate` (patrimônio total e estado para cálculo de ITCMD/inventário).
   * `FamilyContext`: Quantidade estrita de dependentes, que alonga as coberturas projetadas de longevidade.
   * `OperationalData`: Canal lógico (`WEB`, `APP`), `TenantId` de correlação e validações LGPD.
 * **Lead Operacional:** É o "Result" avaliativo. Denota se a necessidade do cliente indica fechamento (`AUMENTAR`), cross-sell ou mera retenção consultiva (`REVISAR`).
@@ -97,7 +97,18 @@ Regras inquebráveis aplicadas ao montante final avaliado:
 1. **Lower Guardrail (2x):** Independentemente da sub-avaliação do buffer, nenhum humano é parametrizado num seguro inferior ao limiar de 2 vezes sua Renda Anual (Cobertura Mortalidade Crítica Padrão).
 2. **Upper Guardrail (20x):** Impede vendas de excesso (Over-insurance / Risco Moral). O motor capta o limite máximo no fator de enriquecimento de longo prazo (20 vezes a renda).
 
-### Passo D: Ação Mapeada
+### Passo D: Custos de Educação (Education Costs)
+Componente opcional que incorpora o custo projetado de educação dos dependentes à cobertura recomendada.
+* Se `EducationCosts.TotalEstimatedCost > 0`, o valor integral é somado diretamente à cobertura.
+* Regra aplicada: `RULE_EDUCATION_COSTS`.
+
+### Passo E: Custos de Sucessão (Estate / ITCMD + Inventário)
+Componente opcional que calcula os custos tributários e jurídicos de transmissão patrimonial.
+* **ITCMD (Imposto sobre Transmissão Causa Mortis):** Calculado como `EstateValue × AlíquotaEstadual`. A alíquota varia de 2% a 8% conforme o estado brasileiro informado (`Estate.State`). Caso o estado seja omitido, aplica-se a alíquota padrão de 4%. Regra: `RULE_ITCMD_ESTATE_TAX`.
+* **Custos de Inventário:** Calculados como `EstateValue × 10%` (taxa fixa de honorários advocatícios e custas judiciais padrão). Regra: `RULE_INVENTORY_COSTS`.
+* Ambos os valores são somados à cobertura recomendada total.
+
+### Passo F: Ação Mapeada
 O *Gap* Matemático puro (Recomendado - Atual) / Recomendado, determina exatamente uma constante:
 * Gap > 25% → **`AUMENTAR`** (Classificação: `CRÍTICO`)
 * Gap < -20% → **`REDUZIR`** (SuperSegurado - Classificação: `ATENÇÃO`)

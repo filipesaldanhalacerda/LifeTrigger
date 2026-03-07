@@ -57,6 +57,20 @@ public class LifeInsuranceAssessmentRequestValidator : AbstractValidator<LifeIns
                     .GreaterThanOrEqualTo(0)
                     .WithMessage("O valor da cobertura atual não pode ser negativo.");
             });
+
+            When(x => x.FinancialContext.EducationCosts != null, () =>
+            {
+                RuleFor(x => x.FinancialContext.EducationCosts!.TotalEstimatedCost)
+                    .GreaterThanOrEqualTo(0)
+                    .WithMessage("O custo estimado de educação não pode ser negativo.");
+            });
+
+            When(x => x.FinancialContext.Estate != null, () =>
+            {
+                RuleFor(x => x.FinancialContext.Estate!.TotalEstateValue)
+                    .GreaterThanOrEqualTo(0)
+                    .WithMessage("O valor total do patrimônio não pode ser negativo.");
+            });
         });
 
         RuleFor(x => x.FamilyContext).NotNull();

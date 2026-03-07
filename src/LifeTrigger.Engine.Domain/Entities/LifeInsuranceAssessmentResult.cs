@@ -23,6 +23,14 @@ public record LifeInsuranceAssessmentResult
     /// </summary>
     public int CoverageEfficiencyScore { get; init; } // 0 - 100
     
+    // Coverage Breakdown (composição da cobertura recomendada)
+    public decimal IncomeReplacementAmount { get; init; }
+    public decimal DebtClearanceAmount { get; init; }
+    public decimal TransitionReserveAmount { get; init; }
+    public decimal EducationCostsAmount { get; init; }
+    public decimal ItcmdCostAmount { get; init; }
+    public decimal InventoryCostAmount { get; init; }
+
     public RiskClassification RiskClassification { get; init; }
     public CoverageStatus CoverageStatus { get; init; }
     public RecommendedAction RecommendedAction { get; init; }

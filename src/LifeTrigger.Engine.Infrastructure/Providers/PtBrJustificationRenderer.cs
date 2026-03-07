@@ -24,6 +24,9 @@ public class PtBrJustificationRenderer : IRuleJustificationRenderer
         { "rules.penalty_low_coverage_dependents", "Penalidade de {0} pontos aplicada no score devido à baixa cobertura com dependentes." },
         { "rules.penalty_high_debt", "Penalidade de {0} pontos aplicada no score devido ao alto nível de endividamento (> 50% da renda anual)." },
         { "rules.penalty_no_emergency_fund", "Penalidade de {0} pontos aplicada no score devido à ausência de reserva de emergência mínima (3 meses)." },
+        { "rules.education_costs", "Custos de educação dos dependentes no valor estimado de {0:C} adicionados à cobertura recomendada." },
+        { "rules.itcmd_estate_tax", "ITCMD calculado sobre patrimônio de {0:C} à alíquota de {1:F0}% (estado {2}), totalizando {3:C}." },
+        { "rules.inventory_costs", "Custos de inventário e honorários calculados sobre patrimônio de {0:C} à taxa de {1:F0}%, totalizando {2:C}." },
         { "rules.action_override_old_review", "Ação alterada para REVISAR devido à última revisão ter ocorrido há mais de 12 meses." },
         { "rules.action_override_unconfirmed_data", "Ação alterada para REVISAR devido à existência de dados essenciais não confirmados." },
         { "rules.action_override_recent_trigger", "Ação alterada para REVISAR devido à ocorrência de um gatilho de vida recente." }
@@ -56,6 +59,9 @@ public class PtBrJustificationRenderer : IRuleJustificationRenderer
             EngineRuleId.RULE_PENALTY_LOW_COVERAGE_DEPENDENTS => new[] { args["penaltyPoints"].GetValue() },
             EngineRuleId.RULE_PENALTY_HIGH_DEBT => new[] { args["penaltyPoints"].GetValue() },
             EngineRuleId.RULE_PENALTY_NO_EMERGENCY_FUND => new[] { args["penaltyPoints"].GetValue() },
+            EngineRuleId.RULE_EDUCATION_COSTS => new[] { args["amount"].GetValue() },
+            EngineRuleId.RULE_ITCMD_ESTATE_TAX => new[] { args["estateValue"].GetValue(), args["rate"].GetValue(), args["state"].GetValue(), args["amount"].GetValue() },
+            EngineRuleId.RULE_INVENTORY_COSTS => new[] { args["estateValue"].GetValue(), args["rate"].GetValue(), args["amount"].GetValue() },
             _ => Array.Empty<object>()
         };
     }

@@ -206,6 +206,53 @@ export default function EvaluationResult() {
               </div>
             </div>
 
+            {/* Coverage breakdown */}
+            {result.recommendedCoverageAmount > 0 && (
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-card">
+                <h2 className="text-sm font-semibold text-slate-900">Composição da Cobertura Recomendada</h2>
+                <p className="mt-0.5 mb-4 text-xs text-slate-500">
+                  Detalhamento dos componentes que formam o capital segurado recomendado pelo motor.
+                </p>
+                <div className="space-y-2">
+                  {[
+                    { label: 'Substituição de Renda', value: result.incomeReplacementAmount, color: 'bg-brand-500' },
+                    { label: 'Quitação de Dívidas', value: result.debtClearanceAmount, color: 'bg-amber-500' },
+                    { label: 'Reserva de Transição', value: result.transitionReserveAmount, color: 'bg-sky-500' },
+                    { label: 'Custos de Educação', value: result.educationCostsAmount, color: 'bg-violet-500' },
+                    { label: 'ITCMD (Imposto Herança)', value: result.itcmdCostAmount, color: 'bg-orange-500' },
+                    { label: 'Custos de Inventário', value: result.inventoryCostAmount, color: 'bg-rose-500' },
+                  ]
+                    .filter((item) => item.value > 0)
+                    .map((item) => {
+                      const pct = result.recommendedCoverageAmount > 0
+                        ? (item.value / result.recommendedCoverageAmount) * 100
+                        : 0
+                      return (
+                        <div key={item.label} className="flex items-center gap-3">
+                          <div className="w-36 sm:w-44 shrink-0">
+                            <p className="text-xs font-medium text-slate-700">{item.label}</p>
+                          </div>
+                          <div className="flex-1 h-5 rounded-full bg-slate-100 overflow-hidden">
+                            <div
+                              className={`h-full rounded-full ${item.color} transition-all duration-700`}
+                              style={{ width: `${Math.max(pct, 2)}%` }}
+                            />
+                          </div>
+                          <div className="w-28 shrink-0 text-right">
+                            <span className="text-xs font-bold tabular-nums text-slate-800">
+                              {formatCurrency(item.value)}
+                            </span>
+                            <span className="ml-1 text-[10px] text-slate-400">
+                              ({pct.toFixed(1)}%)
+                            </span>
+                          </div>
+                        </div>
+                      )
+                    })}
+                </div>
+              </div>
+            )}
+
             {/* Scores */}
             <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-card">
               <h2 className="text-sm font-semibold text-slate-900">Scores da Avaliação</h2>

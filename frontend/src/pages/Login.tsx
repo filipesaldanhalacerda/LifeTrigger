@@ -101,7 +101,7 @@ export default function Login() {
               { icon: Zap,         title: 'Gatilhos de Vida',         desc: 'Casamento, filho, promoção — eventos que criam oportunidades de recontato' },
               { icon: Users,       title: 'Gestão de Carteira',       desc: 'Visão por cliente com risco, ação e histórico completo de avaliações' },
               { icon: Hash,        title: 'Auditoria Imutável',       desc: 'Hash SHA-256 em cada avaliação — prova técnica que protege você juridicamente' },
-              { icon: ShieldCheck, title: 'Motor Determinístico',     desc: '13 regras tipadas, sem IA — mesmo input, mesmo resultado, sempre' },
+              { icon: ShieldCheck, title: 'Motor Determinístico',     desc: '17 regras tipadas, sem IA — mesmo input, mesmo resultado, sempre' },
               { icon: Lock,        title: 'LGPD by Design',           desc: 'Zero dados pessoais na API — apenas perfil anônimo vinculado por Consent ID' },
             ].map(({ icon: FIcon, title, desc }) => (
               <div key={title} className="flex gap-3 rounded-xl bg-white/[0.04] border border-white/[0.06] p-3 hover:bg-white/[0.07] transition-colors">

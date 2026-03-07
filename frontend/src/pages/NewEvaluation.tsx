@@ -66,6 +66,11 @@ export default function NewEvaluation() {
   const [debtMonths, setDebtMonths] = useState('')
   const [emergencyFund, setEmergencyFund] = useState('')
 
+  // Education & Estate
+  const [educationCost, setEducationCost] = useState('')
+  const [estateValue, setEstateValue] = useState('')
+  const [estateState, setEstateState] = useState('')
+
   // Family
   const [dependentsCount, setDependentsCount] = useState('0')
   const [dependentsAges, setDependentsAges] = useState<string[]>([])
@@ -168,6 +173,12 @@ export default function NewEvaluation() {
             remainingTermMonths: debtMonths ? Number(debtMonths) : undefined,
           } : undefined,
           emergencyFundMonths: emergencyFund ? Number(emergencyFund) : undefined,
+          educationCosts: educationCost && parseCurrency(educationCost) > 0
+            ? { totalEstimatedCost: parseCurrency(educationCost) }
+            : undefined,
+          estate: estateValue && parseCurrency(estateValue) > 0
+            ? { totalEstateValue: parseCurrency(estateValue), state: estateState || undefined }
+            : undefined,
         },
         familyContext: {
           dependentsCount: Number(dependentsCount),
@@ -435,6 +446,48 @@ export default function NewEvaluation() {
                     </Field>
                   </div>
                 </div>
+
+                <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 space-y-4">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Custos de Educação</p>
+                      <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-medium text-slate-500">opcional</span>
+                    </div>
+                    <p className="text-xs text-slate-500">
+                      Custo total estimado de educação dos dependentes (escola, faculdade, cursos).
+                      O motor adiciona esse valor ao capital segurado recomendado.
+                    </p>
+                  </div>
+                  <Field label="Custo Total Estimado" hint="Soma de mensalidades até a formação de todos os dependentes.">
+                    <CurrencyInput value={educationCost} onChange={setEducationCost} placeholder="200.000" />
+                  </Field>
+                </div>
+
+                <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 space-y-4">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Patrimônio e Sucessão</p>
+                      <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-medium text-slate-500">opcional</span>
+                    </div>
+                    <p className="text-xs text-slate-500">
+                      Valor total do patrimônio (imóveis, investimentos, bens). O motor calcula
+                      automaticamente o ITCMD (imposto estadual sobre herança) e custos de inventário.
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <Field label="Valor Total do Patrimônio" hint="Soma de imóveis, veículos, investimentos e outros bens.">
+                      <CurrencyInput value={estateValue} onChange={setEstateValue} placeholder="1.000.000" />
+                    </Field>
+                    <Field label="Estado (UF)" hint="O ITCMD varia de 2% a 8% conforme o estado. Alíquota padrão: 4%.">
+                      <select value={estateState} onChange={(e) => setEstateState(e.target.value)} className={cls()}>
+                        <option value="">Não informado (4% padrão)</option>
+                        {BR_STATES.map((s) => (
+                          <option key={s.uf} value={s.uf}>{s.uf} — {s.name} ({s.rate}%)</option>
+                        ))}
+                      </select>
+                    </Field>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -682,6 +735,23 @@ const PROFESSION_RISKS = [
   { value: 'MEDIO',      label: 'Médio',      desc: 'Comércio, saúde, educação',      dot: 'bg-amber-500' },
   { value: 'ALTO',       label: 'Alto',       desc: 'Construção, logística, campo',   dot: 'bg-orange-500' },
   { value: 'MUITO_ALTO', label: 'Muito Alto', desc: 'Mineração, segurança, offshore', dot: 'bg-red-500' },
+]
+
+const BR_STATES = [
+  { uf: 'AC', name: 'Acre', rate: 4 }, { uf: 'AL', name: 'Alagoas', rate: 4 },
+  { uf: 'AM', name: 'Amazonas', rate: 4 }, { uf: 'AP', name: 'Amapá', rate: 4 },
+  { uf: 'BA', name: 'Bahia', rate: 8 }, { uf: 'CE', name: 'Ceará', rate: 8 },
+  { uf: 'DF', name: 'Distrito Federal', rate: 6 }, { uf: 'ES', name: 'Espírito Santo', rate: 4 },
+  { uf: 'GO', name: 'Goiás', rate: 8 }, { uf: 'MA', name: 'Maranhão', rate: 7 },
+  { uf: 'MG', name: 'Minas Gerais', rate: 5 }, { uf: 'MS', name: 'Mato Grosso do Sul', rate: 6 },
+  { uf: 'MT', name: 'Mato Grosso', rate: 8 }, { uf: 'PA', name: 'Pará', rate: 6 },
+  { uf: 'PB', name: 'Paraíba', rate: 8 }, { uf: 'PE', name: 'Pernambuco', rate: 8 },
+  { uf: 'PI', name: 'Piauí', rate: 6 }, { uf: 'PR', name: 'Paraná', rate: 4 },
+  { uf: 'RJ', name: 'Rio de Janeiro', rate: 8 }, { uf: 'RN', name: 'Rio Grande do Norte', rate: 6 },
+  { uf: 'RO', name: 'Rondônia', rate: 4 }, { uf: 'RR', name: 'Roraima', rate: 4 },
+  { uf: 'RS', name: 'Rio Grande do Sul', rate: 6 }, { uf: 'SC', name: 'Santa Catarina', rate: 8 },
+  { uf: 'SE', name: 'Sergipe', rate: 8 }, { uf: 'SP', name: 'São Paulo', rate: 4 },
+  { uf: 'TO', name: 'Tocantins', rate: 8 },
 ]
 
 function cls(hasError = false) {

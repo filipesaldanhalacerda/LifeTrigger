@@ -138,6 +138,9 @@ export default function NewTrigger() {
   const [debtTotal, setDebtTotal] = useState('')
   const [professionRisk, setProfessionRisk] = useState('BAIXO')
   const [isSmoker, setIsSmoker] = useState(false)
+  const [educationCost, setEducationCost] = useState('')
+  const [estateValue, setEstateValue] = useState('')
+  const [estateState, setEstateState] = useState('')
   const [consent, setConsent] = useState(false)
   const [consentId] = useState(`consent-trigger-${Date.now()}`)
 
@@ -197,6 +200,12 @@ export default function NewTrigger() {
               : undefined,
             debts: debtTotal
               ? { totalAmount: parseCurrency(debtTotal) }
+              : undefined,
+            educationCosts: parseCurrency(educationCost) > 0
+              ? { totalEstimatedCost: parseCurrency(educationCost) }
+              : undefined,
+            estate: parseCurrency(estateValue) > 0
+              ? { totalEstateValue: parseCurrency(estateValue), state: estateState || undefined }
               : undefined,
           },
           familyContext: {
@@ -487,6 +496,35 @@ export default function NewTrigger() {
                   >
                     <CurrencyInput value={debtTotal} onChange={setDebtTotal} placeholder="0" />
                   </Field>
+                  <Field
+                    label="Custos de Educação"
+                    hint="Custo estimado total de educação dos dependentes, somado à cobertura recomendada."
+                  >
+                    <CurrencyInput value={educationCost} onChange={setEducationCost} placeholder="0" />
+                  </Field>
+                  <Field
+                    label="Patrimônio Total (Sucessão)"
+                    hint="Valor total do patrimônio para cálculo de ITCMD e custos de inventário."
+                  >
+                    <CurrencyInput value={estateValue} onChange={setEstateValue} placeholder="0" />
+                  </Field>
+                  {parseCurrency(estateValue) > 0 && (
+                    <Field
+                      label="Estado (UF)"
+                      hint="Estado do patrimônio para alíquota de ITCMD. Se omitido, usa alíquota padrão de 4%."
+                    >
+                      <select
+                        value={estateState}
+                        onChange={(e) => setEstateState(e.target.value)}
+                        className={cls()}
+                      >
+                        <option value="">Selecione (opcional)</option>
+                        {BR_STATES.map((s) => (
+                          <option key={s.uf} value={s.uf}>{s.uf} — {s.name} (ITCMD {s.rate}%)</option>
+                        ))}
+                      </select>
+                    </Field>
+                  )}
                 </div>
               </div>
 
@@ -589,6 +627,36 @@ const PROFESSION_RISKS = [
   { value: 'MEDIO',      label: 'Médio',      example: 'Saúde, comércio', dot: 'bg-amber-500' },
   { value: 'ALTO',       label: 'Alto',       example: 'Construção, campo', dot: 'bg-orange-500' },
   { value: 'MUITO_ALTO', label: 'Muito Alto', example: 'Mineração, offshore', dot: 'bg-red-500' },
+]
+
+const BR_STATES = [
+  { uf: 'AC', name: 'Acre', rate: 4 },
+  { uf: 'AL', name: 'Alagoas', rate: 4 },
+  { uf: 'AM', name: 'Amazonas', rate: 4 },
+  { uf: 'AP', name: 'Amapá', rate: 4 },
+  { uf: 'BA', name: 'Bahia', rate: 8 },
+  { uf: 'CE', name: 'Ceará', rate: 8 },
+  { uf: 'DF', name: 'Distrito Federal', rate: 6 },
+  { uf: 'ES', name: 'Espírito Santo', rate: 4 },
+  { uf: 'GO', name: 'Goiás', rate: 8 },
+  { uf: 'MA', name: 'Maranhão', rate: 7 },
+  { uf: 'MG', name: 'Minas Gerais', rate: 5 },
+  { uf: 'MS', name: 'Mato Grosso do Sul', rate: 6 },
+  { uf: 'MT', name: 'Mato Grosso', rate: 8 },
+  { uf: 'PA', name: 'Pará', rate: 6 },
+  { uf: 'PB', name: 'Paraíba', rate: 8 },
+  { uf: 'PE', name: 'Pernambuco', rate: 8 },
+  { uf: 'PI', name: 'Piauí', rate: 6 },
+  { uf: 'PR', name: 'Paraná', rate: 4 },
+  { uf: 'RJ', name: 'Rio de Janeiro', rate: 8 },
+  { uf: 'RN', name: 'Rio Grande do Norte', rate: 6 },
+  { uf: 'RO', name: 'Rondônia', rate: 4 },
+  { uf: 'RR', name: 'Roraima', rate: 4 },
+  { uf: 'RS', name: 'Rio Grande do Sul', rate: 6 },
+  { uf: 'SC', name: 'Santa Catarina', rate: 8 },
+  { uf: 'SE', name: 'Sergipe', rate: 8 },
+  { uf: 'SP', name: 'São Paulo', rate: 4 },
+  { uf: 'TO', name: 'Tocantins', rate: 8 },
 ]
 
 function cls(hasError = false) {

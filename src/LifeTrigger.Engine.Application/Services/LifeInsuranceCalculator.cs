@@ -60,16 +60,23 @@ public class LifeInsuranceCalculator : ILifeInsuranceCalculator
 
         decimal annualIncome = CalculateAnnualIncome(request.FinancialContext.MonthlyIncome);
 
-        decimal rawRecommendedCoverage = CalculateCoverage(request, annualIncome, evalRecorder, tenantSettings);
-        
+        var breakdown = CalculateCoverage(request, annualIncome, evalRecorder, tenantSettings);
+        decimal rawRecommendedCoverage = breakdown.Total;
+
         decimal finalRecommendedCoverage = ApplyGuardrails(rawRecommendedCoverage, annualIncome, evalRecorder, tenantSettings);
 
         decimal currentCoverage = request.FinancialContext.CurrentLifeInsurance?.CoverageAmount ?? 0m;
-        
+
         var partialResult = new LifeInsuranceAssessmentResult
         {
             RecommendedCoverageAmount = finalRecommendedCoverage,
             CurrentCoverageAmount = currentCoverage,
+            IncomeReplacementAmount = breakdown.IncomeReplacement,
+            DebtClearanceAmount = breakdown.DebtClearance,
+            TransitionReserveAmount = breakdown.TransitionReserve,
+            EducationCostsAmount = breakdown.EducationCosts,
+            ItcmdCostAmount = breakdown.ItcmdCost,
+            InventoryCostAmount = breakdown.InventoryCost,
         };
 
         var scoreAndClassification = DetermineScoreAndAction(partialResult, request, annualIncome, evalRecorder);
@@ -105,13 +112,17 @@ public class LifeInsuranceCalculator : ILifeInsuranceCalculator
         return (monthlyIncome.ExactValue ?? 0m) * 12;
     }
 
-    private decimal CalculateCoverage(LifeInsuranceAssessmentRequest request, decimal annualIncome, EvaluationRecorder evalRecorder, TenantSettings? settings)
+    private (decimal Total, decimal IncomeReplacement, decimal DebtClearance, decimal TransitionReserve, decimal EducationCosts, decimal ItcmdCost, decimal InventoryCost)
+        CalculateCoverage(LifeInsuranceAssessmentRequest request, decimal annualIncome, EvaluationRecorder evalRecorder, TenantSettings? settings)
     {
-        decimal incomeReplacementAmount = CalculateIncomeReplacement(annualIncome, request.FamilyContext, evalRecorder, settings);
-        decimal debtClearanceAmount = CalculateDebtClearance(request.FinancialContext.Debts, evalRecorder);
-        decimal transitionReserveAmount = CalculateTransitionReserve(request.FinancialContext.MonthlyIncome, request.FinancialContext.EmergencyFundMonths, evalRecorder, settings);
+        decimal incomeReplacement = CalculateIncomeReplacement(annualIncome, request.FamilyContext, evalRecorder, settings);
+        decimal debtClearance = CalculateDebtClearance(request.FinancialContext.Debts, evalRecorder);
+        decimal transitionReserve = CalculateTransitionReserve(request.FinancialContext.MonthlyIncome, request.FinancialContext.EmergencyFundMonths, evalRecorder, settings);
+        decimal educationCosts = CalculateEducationCosts(request.FinancialContext.EducationCosts, evalRecorder);
+        var (itcmdCost, inventoryCost) = CalculateEstateCosts(request.FinancialContext.Estate, evalRecorder);
 
-        return incomeReplacementAmount + debtClearanceAmount + transitionReserveAmount;
+        decimal total = incomeReplacement + debtClearance + transitionReserve + educationCosts + itcmdCost + inventoryCost;
+        return (total, incomeReplacement, debtClearance, transitionReserve, educationCosts, itcmdCost, inventoryCost);
     }
 
     private decimal CalculateIncomeReplacement(decimal annualIncome, FamilyContext familyContext, EvaluationRecorder evalRecorder, TenantSettings? settings)
@@ -201,6 +212,51 @@ public class LifeInsuranceCalculator : ILifeInsuranceCalculator
         }
 
         return income * bufferMonths;
+    }
+
+    private decimal CalculateEducationCosts(EducationData? education, EvaluationRecorder evalRecorder)
+    {
+        if (education == null || education.TotalEstimatedCost <= 0)
+            return 0m;
+
+        evalRecorder.TrackRule(_ruleJustificationProvider.Build(
+            EngineRuleId.RULE_EDUCATION_COSTS,
+            new Dictionary<string, RuleArgValue> { { "amount", education.TotalEstimatedCost } }));
+
+        return education.TotalEstimatedCost;
+    }
+
+    private (decimal ItcmdCost, decimal InventoryCost) CalculateEstateCosts(EstateData? estate, EvaluationRecorder evalRecorder)
+    {
+        if (estate == null || estate.TotalEstateValue <= 0)
+            return (0m, 0m);
+
+        decimal itcmdRate = CalculationRules.GetItcmdRateByState(estate.State);
+        decimal itcmdCost = estate.TotalEstateValue * itcmdRate;
+
+        evalRecorder.TrackRule(_ruleJustificationProvider.Build(
+            EngineRuleId.RULE_ITCMD_ESTATE_TAX,
+            new Dictionary<string, RuleArgValue>
+            {
+                { "estateValue", estate.TotalEstateValue },
+                { "rate", itcmdRate * 100m },
+                { "amount", itcmdCost },
+                { "state", (RuleArgValue)(estate.State ?? "N/A") },
+            }));
+
+        decimal inventoryRate = CalculationRules.DefaultInventoryRate;
+        decimal inventoryCost = estate.TotalEstateValue * inventoryRate;
+
+        evalRecorder.TrackRule(_ruleJustificationProvider.Build(
+            EngineRuleId.RULE_INVENTORY_COSTS,
+            new Dictionary<string, RuleArgValue>
+            {
+                { "estateValue", estate.TotalEstateValue },
+                { "rate", inventoryRate * 100m },
+                { "amount", inventoryCost },
+            }));
+
+        return (itcmdCost, inventoryCost);
     }
 
     private decimal ApplyGuardrails(decimal rawCoverage, decimal annualIncome, EvaluationRecorder evalRecorder, TenantSettings? settings)

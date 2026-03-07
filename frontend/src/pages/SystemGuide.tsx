@@ -310,7 +310,7 @@ export default function SystemGuide() {
               </div>
               <div className="mt-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  <strong>13 regras catalogadas</strong> em enum fortemente tipado (<code className="text-brand-600 bg-white px-1 rounded">EngineRuleId</code>),
+                  <strong>17 regras catalogadas</strong> em enum fortemente tipado (<code className="text-brand-600 bg-white px-1 rounded">EngineRuleId</code>),
                   cada uma com template de justificativa e rastreabilidade completa. Nenhuma "string magica" — tudo validado em compilacao.
                 </p>
               </div>

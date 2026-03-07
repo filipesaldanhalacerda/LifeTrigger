@@ -9,7 +9,7 @@
 
 O **LifeTrigger Engine** é um motor determinístico de análise de necessidade de seguro de vida. Ele recebe o contexto financeiro e familiar de um cliente e devolve:
 
-- O **capital segurado ideal** (calculado em 3 componentes: reposição de renda, liquidação de dívidas, reserva de transição)
+- O **capital segurado ideal** (calculado em 6 componentes: reposição de renda, liquidação de dívidas, reserva de transição, custos de educação, ITCMD e custos de inventário)
 - O **gap de proteção** em R$ e %
 - Uma **ação recomendada**: `AUMENTAR`, `MANTER`, `REDUZIR` ou `REVISAR`
 - Uma **classificação de risco**: `CRÍTICO`, `MODERADO` ou `ADEQUADO`
@@ -35,15 +35,18 @@ O núcleo matemático é **100% determinístico** — o mesmo input sempre produ
 ## Capacidades do Motor
 
 ### Cálculo de Cobertura Recomendada
-O motor soma 3 componentes configuráveis:
+O motor soma 6 componentes configuráveis:
 
 ```
-Cobertura = Reposição de Renda + Liquidação de Dívidas + Reserva de Transição
+Cobertura = Reposição de Renda + Liquidação de Dívidas + Reserva de Transição + Custos de Educação + ITCMD + Custos de Inventário
 ```
 
 - **Reposição de renda**: 2 anos (sem dependentes) até 8+ anos (com dependentes), ajustável por corretora
 - **Liquidação de dívidas**: valor total da dívida ativa do cliente
 - **Reserva de transição**: meses de renda para manter o padrão de vida — calculado com base no fundo de emergência existente
+- **Custos de educação**: valor estimado total de educação dos dependentes (opcional)
+- **ITCMD (imposto de herança)**: calculado sobre o patrimônio total com alíquota variável por estado (2–8%)
+- **Custos de inventário**: honorários e custos legais de inventário (padrão 10% do patrimônio)
 
 ### Scores Bi-dimensionais
 
@@ -207,7 +210,9 @@ curl -X POST https://localhost:5001/api/v1/evaluations \
     "financialContext": {
       "monthlyIncome": { "exactValue": 15000 },
       "debts": { "totalAmount": 200000, "remainingTermMonths": 120 },
-      "emergencyFundMonths": 2
+      "emergencyFundMonths": 2,
+      "educationCosts": { "totalEstimatedCost": 120000 },
+      "estate": { "totalEstateValue": 800000, "state": "SP" }
     },
     "familyContext": { "dependentsCount": 2, "dependentsAges": [5, 8] },
     "operationalData": {

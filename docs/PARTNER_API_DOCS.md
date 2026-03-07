@@ -73,6 +73,13 @@ Este é o endpoint universal que suas aplicações devem chamar assim que o form
     "currentLifeInsurance": {
       "coverageAmount": 100000,
       "policyType": "TEMPORARIO"
+    },
+    "educationCosts": {
+      "totalEstimatedCost": 120000
+    },
+    "estate": {
+      "totalEstateValue": 800000,
+      "state": "SP"
     }
   },
   "familyContext": {
@@ -101,6 +108,9 @@ Este é o endpoint universal que suas aplicações devem chamar assim que o form
 | **Financial**| `emergencyFundMonths` | `int` | Não | Falta desse valor significa "Zero Reserva". Aciona no motor as **Penalidades de Reserva Transicional** aumentando o Gap (Sugerindo apólice maior). |
 | **Financial**| `debts.totalAmount` | `decimal` | Não | Falta assinala "Zero Dívidas". Valores altos são herdados pela família na falta do cliente, forçando ações de `AUMENTAR` a cobertura na saída. |
 | **Financial**| `currentLifeInsurance`| `object` | Não | Omitir indica 100% de Falta de Proteção Morte. Resulta sempre num score de Risco extremo (Crítico/Aumentar). |
+| **Financial**| `educationCosts.totalEstimatedCost`| `decimal` | Não | Custo total estimado de educação dos dependentes (faculdade, escola particular). Valor somado integralmente à cobertura recomendada. |
+| **Financial**| `estate.totalEstateValue`| `decimal` | Não | Valor total do patrimônio do proponente. Usado para calcular ITCMD e custos de inventário, somados à cobertura. |
+| **Financial**| `estate.state`| `string` | Não | Sigla do estado (UF) onde se localiza o patrimônio principal. Determina a alíquota de ITCMD (2–8%). Se omitido, aplica 4% (padrão). |
 | **Family** | `dependentsCount` | `int` | **Sim** | Base Teto do motor. Cada dependente adiciona um extra anual no fundo de reposição de renda da família projetado pelo Motor. |
 | **Family** | `dependentsAges` | `int[]`| Não | Array. Usado se o motor necessitar abater Gaps de cobertura baseadas na longevidade das crianças ate os 18-24 anos. |
 | **Operacional**| `originChannel` | `string`| **Sim** | Marcador de leads de Marketing pra Corretora. |
