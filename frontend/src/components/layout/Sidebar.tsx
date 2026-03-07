@@ -75,7 +75,7 @@ const sections: NavSection[] = [
   {
     label: 'Configurações',
     items: [
-      { to: '/settings', label: 'Tenant',             icon: Settings,   minRole: 'TenantOwner', tenantOnly: true },
+      { to: '/settings', label: 'Configurações',       icon: Settings,   minRole: 'TenantOwner', tenantOnly: true },
       { to: '/billing',  label: 'Plano & Faturamento', icon: CreditCard, minRole: 'TenantOwner', tenantOnly: true },
     ],
   },
