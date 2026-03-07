@@ -91,11 +91,12 @@ export default function EvaluationHistory() {
   const [filterStatus, setFilterStatus] = useState<string>('')
   const [copiedId, setCopiedId]         = useState<string | null>(null)
   const [statusMenuId, setStatusMenuId] = useState<string | null>(null)
+  const [statusMenuPos, setStatusMenuPos] = useState<{ top: number; left: number } | null>(null)
   const [confirmAction, setConfirmAction] = useState<{ id: string; status: EvaluationStatusType } | null>(null)
   const [users, setUsers]               = useState<UserRecord[]>([])
 
   // Close status menu on outside click
-  const closeMenu = useCallback(() => setStatusMenuId(null), [])
+  const closeMenu = useCallback(() => { setStatusMenuId(null); setStatusMenuPos(null) }, [])
   useEffect(() => {
     if (statusMenuId) {
       document.addEventListener('click', closeMenu)
@@ -625,45 +626,25 @@ export default function EvaluationHistory() {
 
                         {/* Status */}
                         <td className="px-4 py-3">
-                          <div className="relative">
-                            <button
-                              type="button"
-                              onClick={(e) => { e.stopPropagation(); setStatusMenuId(statusMenuId === ev.id ? null : ev.id) }}
-                              className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[11px] font-semibold transition-all cursor-pointer ${evalStatusColors((ev.status || 'ABERTO') as EvaluationStatusType)} hover:shadow-sm`}
-                            >
-                              {(ev.status || 'ABERTO') === 'CONVERTIDO' && <BadgeCheck className="h-3.5 w-3.5" />}
-                              {(ev.status || 'ABERTO') === 'ARQUIVADO' && <Archive className="h-3.5 w-3.5" />}
-                              {(ev.status || 'ABERTO') === 'ABERTO' && <CircleDot className="h-3.5 w-3.5" />}
-                              {evalStatusLabel((ev.status || 'ABERTO') as EvaluationStatusType)}
-                              <ChevronDown className="h-3 w-3 opacity-50" />
-                            </button>
-                            {statusMenuId === ev.id && (
-                              <div className="absolute left-0 top-full mt-1 z-20 w-44 rounded-xl border border-slate-200 bg-white shadow-xl py-1.5">
-                                {(['ABERTO', 'CONVERTIDO', 'ARQUIVADO'] as EvaluationStatusType[])
-                                  .filter((s) => s !== (ev.status || 'ABERTO'))
-                                  .map((s) => (
-                                    <button
-                                      key={s}
-                                      type="button"
-                                      onClick={(e) => requestStatusChange(e, ev.id, s)}
-                                      className="flex w-full items-center gap-2.5 px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 transition-colors"
-                                    >
-                                      {s === 'CONVERTIDO' && <BadgeCheck className="h-4 w-4 text-emerald-500" />}
-                                      {s === 'ARQUIVADO' && <Archive className="h-4 w-4 text-slate-400" />}
-                                      {s === 'ABERTO' && <CircleDot className="h-4 w-4 text-blue-500" />}
-                                      <div className="text-left">
-                                        <p className="font-semibold">{evalStatusLabel(s)}</p>
-                                        <p className="text-[10px] text-slate-400 font-normal">
-                                          {s === 'CONVERTIDO' && 'Venda realizada'}
-                                          {s === 'ARQUIVADO' && 'Sem interesse'}
-                                          {s === 'ABERTO' && 'Reabrir caso'}
-                                        </p>
-                                      </div>
-                                    </button>
-                                  ))}
-                              </div>
-                            )}
-                          </div>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              if (statusMenuId === ev.id) { setStatusMenuId(null); setStatusMenuPos(null) }
+                              else {
+                                const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+                                setStatusMenuPos({ top: rect.bottom + 4, left: rect.left })
+                                setStatusMenuId(ev.id)
+                              }
+                            }}
+                            className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[11px] font-semibold transition-all cursor-pointer ${evalStatusColors((ev.status || 'ABERTO') as EvaluationStatusType)} hover:shadow-sm`}
+                          >
+                            {(ev.status || 'ABERTO') === 'CONVERTIDO' && <BadgeCheck className="h-3.5 w-3.5" />}
+                            {(ev.status || 'ABERTO') === 'ARQUIVADO' && <Archive className="h-3.5 w-3.5" />}
+                            {(ev.status || 'ABERTO') === 'ABERTO' && <CircleDot className="h-3.5 w-3.5" />}
+                            {evalStatusLabel((ev.status || 'ABERTO') as EvaluationStatusType)}
+                            <ChevronDown className="h-3 w-3 opacity-50" />
+                          </button>
                         </td>
 
                         {/* Broker (Manager+ only) */}
@@ -730,6 +711,42 @@ export default function EvaluationHistory() {
         )}
 
       </div>
+
+      {/* ── Status dropdown (fixed, outside overflow container) ── */}
+      {statusMenuId && statusMenuPos && (() => {
+        const ev = items.find((e) => e.id === statusMenuId)
+        if (!ev) return null
+        return (
+          <div
+            className="fixed z-50 w-44 rounded-xl border border-slate-200 bg-white shadow-xl py-1.5"
+            style={{ top: statusMenuPos.top, left: statusMenuPos.left }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {(['ABERTO', 'CONVERTIDO', 'ARQUIVADO'] as EvaluationStatusType[])
+              .filter((s) => s !== (ev.status || 'ABERTO'))
+              .map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={(e) => requestStatusChange(e, ev.id, s)}
+                  className="flex w-full items-center gap-2.5 px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 transition-colors"
+                >
+                  {s === 'CONVERTIDO' && <BadgeCheck className="h-4 w-4 text-emerald-500" />}
+                  {s === 'ARQUIVADO' && <Archive className="h-4 w-4 text-slate-400" />}
+                  {s === 'ABERTO' && <CircleDot className="h-4 w-4 text-blue-500" />}
+                  <div className="text-left">
+                    <p className="font-semibold">{evalStatusLabel(s)}</p>
+                    <p className="text-[10px] text-slate-400 font-normal">
+                      {s === 'CONVERTIDO' && 'Venda realizada'}
+                      {s === 'ARQUIVADO' && 'Sem interesse'}
+                      {s === 'ABERTO' && 'Reabrir caso'}
+                    </p>
+                  </div>
+                </button>
+              ))}
+          </div>
+        )
+      })()}
 
       {/* ── Status change confirmation modal ── */}
       {confirmAction && (
