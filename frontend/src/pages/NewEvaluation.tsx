@@ -1,4 +1,4 @@
-import { useState, useRef, useLayoutEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ChevronRight, ChevronLeft, Send, AlertCircle,
@@ -12,20 +12,16 @@ import type { LifeInsuranceAssessmentRequest } from '../types/api'
 // ── Currency helpers ─────────────────────────────────────────────
 function parseCurrency(raw: string): number {
   if (!raw) return 0
-  const cleaned = raw.replace(/\./g, '').replace(',', '.')
-  return Number(cleaned) || 0
+  // raw is digits-only (cents). e.g. "1500000" = R$ 15.000,00
+  const cents = parseInt(raw, 10) || 0
+  return cents / 100
 }
 
 function formatCurrencyLive(raw: string): string {
   if (!raw) return ''
-  const parts = raw.split(',')
-  let intPart = parts[0].replace(/\D/g, '')
-  intPart = intPart.replace(/^0+(\d)/, '$1')
-  if (intPart.length > 3) {
-    intPart = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.')
-  }
-  if (parts.length > 1) return `${intPart},${parts[1].replace(/\D/g, '').slice(0, 2)}`
-  return intPart
+  const cents = parseInt(raw, 10) || 0
+  const reais = cents / 100
+  return reais.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
 // ── Step metadata ────────────────────────────────────────────────
@@ -796,53 +792,16 @@ function CurrencyInput({
   placeholder?: string
   hasError?: boolean
 }) {
-  const inputRef = useRef<HTMLInputElement>(null)
-  const cursorRef = useRef<number>(0)
-
-  useLayoutEffect(() => {
-    const el = inputRef.current
-    if (el && document.activeElement === el) {
-      el.setSelectionRange(cursorRef.current, cursorRef.current)
-    }
-  })
-
-  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const el = e.target
-    const pos = el.selectionStart ?? 0
-    // Count meaningful chars (digits + comma) before cursor
-    const meaningful = el.value.slice(0, pos).replace(/\./g, '').length
-
-    // Strip dots, keep only digits and one comma with max 2 decimals
-    let raw = el.value.replace(/\./g, '').replace(/[^\d,]/g, '')
-    const ci = raw.indexOf(',')
-    if (ci !== -1) {
-      raw = raw.slice(0, ci + 1) + raw.slice(ci + 1).replace(/,/g, '').slice(0, 2)
-    }
-
-    const formatted = formatCurrencyLive(raw)
-
-    // Restore cursor: find where N meaningful chars land in the formatted string
-    let count = 0
-    let newPos = formatted.length
-    for (let i = 0; i < formatted.length; i++) {
-      if (formatted[i] !== '.') count++
-      if (count >= meaningful) { newPos = i + 1; break }
-    }
-    cursorRef.current = newPos
-    onChange(raw)
-  }
-
   return (
     <div className="relative">
       <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-slate-400">
         R$
       </span>
       <input
-        ref={inputRef}
         type="text"
-        inputMode="decimal"
+        inputMode="numeric"
         value={formatCurrencyLive(value)}
-        onChange={handleChange}
+        onChange={(e) => onChange(e.target.value.replace(/\D/g, ''))}
         placeholder={placeholder ?? '0,00'}
         className={`${cls(hasError)} pl-9`}
       />
