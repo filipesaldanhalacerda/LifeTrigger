@@ -4,7 +4,7 @@ import {
   Search, Filter, TrendingUp, TrendingDown, Minus, RotateCcw,
   AlertCircle, ChevronRight, RefreshCw, Users, CheckCircle, Zap,
   ShieldAlert, ShieldCheck, ShieldQuestion, Copy, Check,
-  CircleDot, Archive, BadgeCheck,
+  CircleDot, Archive, BadgeCheck, ChevronDown, X,
 } from 'lucide-react'
 import { TopBar } from '../components/layout/TopBar'
 import { Badge } from '../components/ui/Badge'
@@ -91,6 +91,7 @@ export default function EvaluationHistory() {
   const [filterStatus, setFilterStatus] = useState<string>('')
   const [copiedId, setCopiedId]         = useState<string | null>(null)
   const [statusMenuId, setStatusMenuId] = useState<string | null>(null)
+  const [confirmAction, setConfirmAction] = useState<{ id: string; status: EvaluationStatusType } | null>(null)
   const [users, setUsers]               = useState<UserRecord[]>([])
 
   // Close status menu on outside click
@@ -136,13 +137,19 @@ export default function EvaluationHistory() {
     setFilterStatus('')
   }
 
-  async function changeStatus(e: React.MouseEvent, id: string, newStatus: EvaluationStatusType) {
+  function requestStatusChange(e: React.MouseEvent, id: string, newStatus: EvaluationStatusType) {
     e.stopPropagation()
     setStatusMenuId(null)
+    setConfirmAction({ id, status: newStatus })
+  }
+
+  async function confirmStatusChange() {
+    if (!confirmAction) return
     try {
-      await updateEvaluationStatus(id, newStatus)
-      setItems((prev) => prev.map((ev) => ev.id === id ? { ...ev, status: newStatus } : ev))
+      await updateEvaluationStatus(confirmAction.id, confirmAction.status)
+      setItems((prev) => prev.map((ev) => ev.id === confirmAction.id ? { ...ev, status: confirmAction.status } : ev))
     } catch { /* best-effort */ }
+    setConfirmAction(null)
   }
 
   const filtered = items.filter((ev) => {
@@ -622,28 +629,36 @@ export default function EvaluationHistory() {
                             <button
                               type="button"
                               onClick={(e) => { e.stopPropagation(); setStatusMenuId(statusMenuId === ev.id ? null : ev.id) }}
-                              className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold transition-colors ${evalStatusColors((ev.status || 'ABERTO') as EvaluationStatusType)} hover:opacity-80`}
+                              className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[11px] font-semibold transition-all cursor-pointer ${evalStatusColors((ev.status || 'ABERTO') as EvaluationStatusType)} hover:shadow-sm`}
                             >
-                              {(ev.status || 'ABERTO') === 'CONVERTIDO' && <BadgeCheck className="h-3 w-3" />}
-                              {(ev.status || 'ABERTO') === 'ARQUIVADO' && <Archive className="h-3 w-3" />}
-                              {(ev.status || 'ABERTO') === 'ABERTO' && <CircleDot className="h-3 w-3" />}
+                              {(ev.status || 'ABERTO') === 'CONVERTIDO' && <BadgeCheck className="h-3.5 w-3.5" />}
+                              {(ev.status || 'ABERTO') === 'ARQUIVADO' && <Archive className="h-3.5 w-3.5" />}
+                              {(ev.status || 'ABERTO') === 'ABERTO' && <CircleDot className="h-3.5 w-3.5" />}
                               {evalStatusLabel((ev.status || 'ABERTO') as EvaluationStatusType)}
+                              <ChevronDown className="h-3 w-3 opacity-50" />
                             </button>
                             {statusMenuId === ev.id && (
-                              <div className="absolute left-0 top-full mt-1 z-20 w-36 rounded-lg border border-slate-200 bg-white shadow-lg py-1">
+                              <div className="absolute left-0 top-full mt-1 z-20 w-44 rounded-xl border border-slate-200 bg-white shadow-xl py-1.5">
                                 {(['ABERTO', 'CONVERTIDO', 'ARQUIVADO'] as EvaluationStatusType[])
                                   .filter((s) => s !== (ev.status || 'ABERTO'))
                                   .map((s) => (
                                     <button
                                       key={s}
                                       type="button"
-                                      onClick={(e) => changeStatus(e, ev.id, s)}
-                                      className="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50 transition-colors"
+                                      onClick={(e) => requestStatusChange(e, ev.id, s)}
+                                      className="flex w-full items-center gap-2.5 px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 transition-colors"
                                     >
-                                      {s === 'CONVERTIDO' && <BadgeCheck className="h-3.5 w-3.5 text-emerald-500" />}
-                                      {s === 'ARQUIVADO' && <Archive className="h-3.5 w-3.5 text-slate-400" />}
-                                      {s === 'ABERTO' && <CircleDot className="h-3.5 w-3.5 text-blue-500" />}
-                                      {evalStatusLabel(s)}
+                                      {s === 'CONVERTIDO' && <BadgeCheck className="h-4 w-4 text-emerald-500" />}
+                                      {s === 'ARQUIVADO' && <Archive className="h-4 w-4 text-slate-400" />}
+                                      {s === 'ABERTO' && <CircleDot className="h-4 w-4 text-blue-500" />}
+                                      <div className="text-left">
+                                        <p className="font-semibold">{evalStatusLabel(s)}</p>
+                                        <p className="text-[10px] text-slate-400 font-normal">
+                                          {s === 'CONVERTIDO' && 'Venda realizada'}
+                                          {s === 'ARQUIVADO' && 'Sem interesse'}
+                                          {s === 'ABERTO' && 'Reabrir caso'}
+                                        </p>
+                                      </div>
                                     </button>
                                   ))}
                               </div>
@@ -715,6 +730,83 @@ export default function EvaluationHistory() {
         )}
 
       </div>
+
+      {/* ── Status change confirmation modal ── */}
+      {confirmAction && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={() => setConfirmAction(null)}>
+          <div
+            className="relative mx-4 w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl animate-scaleIn"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setConfirmAction(null)}
+              className="absolute right-4 top-4 rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+            >
+              <X className="h-4 w-4" />
+            </button>
+
+            <div className="flex items-start gap-4">
+              <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
+                confirmAction.status === 'CONVERTIDO' ? 'bg-emerald-100' : confirmAction.status === 'ARQUIVADO' ? 'bg-slate-100' : 'bg-blue-100'
+              }`}>
+                {confirmAction.status === 'CONVERTIDO' && <BadgeCheck className="h-5 w-5 text-emerald-600" />}
+                {confirmAction.status === 'ARQUIVADO' && <Archive className="h-5 w-5 text-slate-500" />}
+                {confirmAction.status === 'ABERTO' && <CircleDot className="h-5 w-5 text-blue-600" />}
+              </div>
+              <div className="flex-1">
+                <h3 className="text-base font-bold text-slate-800">
+                  {confirmAction.status === 'CONVERTIDO' && 'Marcar como Convertido'}
+                  {confirmAction.status === 'ARQUIVADO' && 'Arquivar Avaliação'}
+                  {confirmAction.status === 'ABERTO' && 'Reabrir Avaliação'}
+                </h3>
+                <p className="mt-2 text-sm text-slate-600 leading-relaxed">
+                  {confirmAction.status === 'CONVERTIDO' && (
+                    <>
+                      Ao marcar como <span className="font-semibold text-emerald-700">Convertido</span>, você confirma que a venda foi realizada e o cliente está protegido.
+                      Esta avaliação <span className="font-semibold">deixará de contar nas métricas de risco</span> do dashboard e relatórios.
+                    </>
+                  )}
+                  {confirmAction.status === 'ARQUIVADO' && (
+                    <>
+                      Ao <span className="font-semibold text-slate-700">Arquivar</span>, você indica que o cliente não tem mais interesse ou que o caso foi encerrado sem venda.
+                      Esta avaliação <span className="font-semibold">deixará de contar nas métricas de risco</span> do dashboard e relatórios.
+                    </>
+                  )}
+                  {confirmAction.status === 'ABERTO' && (
+                    <>
+                      Ao <span className="font-semibold text-blue-700">Reabrir</span>, esta avaliação voltará a ser contabilizada nas métricas de risco do dashboard e relatórios como um caso ativo.
+                    </>
+                  )}
+                </p>
+                <p className="mt-2 text-xs text-slate-400">
+                  Os dados e o hash de auditoria da avaliação permanecem intactos. Você pode alterar o status novamente a qualquer momento.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-5 flex items-center justify-end gap-2">
+              <button
+                onClick={() => setConfirmAction(null)}
+                className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmStatusChange}
+                className={`rounded-lg px-4 py-2 text-sm font-semibold text-white transition-colors ${
+                  confirmAction.status === 'CONVERTIDO' ? 'bg-emerald-600 hover:bg-emerald-700'
+                  : confirmAction.status === 'ARQUIVADO' ? 'bg-slate-600 hover:bg-slate-700'
+                  : 'bg-blue-600 hover:bg-blue-700'
+                }`}
+              >
+                {confirmAction.status === 'CONVERTIDO' && 'Confirmar Conversão'}
+                {confirmAction.status === 'ARQUIVADO' && 'Confirmar Arquivamento'}
+                {confirmAction.status === 'ABERTO' && 'Confirmar Reabertura'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
