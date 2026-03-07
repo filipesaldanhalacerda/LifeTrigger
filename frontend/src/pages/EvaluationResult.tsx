@@ -5,6 +5,7 @@ import {
   TrendingUp, TrendingDown, Minus, RotateCcw, Copy, Check,
   ShieldCheck, Shield, BarChart3, User, DollarSign, Baby,
   Lightbulb, MessageSquare, Target, HelpCircle, Package, ArrowRight,
+  Cigarette, Briefcase, Landmark, GraduationCap, CreditCard, Wallet,
 } from 'lucide-react'
 import { TopBar } from '../components/layout/TopBar'
 import { ScoreRing } from '../components/ui/ScoreRing'
@@ -174,7 +175,7 @@ export default function EvaluationResult() {
         {activeTab === 'resultado' && (
           <div className="space-y-5">
 
-            {/* Coverage gap */}
+            {/* 1. Coverage gap — most important */}
             <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-card">
               <h2 className="text-sm font-semibold text-slate-900">Cobertura vs. Necessidade</h2>
               <p className="mt-0.5 mb-5 text-xs text-slate-500">
@@ -206,7 +207,37 @@ export default function EvaluationResult() {
               </div>
             </div>
 
-            {/* Coverage breakdown */}
+            {/* 2. Scores */}
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-card">
+              <h2 className="text-sm font-semibold text-slate-900">Scores da Avaliação</h2>
+              <p className="mt-0.5 mb-4 text-xs text-slate-500">
+                Indicadores calculados pelo motor a partir do perfil financeiro e familiar do cliente.
+              </p>
+              <div className="mb-4 flex flex-wrap items-center gap-x-5 gap-y-1.5 rounded-lg border border-slate-100 bg-slate-50 px-4 py-2.5">
+                <p className="text-[11px] font-semibold text-slate-500 shrink-0">Escala de referência:</p>
+                <div className="flex flex-wrap items-center gap-3">
+                  <ScalePill range="0 – 29"   hint="Crítico"  colorClass="bg-red-100 text-red-700" />
+                  <ScalePill range="30 – 69"  hint="Moderado" colorClass="bg-amber-100 text-amber-700" />
+                  <ScalePill range="70 – 100" hint="Adequado" colorClass="bg-emerald-100 text-emerald-700" />
+                </div>
+              </div>
+              <div className="space-y-3">
+                <ScoreRow
+                  score={result.protectionScore}
+                  nameLocal="Score de Proteção"
+                  nameTech="Protection Score"
+                  description="Mede quantos % da cobertura necessária (calculada pelo motor) a apólice atual já cobre. 100 = cobertura completa para o perfil. 0 = sem nenhuma cobertura. Quanto maior, melhor."
+                />
+                <ScoreRow
+                  score={result.coverageEfficiencyScore}
+                  nameLocal="Score de Eficiência"
+                  nameTech="Efficiency Score"
+                  description="Avalia se a apólice está bem dimensionada. Penaliza tanto a subcobertura quanto a sobrecobertura excessiva. 100 = cobertura perfeitamente calibrada para renda + dependentes + dívidas."
+                />
+              </div>
+            </div>
+
+            {/* 3. Coverage breakdown */}
             {result.recommendedCoverageAmount > 0 && (
               <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-card">
                 <h2 className="text-sm font-semibold text-slate-900">Composição da Cobertura Recomendada</h2>
@@ -253,45 +284,44 @@ export default function EvaluationResult() {
               </div>
             )}
 
-            {/* Scores */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-card">
-              <h2 className="text-sm font-semibold text-slate-900">Scores da Avaliação</h2>
-              <p className="mt-0.5 mb-4 text-xs text-slate-500">
-                Dois indicadores calculados pelo motor a partir do perfil financeiro e familiar do cliente.
-              </p>
-              <div className="mb-4 flex flex-wrap items-center gap-x-5 gap-y-1.5 rounded-lg border border-slate-100 bg-slate-50 px-4 py-2.5">
-                <p className="text-[11px] font-semibold text-slate-500 shrink-0">Escala de referência:</p>
-                <div className="flex flex-wrap items-center gap-3">
-                  <ScalePill range="0 – 29"   hint="Crítico"  colorClass="bg-red-100 text-red-700" />
-                  <ScalePill range="30 – 69"  hint="Moderado" colorClass="bg-amber-100 text-amber-700" />
-                  <ScalePill range="70 – 100" hint="Adequado" colorClass="bg-emerald-100 text-emerald-700" />
-                </div>
+            {/* 4. Justifications — moved from Auditoria */}
+            {result.justificationsRendered?.length > 0 && (
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-card">
+                <h2 className="mb-1 text-sm font-semibold text-slate-900">Justificativas do Cálculo</h2>
+                <p className="mb-4 text-xs text-slate-500">
+                  Regras aplicadas pelo motor que influenciaram este resultado.
+                </p>
+                <ul className="space-y-2">
+                  {result.justificationsRendered.map((text, i) => (
+                    <li key={i} className="flex items-start gap-2.5 rounded-lg border border-slate-100 bg-slate-50 px-3 py-2.5">
+                      <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-brand-500" />
+                      <span className="text-sm text-slate-700">{text}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
-              <div className="space-y-3">
-                <ScoreRow
-                  score={result.protectionScore}
-                  nameLocal="Score de Proteção"
-                  nameTech="Protection Score"
-                  description="Mede quantos % da cobertura necessária (calculada pelo motor) a apólice atual já cobre. 100 = cobertura completa para o perfil. 0 = sem nenhuma cobertura. Quanto maior, melhor."
-                />
-                <ScoreRow
-                  score={result.coverageEfficiencyScore}
-                  nameLocal="Score de Eficiência"
-                  nameTech="Efficiency Score"
-                  description="Avalia se a apólice está bem dimensionada. Penaliza tanto a subcobertura quanto a sobrecobertura excessiva. 100 = cobertura perfeitamente calibrada para renda + dependentes + dívidas."
-                />
-              </div>
-            </div>
+            )}
 
-            {/* Client context */}
+            {/* 5. Client context — expanded */}
             {req && (
               <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-card">
                 <h2 className="mb-1 text-sm font-semibold text-slate-900">Dados do Cliente Avaliado</h2>
                 <p className="mb-4 text-xs text-slate-500">
                   Perfil utilizado pelo motor para calcular a necessidade de cobertura.
                 </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
+
+                {/* Primary data */}
+                <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">Perfil Pessoal</p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-5">
                   <ContextCard icon={User} label="Idade" value={`${req.personalContext.age} anos`} />
+                  <ContextCard icon={Baby} label="Dependentes" value={`${req.familyContext.dependentsCount}`} />
+                  <ContextCard icon={Briefcase} label="Risco profissional" value={req.personalContext.professionRiskLevel} />
+                  <ContextCard icon={Cigarette} label="Fumante" value={req.personalContext.isSmoker ? 'Sim' : 'Não'} />
+                </div>
+
+                {/* Financial data */}
+                <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">Contexto Financeiro</p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-5">
                   <ContextCard
                     icon={DollarSign}
                     label="Renda mensal"
@@ -314,14 +344,48 @@ export default function EvaluationResult() {
                         : 'Sem apólice'
                     })()}
                   />
-                  <ContextCard icon={Baby}     label="Dependentes"       value={`${req.familyContext.dependentsCount}`} />
-                  <ContextCard icon={Shield}   label="Risco profissional" value={req.personalContext.professionRiskLevel} />
-                  <ContextCard icon={BarChart3} label="Canal de origem"   value={req.operationalData.originChannel} />
+                  <ContextCard
+                    icon={CreditCard}
+                    label="Dívidas"
+                    value={req.financialContext.debts?.totalAmount
+                      ? formatCurrency(req.financialContext.debts.totalAmount)
+                      : 'Sem dívidas'}
+                  />
+                  <ContextCard
+                    icon={Wallet}
+                    label="Reserva emergência"
+                    value={req.financialContext.emergencyFundMonths != null
+                      ? `${req.financialContext.emergencyFundMonths} meses`
+                      : 'Não informado'}
+                  />
+                  {req.financialContext.educationCosts?.totalEstimatedCost != null &&
+                    req.financialContext.educationCosts.totalEstimatedCost > 0 && (
+                    <ContextCard
+                      icon={GraduationCap}
+                      label="Custos educação"
+                      value={formatCurrency(req.financialContext.educationCosts.totalEstimatedCost)}
+                    />
+                  )}
+                  {req.financialContext.estate?.totalEstateValue != null &&
+                    req.financialContext.estate.totalEstateValue > 0 && (
+                    <ContextCard
+                      icon={Landmark}
+                      label="Patrimônio"
+                      value={`${formatCurrency(req.financialContext.estate.totalEstateValue)}${req.financialContext.estate.state ? ` (${req.financialContext.estate.state})` : ''}`}
+                    />
+                  )}
+                </div>
+
+                {/* Operational */}
+                <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">Operacional</p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                  <ContextCard icon={BarChart3} label="Canal de origem" value={req.operationalData.originChannel} />
+                  <ContextCard icon={Shield} label="Consentimento" value={req.operationalData.hasExplicitActiveConsent ? 'Ativo' : 'Pendente'} />
                 </div>
               </div>
             )}
 
-            {/* CTAs */}
+            {/* 6. CTAs */}
             <div className="flex flex-wrap gap-3">
               <button
                 onClick={() => navigate('/triggers/new')}
@@ -376,24 +440,6 @@ export default function EvaluationResult() {
         {/* ── Tab: Auditoria ── */}
         {activeTab === 'auditoria' && (
           <div className="space-y-5">
-
-            {/* Justifications */}
-            {result.justificationsRendered?.length > 0 && (
-              <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-card">
-                <h2 className="mb-1 text-sm font-semibold text-slate-900">Justificativas do Cálculo</h2>
-                <p className="mb-4 text-xs text-slate-500">
-                  Regras aplicadas pelo motor que influenciaram este resultado.
-                </p>
-                <ul className="space-y-2">
-                  {result.justificationsRendered.map((text, i) => (
-                    <li key={i} className="flex items-start gap-2.5 rounded-lg border border-slate-100 bg-slate-50 px-3 py-2.5">
-                      <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-brand-500" />
-                      <span className="text-sm text-slate-700">{text}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
 
             {/* Audit metadata */}
             {result.audit && (
