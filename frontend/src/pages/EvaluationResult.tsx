@@ -347,7 +347,7 @@ export default function EvaluationResult() {
                     </p>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                   {([
                     { label: 'Cobertura Recomendada', prev: previousResult.recommendedCoverageAmount, curr: result.recommendedCoverageAmount, fmt: 'currency' as const },
                     { label: 'Score de Proteção', prev: previousResult.protectionScore, curr: result.protectionScore, fmt: 'pct' as const },
@@ -531,7 +531,7 @@ export default function EvaluationResult() {
 
                 {/* Primary data */}
                 <SectionLabel label="Perfil Pessoal" />
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-5">
                   <ContextCard icon={User} label="Idade" value={`${req.personalContext.age} anos`} />
                   <ContextCard icon={Baby} label="Dependentes" value={`${req.familyContext.dependentsCount}`} />
                   <ContextCard icon={Briefcase} label="Risco profissional" value={req.personalContext.professionRiskLevel} />
@@ -540,7 +540,7 @@ export default function EvaluationResult() {
 
                 {/* Financial data */}
                 <SectionLabel label="Contexto Financeiro" />
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-5">
                   <ContextCard
                     icon={DollarSign}
                     label="Renda mensal"
@@ -597,7 +597,7 @@ export default function EvaluationResult() {
 
                 {/* Operational */}
                 <SectionLabel label="Operacional" />
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                   <ContextCard icon={BarChart3} label="Canal de origem" value={req.operationalData.originChannel} />
                   <ContextCard icon={Shield} label="Consentimento" value={req.operationalData.hasExplicitActiveConsent ? 'Ativo' : 'Pendente'} />
                 </div>
@@ -623,7 +623,7 @@ export default function EvaluationResult() {
                   </div>
                   <button
                     onClick={() => navigate('/triggers/new', { state: { prefill: record.request } })}
-                    className="flex items-center justify-center gap-2 rounded-xl bg-amber-500 px-6 py-3 text-sm font-bold text-white shadow-sm hover:bg-amber-600 transition-colors shrink-0"
+                    className="flex items-center justify-center gap-2 rounded-xl bg-amber-500 px-6 py-3 text-sm font-bold text-white shadow-sm hover:bg-amber-600 transition-colors w-full sm:w-auto sm:shrink-0"
                   >
                     <Zap className="h-4 w-4" />
                     Registrar Gatilho

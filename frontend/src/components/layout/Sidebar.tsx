@@ -125,7 +125,7 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
         'fixed inset-y-0 left-0 z-50 flex flex-col border-r border-brand-900/30 transition-all duration-300 ease-in-out',
         // Mobile: full-width drawer, slide in/out
         mobileOpen ? 'translate-x-0' : '-translate-x-full',
-        'w-72 lg:translate-x-0',
+        'w-72 max-w-[85vw] lg:max-w-none lg:translate-x-0',
         // Desktop: respect collapsed state
         collapsed ? 'lg:w-20' : 'lg:w-64',
       )}

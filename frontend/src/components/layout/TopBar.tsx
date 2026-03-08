@@ -145,7 +145,7 @@ export function TopBar({ title, subtitle }: TopBarProps) {
             </button>
 
             {userMenuOpen && (
-              <div className="absolute right-0 mt-2 w-64 rounded-xl border border-slate-200 bg-white shadow-elevated ring-1 ring-black/5 overflow-hidden animate-scaleIn">
+              <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-64 rounded-xl border border-slate-200 bg-white shadow-elevated ring-1 ring-black/5 overflow-hidden animate-scaleIn">
                 <div className="flex items-center gap-3 px-4 py-3.5 bg-slate-50 border-b border-slate-100">
                   <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-bold text-white ${avatarBg}`}>
                     {initials}

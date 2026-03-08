@@ -75,7 +75,7 @@ function CalendarMonth({
   const effectiveEnd = rangeEnd ?? hoverDate
 
   return (
-    <div className="select-none w-[252px]">
+    <div className="select-none w-full min-w-[224px] sm:w-[252px]">
       <div className="flex items-center justify-between mb-3 px-1">
         {onPrev
           ? <button type="button" onClick={onPrev} aria-label="Mês anterior" className="p-1 rounded-md hover:bg-slate-100 text-slate-500 transition-colors"><ChevronLeft className="h-4 w-4" /></button>

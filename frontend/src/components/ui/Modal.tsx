@@ -23,6 +23,14 @@ export function Modal({ open, onClose, title, children, maxWidth = 'max-w-lg' }:
     return () => document.removeEventListener('keydown', handleKey)
   }, [open, onClose])
 
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (!open) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = prev }
+  }, [open])
+
   // Trap focus inside modal
   useEffect(() => {
     if (!open) return

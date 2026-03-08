@@ -726,7 +726,7 @@ export default function NewTrigger() {
                     <p className="text-[11px] text-slate-400">
                       Dependentes mais jovens aumentam o horizonte de proteção calculado pelo motor.
                     </p>
-                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
                       {dependentsAges.map((depAge, i) => (
                         <div key={i} className="space-y-1.5">
                           <label className="text-[11px] font-semibold text-slate-500">Dependente {i + 1}</label>
@@ -991,7 +991,7 @@ export default function NewTrigger() {
                         </div>
 
                         {/* Calculator params */}
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <Field label="Reajuste anual" hint="">
                             <div className="relative">
                               <input
@@ -1138,7 +1138,7 @@ export default function NewTrigger() {
             )}
 
             {/* ── Navigation ── */}
-            <div className="mt-8 flex items-center justify-between border-t border-slate-100 pt-5">
+            <div className="mt-8 flex flex-col-reverse sm:flex-row items-center justify-between gap-3 border-t border-slate-100 pt-5">
               <button
                 type="button"
                 onClick={() => { setStep((s) => s - 1); setFieldErrors({}) }}

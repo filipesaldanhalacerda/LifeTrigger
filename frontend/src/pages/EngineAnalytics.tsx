@@ -84,7 +84,7 @@ export default function EngineAnalytics() {
         {!loading && data && (
           <>
             {/* Summary cards */}
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <SummaryCard label="Total Avaliações" value={data.total} icon={Activity} iconBg="bg-brand-50" iconColor="text-brand-600" />
               <SummaryCard label="Score Médio" value={`${data.avgScore}%`} icon={Target} iconBg="bg-emerald-50" iconColor="text-emerald-600" />
               <SummaryCard label="Gap Médio" value={`${data.avgGap}%`} icon={TrendingUp} iconBg="bg-amber-50" iconColor="text-amber-600" />
