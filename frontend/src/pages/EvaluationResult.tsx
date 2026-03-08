@@ -6,13 +6,14 @@ import {
   ShieldCheck, Shield, BarChart3, User, DollarSign, Baby,
   Lightbulb, MessageSquare, Target, HelpCircle, Package, ArrowRight,
   Cigarette, Briefcase, Landmark, GraduationCap, CreditCard, Wallet,
-  Info, ChevronDown,
+  Info, ChevronDown, BadgeCheck, CircleDot, Archive, PieChart,
 } from 'lucide-react'
 import { TopBar } from '../components/layout/TopBar'
 import { ScoreRing } from '../components/ui/ScoreRing'
 import { GapBar } from '../components/ui/GapBar'
 import { Badge } from '../components/ui/Badge'
-import { getEvaluation, getEvaluations, getActiveTenantId, updateEvaluationStatus } from '../lib/api'
+import { getEvaluation, getEvaluations, getActiveTenantId } from '../lib/api'
+import { StatusChangeModal } from '../components/evaluation/StatusChangeModal'
 import {
   actionColors, actionLabel, riskColors, riskLabel, coverageStatusLabel,
   formatCurrency, formatDate, riskScoreColor, evalStatusLabel, evalStatusColors,
@@ -71,6 +72,7 @@ export default function EvaluationResult() {
   const [activeTab, setActiveTab] = useState<TabId>('resultado')
   const [previousResult, setPreviousResult] = useState<LifeInsuranceAssessmentResult | null>(null)
   const [showStatusMenu, setShowStatusMenu] = useState(false)
+  const [confirmAction, setConfirmAction] = useState<{ status: EvaluationStatusType } | null>(null)
 
   useEffect(() => {
     if (id) {
@@ -112,13 +114,16 @@ export default function EvaluationResult() {
     })
   }
 
-  async function handleStatusChange(newStatus: EvaluationStatusType) {
-    if (!record || !id) return
+  function requestStatusChange(newStatus: EvaluationStatusType) {
+    if (!record || !id || !result) return
     setShowStatusMenu(false)
-    try {
-      await updateEvaluationStatus(id, newStatus)
-      setRecord({ ...record, status: newStatus })
-    } catch { /* best-effort */ }
+    setConfirmAction({ status: newStatus })
+  }
+
+  function handleStatusConfirmed(finalStatus: EvaluationStatusType, statusNotes?: string) {
+    if (!record) return
+    setRecord({ ...record, status: finalStatus, statusNotes })
+    setConfirmAction(null)
   }
 
   // ── Loading ───────────────────────────────────────────────────
@@ -187,23 +192,29 @@ export default function EvaluationResult() {
                   <ChevronDown className="h-3 w-3" />
                 </button>
                 {showStatusMenu && (
-                  <div className="absolute right-0 top-full mt-1 z-20 w-44 rounded-lg border border-slate-200 bg-white shadow-lg py-1">
+                  <div className="absolute right-0 top-full mt-1 z-20 w-44 rounded-xl border border-slate-200 bg-white shadow-xl py-1.5">
                     {(['ABERTO', 'CONVERTIDO', 'CONVERTIDO_PARCIAL', 'ARQUIVADO'] as EvaluationStatusType[])
                       .filter((s) => s !== (record.status || 'ABERTO'))
                       .map((s) => (
                         <button
                           key={s}
                           type="button"
-                          onClick={() => handleStatusChange(s)}
-                          className="flex w-full items-center gap-2 px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 transition-colors"
+                          onClick={() => requestStatusChange(s)}
+                          className="flex w-full items-center gap-2.5 px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 transition-colors"
                         >
-                          <span className={`inline-block h-2 w-2 rounded-full ${
-                            s === 'CONVERTIDO' ? 'bg-emerald-500'
-                            : s === 'CONVERTIDO_PARCIAL' ? 'bg-amber-500'
-                            : s === 'ARQUIVADO' ? 'bg-slate-400'
-                            : 'bg-blue-500'
-                          }`} />
-                          {evalStatusLabel(s)}
+                          {s === 'CONVERTIDO' && <BadgeCheck className="h-4 w-4 text-emerald-500" />}
+                          {s === 'CONVERTIDO_PARCIAL' && <PieChart className="h-4 w-4 text-amber-500" />}
+                          {s === 'ARQUIVADO' && <Archive className="h-4 w-4 text-slate-400" />}
+                          {s === 'ABERTO' && <CircleDot className="h-4 w-4 text-blue-500" />}
+                          <div className="text-left">
+                            <p className="font-semibold">{evalStatusLabel(s)}</p>
+                            <p className="text-[10px] text-slate-400 font-normal">
+                              {s === 'CONVERTIDO' && 'Venda realizada'}
+                              {s === 'CONVERTIDO_PARCIAL' && 'Venda parcial com gap'}
+                              {s === 'ARQUIVADO' && 'Sem interesse'}
+                              {s === 'ABERTO' && 'Reabrir caso'}
+                            </p>
+                          </div>
                         </button>
                       ))}
                   </div>
@@ -722,6 +733,16 @@ export default function EvaluationResult() {
         )}
 
       </div>
+
+      {/* ── Status confirmation modal ── */}
+      {confirmAction && id && (
+        <StatusChangeModal
+          evaluationId={id}
+          initialStatus={confirmAction.status}
+          onConfirmed={handleStatusConfirmed}
+          onCancel={() => setConfirmAction(null)}
+        />
+      )}
     </div>
   )
 }

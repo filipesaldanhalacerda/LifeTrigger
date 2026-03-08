@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
@@ -12,22 +13,30 @@ namespace LifeTrigger.Engine.Api.Controllers;
 
 [ApiController]
 [Route("api/v1/auth")]
-[AllowAnonymous] // Garante que este endpoint sempre seja público
+[AllowAnonymous]
 public class AuthController : ControllerBase
 {
     private readonly IConfiguration _configuration;
+    private readonly IHostEnvironment _env;
 
-    public AuthController(IConfiguration configuration)
+    public AuthController(IConfiguration configuration, IHostEnvironment env)
     {
         _configuration = configuration;
+        _env = env;
     }
 
     /// <summary>
     /// Mock Endpoint (Apenas Desenvolvimento): Gera um JWT válido contendo o TenantId especificado.
+    /// Bloqueado em produção.
     /// </summary>
     [HttpPost("mock-token")]
     public IActionResult GenerateMockToken([FromBody] MockTokenRequest request)
     {
+        if (!_env.IsDevelopment())
+        {
+            return NotFound();
+        }
+
         if (string.IsNullOrWhiteSpace(request.TenantId))
         {
             return BadRequest(new { Error = "TenantId is required" });

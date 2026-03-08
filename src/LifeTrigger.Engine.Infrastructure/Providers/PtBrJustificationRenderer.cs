@@ -27,6 +27,9 @@ public class PtBrJustificationRenderer : IRuleJustificationRenderer
         { "rules.education_costs", "Custos de educação dos dependentes no valor estimado de {0:C} adicionados à cobertura recomendada." },
         { "rules.itcmd_estate_tax", "ITCMD calculado sobre patrimônio de {0:C} à alíquota de {1:F0}% (estado {2}), totalizando {3:C}." },
         { "rules.inventory_costs", "Custos de inventário e honorários calculados sobre patrimônio de {0:C} à taxa de {1:F0}%, totalizando {2:C}." },
+        { "rules.coverage_type_ap_only", "A apólice informada é de Acidentes Pessoais, que cobre apenas morte acidental (não doença ou causa natural). Cobertura declarada: {0:C} — cobertura efetiva considerada pelo motor: {1:C} (30% do valor declarado)." },
+        { "rules.coverage_type_group_portability_risk", "A apólice informada é de Seguro de Vida em Grupo (empresarial). A cobertura de {0:C} é válida, mas cessa imediatamente com o desligamento do vínculo empregatício. Recomenda-se cobertura individual complementar." },
+        { "rules.coverage_type_prestamista_not_family", "A apólice informada é Seguro Prestamista, que paga exclusivamente ao credor (banco/financeira) e não à família. O valor de {0:C} não foi contabilizado como proteção familiar." },
         { "rules.action_override_old_review", "Ação alterada para REVISAR devido à última revisão ter ocorrido há mais de 12 meses." },
         { "rules.action_override_unconfirmed_data", "Ação alterada para REVISAR devido à existência de dados essenciais não confirmados." },
         { "rules.action_override_recent_trigger", "Ação alterada para REVISAR devido à ocorrência de um gatilho de vida recente." }
@@ -62,6 +65,9 @@ public class PtBrJustificationRenderer : IRuleJustificationRenderer
             EngineRuleId.RULE_EDUCATION_COSTS => new[] { args["amount"].GetValue() },
             EngineRuleId.RULE_ITCMD_ESTATE_TAX => new[] { args["estateValue"].GetValue(), args["rate"].GetValue(), args["state"].GetValue(), args["amount"].GetValue() },
             EngineRuleId.RULE_INVENTORY_COSTS => new[] { args["estateValue"].GetValue(), args["rate"].GetValue(), args["amount"].GetValue() },
+            EngineRuleId.RULE_COVERAGE_TYPE_AP_ONLY => new[] { args["declaredCoverage"].GetValue(), args["effectiveCoverage"].GetValue() },
+            EngineRuleId.RULE_COVERAGE_TYPE_GROUP_PORTABILITY_RISK => new[] { args["coverageAmount"].GetValue() },
+            EngineRuleId.RULE_COVERAGE_TYPE_PRESTAMISTA_NOT_FAMILY => new[] { args["declaredCoverage"].GetValue() },
             _ => Array.Empty<object>()
         };
     }

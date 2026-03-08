@@ -106,8 +106,10 @@ builder.Services.AddAuthentication(x =>
     {
         ValidateIssuerSigningKey = true,
         IssuerSigningKey = new SymmetricSecurityKey(key),
-        ValidateIssuer = false,
-        ValidateAudience = false,
+        ValidateIssuer = true,
+        ValidIssuers = new[] { "LifeTrigger.Auth", "LifeTrigger.LocalAuth" },
+        ValidateAudience = true,
+        ValidAudience = "LifeTrigger.Engine",
         RoleClaimType = "role",
         NameClaimType = "sub",
     };

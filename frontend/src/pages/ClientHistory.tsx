@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
+import { useCopyToClipboard } from '../hooks/useCopyToClipboard'
 import { useNavigate } from 'react-router-dom'
 import {
   Search, Users, TrendingUp, TrendingDown, Minus, RotateCcw,
   Loader2, AlertCircle, ChevronRight, ChevronDown,
-  ShieldAlert, ShieldQuestion, ShieldCheck,
+  ShieldAlert, ShieldQuestion, ShieldCheck, Copy, Check,
 } from 'lucide-react'
 import { TopBar } from '../components/layout/TopBar'
 import { Badge } from '../components/ui/Badge'
@@ -61,6 +62,7 @@ function RiskIcon({ risk }: { risk: RiskClassification }) {
 function ClientGroupRow({ group }: { group: ClientGroup }) {
   const navigate   = useNavigate()
   const [expanded, setExpanded] = useState(false)
+  const [copiedId, copyId] = useCopyToClipboard()
   const scoreColor = group.latestScore >= 70 ? 'bg-emerald-500' : group.latestScore >= 40 ? 'bg-amber-500' : 'bg-red-500'
 
   return (
@@ -72,10 +74,23 @@ function ClientGroupRow({ group }: { group: ClientGroup }) {
       >
         {/* Expand toggle + consent ID */}
         <td className="px-4 py-3">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 group">
             <ChevronDown className={`h-4 w-4 shrink-0 text-slate-400 transition-transform ${expanded ? 'rotate-180' : ''}`} />
-            <div>
-              <p className="font-mono text-xs font-semibold text-slate-700">{group.consentId.slice(0, 20)}{group.consentId.length > 20 ? '…' : ''}</p>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5">
+                <p className="font-mono text-xs font-semibold text-slate-700 truncate max-w-[260px]" title={group.consentId}>{group.consentId}</p>
+                <button
+                  type="button"
+                  onClick={(e) => copyId(e, group.consentId)}
+                  title="Copiar consentId"
+                  className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  {copiedId === group.consentId
+                    ? <Check className="h-3.5 w-3.5 text-emerald-500" />
+                    : <Copy className="h-3.5 w-3.5 text-slate-400 hover:text-slate-600" />
+                  }
+                </button>
+              </div>
               <p className="text-[11px] text-slate-400 tabular-nums">{group.evaluations.length} avaliação{group.evaluations.length !== 1 ? 'ões' : ''}</p>
             </div>
           </div>
@@ -118,7 +133,7 @@ function ClientGroupRow({ group }: { group: ClientGroup }) {
         return (
           <tr
             key={ev.id}
-            className="bg-slate-50 hover:bg-brand-50 cursor-pointer transition-colors"
+            className="bg-slate-50 hover:bg-brand-50 cursor-pointer transition-colors group/row"
             onClick={(e) => { e.stopPropagation(); navigate(`/evaluations/${ev.id}`) }}
           >
             <td className="py-2.5 pl-14 pr-4">
@@ -126,7 +141,18 @@ function ClientGroupRow({ group }: { group: ClientGroup }) {
                 <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-white border border-slate-200">
                   <EvIcon className="h-3 w-3 text-slate-500" />
                 </div>
-                <p className="font-mono text-[11px] text-slate-500">{ev.id.slice(0, 18)}…</p>
+                <p className="font-mono text-[11px] text-slate-500 truncate max-w-[220px]" title={ev.id}>{ev.id}</p>
+                <button
+                  type="button"
+                  onClick={(e) => copyId(e, ev.id)}
+                  title="Copiar ID"
+                  className="shrink-0 opacity-0 group-hover/row:opacity-100 transition-opacity"
+                >
+                  {copiedId === ev.id
+                    ? <Check className="h-3 w-3 text-emerald-500" />
+                    : <Copy className="h-3 w-3 text-slate-400 hover:text-slate-600" />
+                  }
+                </button>
               </div>
             </td>
             <td className="px-4 py-2.5 text-[11px] text-slate-400">{formatDate(ev.timestamp)}</td>
@@ -153,6 +179,7 @@ function ClientGroupRow({ group }: { group: ClientGroup }) {
 function MobileClientCard({ group }: { group: ClientGroup }) {
   const navigate = useNavigate()
   const [expanded, setExpanded] = useState(false)
+  const [copiedId, copyId] = useCopyToClipboard()
   const scoreColor = group.latestScore >= 70 ? 'bg-emerald-500' : group.latestScore >= 40 ? 'bg-amber-500' : 'bg-red-500'
 
   return (
@@ -164,9 +191,22 @@ function MobileClientCard({ group }: { group: ClientGroup }) {
         <RiskIcon risk={group.latestRisk} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2">
-            <p className="font-mono text-xs font-semibold text-slate-700 truncate">
-              {group.consentId.slice(0, 20)}{group.consentId.length > 20 ? '…' : ''}
-            </p>
+            <div className="flex items-center gap-1.5 min-w-0">
+              <p className="font-mono text-xs font-semibold text-slate-700 truncate" title={group.consentId}>
+                {group.consentId}
+              </p>
+              <button
+                type="button"
+                onClick={(e) => copyId(e, group.consentId)}
+                title="Copiar consentId"
+                className="shrink-0"
+              >
+                {copiedId === group.consentId
+                  ? <Check className="h-3.5 w-3.5 text-emerald-500" />
+                  : <Copy className="h-3.5 w-3.5 text-slate-400" />
+                }
+              </button>
+            </div>
             <ChevronDown className={`h-4 w-4 shrink-0 text-slate-400 transition-transform ${expanded ? 'rotate-180' : ''}`} />
           </div>
           <div className="mt-1 flex flex-wrap items-center gap-1.5">
@@ -199,7 +239,20 @@ function MobileClientCard({ group }: { group: ClientGroup }) {
                   <EvIcon className="h-3 w-3 text-slate-500" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-mono text-[11px] text-slate-500 truncate">{ev.id.slice(0, 18)}…</p>
+                  <div className="flex items-center gap-1">
+                    <p className="font-mono text-[11px] text-slate-500 truncate" title={ev.id}>{ev.id}</p>
+                    <button
+                      type="button"
+                      onClick={(e) => copyId(e, ev.id)}
+                      title="Copiar ID"
+                      className="shrink-0"
+                    >
+                      {copiedId === ev.id
+                        ? <Check className="h-3 w-3 text-emerald-500" />
+                        : <Copy className="h-3 w-3 text-slate-400" />
+                      }
+                    </button>
+                  </div>
                   <p className="text-[10px] text-slate-400">{formatDate(ev.timestamp)}</p>
                 </div>
                 <Badge className={riskColors(ev.risk)} size="sm">{riskLabel(ev.risk)}</Badge>

@@ -21,7 +21,7 @@ Os fluxos rejeitarão (HTTP 400 Validation Error) qualquer valor fora dos mapeam
 
 *   **Estado Civil (`maritalStatus`)**: `SOLTEIRO`, `CASADO`, `DIVORCIADO`, `VIUVO`
 *   **Risco da Profissão (`professionRiskLevel`)**: `BAIXO`, `MEDIO`, `ALTO`, `MUITO_ALTO` (Atenção: A falta de mapeamento correto trava a requisição).
-*   **Tipo de Seguro Atual (`policyType`)**: `TEMPORARIO`, `VIDA_INTEIRA`, `ACIDENTES_PESSOAIS`, `DESCONHECIDO`
+*   **Tipo de Seguro Atual (`policyType`)**: `TEMPORARIO`, `VIDA_INTEIRA`, `RESGATAVEL`, `GRUPO_EMPRESARIAL`, `ACIDENTES_PESSOAIS`, `PRESTAMISTA`. **Atenção:** `ACIDENTES_PESSOAIS` cobre apenas morte acidental (fator 0.3× no motor). `PRESTAMISTA` paga o credor, não a família (fator 0× no motor).
 *   **Ação Recomendada (`recommendedAction`) (Retorno Principal)**: `AUMENTAR`, `MANTER`, `REDUZIR`, `REVISAR`
 *   **Classificação de Risco (`riskClassification`) (Retorno de Score)**: `CRITICO`, `MODERADO`, `ADEQUADO`
 *   **Status da Cobertura (`coverageStatus`)**: `SUBPROTEGIDO`, `ADEQUADO`, `SOBRESEGURADO`

@@ -93,7 +93,7 @@ components:
                   example: 250000.00
                 policyType:
                   type: string
-                  enum: [TEMPORARIO, VIDA_INTEIRA, ACIDENTES_PESSOAIS, DESCONHECIDO]
+                  enum: [TEMPORARIO, VIDA_INTEIRA, RESGATAVEL, GRUPO_EMPRESARIAL, ACIDENTES_PESSOAIS, PRESTAMISTA]
                   example: "TEMPORARIO"
             educationCosts:
               type: object

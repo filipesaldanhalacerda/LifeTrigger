@@ -31,6 +31,9 @@ public static class JustificationTemplateRegistry
         { EngineRuleId.RULE_EDUCATION_COSTS, ("RULE_EDUCATION_COSTS_V1", "rules.education_costs", new[] { "amount" }) },
         { EngineRuleId.RULE_ITCMD_ESTATE_TAX, ("RULE_ITCMD_ESTATE_TAX_V1", "rules.itcmd_estate_tax", new[] { "estateValue", "rate", "amount", "state" }) },
         { EngineRuleId.RULE_INVENTORY_COSTS, ("RULE_INVENTORY_COSTS_V1", "rules.inventory_costs", new[] { "estateValue", "rate", "amount" }) },
+        { EngineRuleId.RULE_COVERAGE_TYPE_AP_ONLY, ("RULE_COVERAGE_TYPE_AP_ONLY_V1", "rules.coverage_type_ap_only", new[] { "declaredCoverage", "effectiveCoverage" }) },
+        { EngineRuleId.RULE_COVERAGE_TYPE_GROUP_PORTABILITY_RISK, ("RULE_COVERAGE_TYPE_GROUP_PORTABILITY_RISK_V1", "rules.coverage_type_group_portability_risk", new[] { "coverageAmount" }) },
+        { EngineRuleId.RULE_COVERAGE_TYPE_PRESTAMISTA_NOT_FAMILY, ("RULE_COVERAGE_TYPE_PRESTAMISTA_NOT_FAMILY_V1", "rules.coverage_type_prestamista_not_family", new[] { "declaredCoverage" }) },
         { EngineRuleId.RULE_ACTION_OVERRIDE_OLD_REVIEW, ("RULE_ACTION_OVERRIDE_OLD_REVIEW_V1", "rules.action_override_old_review", Array.Empty<string>()) },
         { EngineRuleId.RULE_ACTION_OVERRIDE_UNCONFIRMED_DATA, ("RULE_ACTION_OVERRIDE_UNCONFIRMED_DATA_V1", "rules.action_override_unconfirmed_data", Array.Empty<string>()) },
         { EngineRuleId.RULE_ACTION_OVERRIDE_RECENT_TRIGGER, ("RULE_ACTION_OVERRIDE_RECENT_TRIGGER_V1", "rules.action_override_recent_trigger", Array.Empty<string>()) }

@@ -11,21 +11,8 @@ import { TopBar } from '../components/layout/TopBar'
 import { DatePicker } from '../components/ui/DateRangePicker'
 import { postTrigger, getActiveTenantId } from '../lib/api'
 import { generateIdempotencyKey } from '../lib/utils'
+import { parseCurrency, formatCurrencyLive } from '../lib/currency'
 import type { LifeTriggerEvent } from '../types/api'
-
-// ── Currency helpers ──────────────────────────────────────────────
-function parseCurrency(raw: string): number {
-  if (!raw) return 0
-  const cents = parseInt(raw, 10) || 0
-  return cents / 100
-}
-
-function formatCurrencyLive(raw: string): string {
-  if (!raw) return ''
-  const cents = parseInt(raw, 10) || 0
-  const reais = cents / 100
-  return reais.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-}
 
 // ── Trigger type catalogue ────────────────────────────────────────
 const TRIGGER_TYPES = [
@@ -285,8 +272,7 @@ export default function NewTrigger() {
       setConsentId(prefill.operationalData.consentId)
     }
 
-    // Consent already given in original evaluation
-    setConsent(true)
+    // Consent must always be re-confirmed (LGPD)
     setHasPrefill(true)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -487,6 +473,17 @@ export default function NewTrigger() {
               <p className="text-xs text-brand-600">{STEPS[step].description}</p>
             </div>
           </div>
+
+          {/* ── Active trigger indicator (steps 1–4) ── */}
+          {step > 0 && (
+            <div className={`flex items-center gap-3 rounded-xl border px-4 py-2.5 ${activeTrigger.border} ${activeTrigger.bg}`}>
+              <activeTrigger.icon className={`h-4 w-4 shrink-0 ${activeTrigger.color}`} />
+              <div className="flex items-center gap-2 min-w-0">
+                <span className={`text-xs font-bold ${activeTrigger.color}`}>{activeTrigger.label}</span>
+                <span className="text-[11px] text-slate-500">— {activeTrigger.desc}</span>
+              </div>
+            </div>
+          )}
 
           {/* ── Form card ── */}
           <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-card">

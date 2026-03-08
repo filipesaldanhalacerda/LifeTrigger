@@ -9,22 +9,8 @@ import {
 import { TopBar } from '../components/layout/TopBar'
 import { postEvaluation, getActiveTenantId } from '../lib/api'
 import { generateIdempotencyKey } from '../lib/utils'
+import { parseCurrency, formatCurrencyLive } from '../lib/currency'
 import type { LifeInsuranceAssessmentRequest } from '../types/api'
-
-// ── Currency helpers ─────────────────────────────────────────────
-function parseCurrency(raw: string): number {
-  if (!raw) return 0
-  // raw is digits-only (cents). e.g. "1500000" = R$ 15.000,00
-  const cents = parseInt(raw, 10) || 0
-  return cents / 100
-}
-
-function formatCurrencyLive(raw: string): string {
-  if (!raw) return ''
-  const cents = parseInt(raw, 10) || 0
-  const reais = cents / 100
-  return reais.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-}
 
 // ── Step metadata ────────────────────────────────────────────────
 const STEPS = [

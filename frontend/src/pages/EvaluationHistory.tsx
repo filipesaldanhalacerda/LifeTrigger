@@ -2,16 +2,18 @@ import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Search, Filter, TrendingUp, TrendingDown, Minus, RotateCcw,
-  AlertCircle, ChevronRight, RefreshCw, Users, CheckCircle, Zap,
+  AlertCircle, ChevronRight, RefreshCw, Users, Zap,
   ShieldAlert, ShieldCheck, ShieldQuestion, Copy, Check,
-  CircleDot, Archive, BadgeCheck, ChevronDown, X, Loader2, PieChart,
+  CircleDot, Archive, BadgeCheck, ChevronDown, PieChart,
 } from 'lucide-react'
 import { TopBar } from '../components/layout/TopBar'
 import { Badge } from '../components/ui/Badge'
+import { StatusChangeModal } from '../components/evaluation/StatusChangeModal'
 import { actionColors, actionLabel, riskColors, riskLabel, formatDate, formatCurrency, riskScoreColor, evalStatusLabel, evalStatusColors } from '../lib/utils'
-import { getEvaluations, getEvaluation, getUsers, getActiveTenantId, updateEvaluationStatus } from '../lib/api'
+import { getEvaluations, getUsers, getActiveTenantId } from '../lib/api'
 import { useAuth } from '../contexts/AuthContext'
-import type { EvaluationSummary, RecommendedAction, EvaluationStatusType, UserRecord, LifeInsuranceAssessmentResult } from '../types/api'
+import { useCopyToClipboard } from '../hooks/useCopyToClipboard'
+import type { EvaluationSummary, RecommendedAction, EvaluationStatusType, UserRecord } from '../types/api'
 
 const ACTION_ICONS: Record<RecommendedAction, React.ElementType> = {
   AUMENTAR: TrendingUp,
@@ -89,15 +91,10 @@ export default function EvaluationHistory() {
   const [filterUser, setFilterUser]     = useState<string>('')
   const [filterType, setFilterType]     = useState<string>('')
   const [filterStatus, setFilterStatus] = useState<string>('')
-  const [copiedId, setCopiedId]         = useState<string | null>(null)
+  const [copiedId, copyId]              = useCopyToClipboard()
   const [statusMenuId, setStatusMenuId] = useState<string | null>(null)
   const [statusMenuPos, setStatusMenuPos] = useState<{ top: number; left: number } | null>(null)
   const [confirmAction, setConfirmAction] = useState<{ id: string; status: EvaluationStatusType } | null>(null)
-  const [partialData, setPartialData]   = useState<{
-    loading: boolean
-    result: LifeInsuranceAssessmentResult | null
-    items: { key: string; label: string; recommended: number; covered: boolean; soldAmount: string }[]
-  }>({ loading: false, result: null, items: [] })
   const [users, setUsers]               = useState<UserRecord[]>([])
 
   // Close status menu on outside click
@@ -126,14 +123,6 @@ export default function EvaluationHistory() {
     }
   }, [isManagerPlus])
 
-  function copyId(e: React.MouseEvent, id: string) {
-    e.stopPropagation()
-    navigator.clipboard.writeText(id).then(() => {
-      setCopiedId(id)
-      setTimeout(() => setCopiedId(null), 1500)
-    })
-  }
-
   function clearFilters() {
     setSearch('')
     setFilterAction('')
@@ -143,76 +132,16 @@ export default function EvaluationHistory() {
     setFilterStatus('')
   }
 
-  const COVERAGE_KEYS: { key: keyof LifeInsuranceAssessmentResult; label: string }[] = [
-    { key: 'incomeReplacementAmount', label: 'Reposição de Renda' },
-    { key: 'debtClearanceAmount', label: 'Quitação de Dívidas' },
-    { key: 'transitionReserveAmount', label: 'Reserva de Transição' },
-    { key: 'educationCostsAmount', label: 'Custos de Educação' },
-    { key: 'itcmdCostAmount', label: 'ITCMD' },
-    { key: 'inventoryCostAmount', label: 'Custos de Inventário' },
-  ]
-
   function requestStatusChange(e: React.MouseEvent, id: string, newStatus: EvaluationStatusType) {
     e.stopPropagation()
     setStatusMenuId(null)
     setConfirmAction({ id, status: newStatus })
-
-    if (newStatus === 'CONVERTIDO_PARCIAL') {
-      setPartialData({ loading: true, result: null, items: [] })
-      getEvaluation(id).then((record) => {
-        const r = record.result
-        const coverageItems = COVERAGE_KEYS
-          .filter(({ key }) => (r[key] as number) > 0)
-          .map(({ key, label }) => ({
-            key,
-            label,
-            recommended: r[key] as number,
-            covered: false,
-            soldAmount: '',
-          }))
-        setPartialData({ loading: false, result: r, items: coverageItems })
-      }).catch(() => {
-        setPartialData({ loading: false, result: null, items: [] })
-      })
-    } else {
-      setPartialData({ loading: false, result: null, items: [] })
-    }
   }
 
-  function togglePartialItem(key: string) {
-    setPartialData((prev) => ({
-      ...prev,
-      items: prev.items.map((it) =>
-        it.key === key ? { ...it, covered: !it.covered, soldAmount: !it.covered ? String(it.recommended) : '' } : it
-      ),
-    }))
-  }
-
-  function setPartialAmount(key: string, value: string) {
-    setPartialData((prev) => ({
-      ...prev,
-      items: prev.items.map((it) => (it.key === key ? { ...it, soldAmount: value } : it)),
-    }))
-  }
-
-  async function confirmStatusChange() {
+  function handleStatusConfirmed(finalStatus: EvaluationStatusType, statusNotes?: string) {
     if (!confirmAction) return
-    try {
-      let statusNotes: string | undefined
-      if (confirmAction.status === 'CONVERTIDO_PARCIAL' && partialData.items.length > 0) {
-        const coveredItems = partialData.items
-          .filter((it) => it.covered)
-          .map((it) => ({ key: it.key, label: it.label, recommended: it.recommended, sold: Number(it.soldAmount) || 0 }))
-        const uncoveredItems = partialData.items
-          .filter((it) => !it.covered)
-          .map((it) => ({ key: it.key, label: it.label, recommended: it.recommended }))
-        statusNotes = JSON.stringify({ coveredItems, uncoveredItems })
-      }
-      await updateEvaluationStatus(confirmAction.id, confirmAction.status, statusNotes)
-      setItems((prev) => prev.map((ev) => ev.id === confirmAction.id ? { ...ev, status: confirmAction.status, statusNotes } : ev))
-    } catch { /* best-effort */ }
+    setItems((prev) => prev.map((ev) => ev.id === confirmAction.id ? { ...ev, status: finalStatus, statusNotes } : ev))
     setConfirmAction(null)
-    setPartialData({ loading: false, result: null, items: [] })
   }
 
   const filtered = items.filter((ev) => {
@@ -622,7 +551,7 @@ export default function EvaluationHistory() {
                             </div>
                             <div>
                               <div className="flex items-center gap-1.5">
-                                <p className="font-mono text-xs text-slate-700">{ev.id.slice(0, 18)}…</p>
+                                <p className="font-mono text-xs text-slate-700 truncate max-w-[260px]" title={ev.id}>{ev.id}</p>
                                 {ev.isTrigger && (
                                   <span className="inline-flex items-center gap-0.5 rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-semibold text-amber-700">
                                     <Zap className="h-2.5 w-2.5" />Gatilho
@@ -819,166 +748,12 @@ export default function EvaluationHistory() {
 
       {/* ── Status change confirmation modal ── */}
       {confirmAction && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={() => { setConfirmAction(null); setPartialData({ loading: false, result: null, items: [] }) }}>
-          <div
-            className={`relative mx-4 w-full rounded-2xl bg-white p-6 shadow-2xl animate-scaleIn ${confirmAction.status === 'CONVERTIDO_PARCIAL' ? 'max-w-lg' : 'max-w-md'}`}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              onClick={() => { setConfirmAction(null); setPartialData({ loading: false, result: null, items: [] }) }}
-              className="absolute right-4 top-4 rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
-            >
-              <X className="h-4 w-4" />
-            </button>
-
-            <div className="flex items-start gap-4">
-              <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
-                confirmAction.status === 'CONVERTIDO' ? 'bg-emerald-100'
-                : confirmAction.status === 'CONVERTIDO_PARCIAL' ? 'bg-amber-100'
-                : confirmAction.status === 'ARQUIVADO' ? 'bg-slate-100'
-                : 'bg-blue-100'
-              }`}>
-                {confirmAction.status === 'CONVERTIDO' && <BadgeCheck className="h-5 w-5 text-emerald-600" />}
-                {confirmAction.status === 'CONVERTIDO_PARCIAL' && <PieChart className="h-5 w-5 text-amber-600" />}
-                {confirmAction.status === 'ARQUIVADO' && <Archive className="h-5 w-5 text-slate-500" />}
-                {confirmAction.status === 'ABERTO' && <CircleDot className="h-5 w-5 text-blue-600" />}
-              </div>
-              <div className="flex-1">
-                <h3 className="text-base font-bold text-slate-800">
-                  {confirmAction.status === 'CONVERTIDO' && 'Marcar como Convertido'}
-                  {confirmAction.status === 'CONVERTIDO_PARCIAL' && 'Conversão Parcial'}
-                  {confirmAction.status === 'ARQUIVADO' && 'Arquivar Avaliação'}
-                  {confirmAction.status === 'ABERTO' && 'Reabrir Avaliação'}
-                </h3>
-                <p className="mt-2 text-sm text-slate-600 leading-relaxed">
-                  {confirmAction.status === 'CONVERTIDO' && (
-                    <>
-                      Ao marcar como <span className="font-semibold text-emerald-700">Convertido</span>, você confirma que a venda foi realizada e o cliente está protegido.
-                      Esta avaliação <span className="font-semibold">deixará de contar nas métricas de risco</span> do dashboard e relatórios.
-                    </>
-                  )}
-                  {confirmAction.status === 'CONVERTIDO_PARCIAL' && (
-                    <>
-                      Selecione abaixo <span className="font-semibold text-amber-700">quais coberturas foram vendidas</span> e o valor contratado.
-                      As coberturas não marcadas continuarão contando como gap nas métricas de risco.
-                    </>
-                  )}
-                  {confirmAction.status === 'ARQUIVADO' && (
-                    <>
-                      Ao <span className="font-semibold text-slate-700">Arquivar</span>, você indica que o cliente não tem mais interesse ou que o caso foi encerrado sem venda.
-                      Esta avaliação <span className="font-semibold">deixará de contar nas métricas de risco</span> do dashboard e relatórios.
-                    </>
-                  )}
-                  {confirmAction.status === 'ABERTO' && (
-                    <>
-                      Ao <span className="font-semibold text-blue-700">Reabrir</span>, esta avaliação voltará a ser contabilizada nas métricas de risco do dashboard e relatórios como um caso ativo.
-                    </>
-                  )}
-                </p>
-              </div>
-            </div>
-
-            {/* ── Partial conversion: coverage checklist ── */}
-            {confirmAction.status === 'CONVERTIDO_PARCIAL' && (
-              <div className="mt-4">
-                {partialData.loading ? (
-                  <div className="flex items-center justify-center gap-2 py-6 text-sm text-slate-400">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Carregando coberturas…
-                  </div>
-                ) : partialData.items.length === 0 ? (
-                  <div className="py-4 text-center text-sm text-slate-400">
-                    Nenhuma cobertura recomendada encontrada.
-                  </div>
-                ) : (
-                  <div className="space-y-2 max-h-72 overflow-y-auto">
-                    {partialData.items.map((item) => (
-                      <div
-                        key={item.key}
-                        className={`rounded-xl border p-3 transition-all ${
-                          item.covered
-                            ? 'border-emerald-200 bg-emerald-50/50'
-                            : 'border-slate-200 bg-slate-50/50'
-                        }`}
-                      >
-                        <label className="flex items-center gap-3 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={item.covered}
-                            onChange={() => togglePartialItem(item.key)}
-                            className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
-                          />
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between gap-2">
-                              <span className="text-sm font-semibold text-slate-700">{item.label}</span>
-                              <span className="text-xs text-slate-400 tabular-nums">
-                                Recomendado: {formatCurrency(item.recommended)}
-                              </span>
-                            </div>
-                            {item.covered && (
-                              <div className="mt-2 flex items-center gap-2">
-                                <span className="text-xs text-slate-500 shrink-0">Valor vendido:</span>
-                                <input
-                                  type="number"
-                                  value={item.soldAmount}
-                                  onChange={(e) => setPartialAmount(item.key, e.target.value)}
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-sm tabular-nums focus:border-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-200"
-                                  placeholder="0"
-                                  min="0"
-                                />
-                              </div>
-                            )}
-                          </div>
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                {!partialData.loading && partialData.items.length > 0 && (
-                  <div className="mt-3 flex items-center justify-between rounded-lg bg-amber-50 px-3 py-2 text-xs">
-                    <span className="text-amber-700 font-medium">
-                      {partialData.items.filter((i) => i.covered).length} de {partialData.items.length} coberturas vendidas
-                    </span>
-                    <span className="text-amber-600 font-semibold tabular-nums">
-                      Total: {formatCurrency(partialData.items.filter((i) => i.covered).reduce((sum, i) => sum + (Number(i.soldAmount) || 0), 0))}
-                    </span>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {confirmAction.status !== 'CONVERTIDO_PARCIAL' && (
-              <p className="mt-3 text-xs text-slate-400">
-                Os dados e o hash de auditoria da avaliação permanecem intactos. Você pode alterar o status novamente a qualquer momento.
-              </p>
-            )}
-
-            <div className="mt-5 flex items-center justify-end gap-2">
-              <button
-                onClick={() => { setConfirmAction(null); setPartialData({ loading: false, result: null, items: [] }) }}
-                className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={confirmStatusChange}
-                disabled={confirmAction.status === 'CONVERTIDO_PARCIAL' && (partialData.loading || partialData.items.filter((i) => i.covered).length === 0)}
-                className={`rounded-lg px-4 py-2 text-sm font-semibold text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                  confirmAction.status === 'CONVERTIDO' ? 'bg-emerald-600 hover:bg-emerald-700'
-                  : confirmAction.status === 'CONVERTIDO_PARCIAL' ? 'bg-amber-600 hover:bg-amber-700'
-                  : confirmAction.status === 'ARQUIVADO' ? 'bg-slate-600 hover:bg-slate-700'
-                  : 'bg-blue-600 hover:bg-blue-700'
-                }`}
-              >
-                {confirmAction.status === 'CONVERTIDO' && 'Confirmar Conversão'}
-                {confirmAction.status === 'CONVERTIDO_PARCIAL' && 'Confirmar Venda Parcial'}
-                {confirmAction.status === 'ARQUIVADO' && 'Confirmar Arquivamento'}
-                {confirmAction.status === 'ABERTO' && 'Confirmar Reabertura'}
-              </button>
-            </div>
-          </div>
-        </div>
+        <StatusChangeModal
+          evaluationId={confirmAction.id}
+          initialStatus={confirmAction.status}
+          onConfirmed={handleStatusConfirmed}
+          onCancel={() => setConfirmAction(null)}
+        />
       )}
     </div>
   )
