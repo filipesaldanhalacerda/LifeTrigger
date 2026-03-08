@@ -203,7 +203,8 @@ export default function Dashboard() {
                       <circle cx="18" cy="18" r="15.5" fill="none" strokeWidth="3" className="text-slate-100" stroke="currentColor" />
                       <circle
                         cx="18" cy="18" r="15.5" fill="none" strokeWidth="3"
-                        strokeDasharray={`${(healthScore / 100) * (2 * Math.PI * 15.5)} ${2 * Math.PI * 15.5}`}
+                        pathLength={100}
+                        strokeDasharray={`${healthScore} 100`}
                         strokeLinecap="round"
                         stroke={health.ringStroke}
                         style={{ transition: 'stroke-dasharray 1s ease' }}
