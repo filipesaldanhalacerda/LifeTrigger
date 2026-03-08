@@ -302,7 +302,7 @@ export default function ClientHistory() {
   return (
     <div>
       <TopBar
-        title="Histórico de Clientes"
+        title="Meus Clientes"
         subtitle={loading ? 'Carregando…' : `${groups.length} cliente${groups.length !== 1 ? 's' : ''} · ${items.length} avaliações`}
       />
 
