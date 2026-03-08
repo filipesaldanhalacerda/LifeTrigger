@@ -192,7 +192,7 @@ export default function Dashboard() {
                   <div className="mt-2 flex flex-wrap items-center gap-3 sm:gap-4">
                     {st.convertido > 0 && <LegendDot color="bg-emerald-500" label={st.convertido === 1 ? 'Convertida' : 'Convertidas'} count={st.convertido} />}
                     {st.parcial > 0 && <LegendDot color="bg-amber-400" label={st.parcial === 1 ? 'Parcial' : 'Parciais'} count={st.parcial} />}
-                    {st.aberto > 0 && <LegendDot color="bg-brand-400" label={st.aberto === 1 ? 'Pendente' : 'Pendentes'} count={st.aberto} />}
+                    {st.aberto > 0 && <LegendDot color="bg-brand-400" label={st.aberto === 1 ? 'Aberta' : 'Abertas'} count={st.aberto} />}
                     {st.arquivado > 0 && <LegendDot color="bg-slate-300" label={st.arquivado === 1 ? 'Arquivada' : 'Arquivadas'} count={st.arquivado} />}
                   </div>
                 </div>
