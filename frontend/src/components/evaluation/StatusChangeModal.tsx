@@ -81,7 +81,7 @@ export function StatusChangeModal({
   const [status, setStatus] = useState<EvaluationStatusType>(initialStatus)
   const [loading, setLoading] = useState(false)
   const [items, setItems] = useState<CoverageItem[]>([])
-  const [result, setResult] = useState<LifeInsuranceAssessmentResult | null>(null)
+  const [, setResult] = useState<LifeInsuranceAssessmentResult | null>(null)
 
   // Load coverage data when status requires it
   const loadCoverageData = useCallback((targetStatus: EvaluationStatusType) => {

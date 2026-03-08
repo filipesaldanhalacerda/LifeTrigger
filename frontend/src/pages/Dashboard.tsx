@@ -81,7 +81,6 @@ export default function Dashboard() {
   const rawSt = report?.statusDistribution
   const st = rawSt ?? { aberto: pending, convertido: totalAll - pending, parcial: 0, arquivado: 0 }
   const critico = report?.riskDistribution.critico ?? 0
-  const adequado = report?.riskDistribution.adequado ?? 0
   const aumentar = report?.actionDistribution.aumentar ?? 0
   const triggerCount = report?.triggerCount ?? 0
   const converted = st.convertido + st.parcial

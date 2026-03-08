@@ -15,7 +15,7 @@ import { Badge } from '../components/ui/Badge'
 import { getEvaluation, getEvaluations, getActiveTenantId } from '../lib/api'
 import { StatusChangeModal } from '../components/evaluation/StatusChangeModal'
 import {
-  actionColors, actionLabel, riskColors, riskLabel, coverageStatusLabel,
+  actionColors, actionLabel, riskColors, riskLabel,
   formatCurrency, formatDate, riskScoreColor, evalStatusLabel, evalStatusColors,
 } from '../lib/utils'
 import type {
@@ -110,7 +110,7 @@ export default function EvaluationResult() {
       .catch(() => { /* best-effort */ })
   }, [record])
 
-  const copyHashTimer = React.useRef<ReturnType<typeof setTimeout>>()
+  const copyHashTimer = React.useRef<ReturnType<typeof setTimeout>>(undefined)
   function copyHash(hash: string) {
     navigator.clipboard.writeText(hash).then(() => {
       setCopiedHash(true)

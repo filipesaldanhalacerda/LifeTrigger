@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import {
   TrendingUp, CheckCircle,
-  BarChart2, Users, AlertTriangle, Zap,
+  BarChart2, Users, AlertTriangle,
   Loader2, Download,
 } from 'lucide-react'
 import { TopBar } from '../components/layout/TopBar'

@@ -12,7 +12,7 @@ import { useState, useCallback, useRef } from 'react'
  */
 export function useCopyToClipboard(resetMs = 1500) {
   const [copiedId, setCopiedId] = useState<string | null>(null)
-  const timerRef = useRef<ReturnType<typeof setTimeout>>()
+  const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
 
   const copyId = useCallback(
     (e: React.MouseEvent, id: string) => {
