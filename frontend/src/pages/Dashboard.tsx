@@ -66,22 +66,27 @@ export default function Dashboard() {
 
   useEffect(() => { void load() }, [load])
 
-  const total = report?.totalEvaluations ?? 0
+  // Pending = ABERTO only (risk/action distributions are based on this)
+  const pending = report?.totalEvaluations ?? 0
+  const totalAll = report?.totalAll ?? pending
   const critico = report?.riskDistribution.critico ?? 0
   const adequado = report?.riskDistribution.adequado ?? 0
   const aumentar = report?.actionDistribution.aumentar ?? 0
   const triggerCount = report?.triggerCount ?? 0
 
-  // totalAll includes all evaluations regardless of status; total only counts active ones
-  const totalAll = report?.totalAll ?? total
-  const allConverted = totalAll > 0 && total === 0
+  // Status funnel
+  const st = report?.statusDistribution ?? { aberto: 0, convertido: 0, parcial: 0, arquivado: 0 }
+  const converted = st.convertido + st.parcial
+  const conversionRate = totalAll > 0 ? Math.round((converted / totalAll) * 100) : 0
+  const noPending = totalAll > 0 && pending === 0
 
-  const healthScore = allConverted
+  // Health score: based only on ABERTO (pending) evaluations
+  const healthScore = noPending
     ? 100
-    : total > 0
-      ? Math.round(((report!.riskDistribution.adequado * 100) + (report!.riskDistribution.moderado * 50)) / total)
+    : pending > 0
+      ? Math.round(((report!.riskDistribution.adequado * 100) + (report!.riskDistribution.moderado * 50)) / pending)
       : 0
-  const health = allConverted
+  const health = noPending
     ? { label: 'Protegida', color: 'text-emerald-600', ringStroke: '#059669', dot: 'bg-emerald-500' }
     : healthConfig(healthScore)
 
@@ -156,36 +161,31 @@ export default function Dashboard() {
                     {greeting()}, <span className="font-semibold text-slate-800">{userName}</span>
                   </p>
                   <p className="mt-0.5 text-xs text-slate-400">
-                    {allConverted ? totalAll : total} avaliações na carteira
-                    {allConverted && ' — todas convertidas'}
+                    {totalAll} avaliações na carteira
+                    {noPending && ' — todas resolvidas'}
+                    {!noPending && pending > 0 && ` · ${pending} pendente${pending !== 1 ? 's' : ''}`}
                   </p>
 
-                  {/* Stacked bar */}
-                  {allConverted ? (
-                    <div className="mt-3 flex h-2 w-full overflow-hidden rounded-full bg-emerald-500 transition-all duration-700" />
-                  ) : (
-                    <div className="mt-3 flex h-2 w-full overflow-hidden rounded-full bg-slate-100">
-                      {pct(critico, total) > 0 && (
-                        <div className="bg-red-500 transition-all duration-700" style={{ width: `${pct(critico, total)}%` }} />
-                      )}
-                      {pct(report.riskDistribution.moderado, total) > 0 && (
-                        <div className="bg-amber-400 transition-all duration-700" style={{ width: `${pct(report.riskDistribution.moderado, total)}%` }} />
-                      )}
-                      {pct(adequado, total) > 0 && (
-                        <div className="bg-emerald-500 transition-all duration-700" style={{ width: `${pct(adequado, total)}%` }} />
-                      )}
-                    </div>
-                  )}
-                  <div className="mt-2 flex flex-wrap items-center gap-3 sm:gap-4">
-                    {allConverted ? (
-                      <LegendDot color="bg-emerald-500" label="Convertidas" count={totalAll} />
-                    ) : (
-                      <>
-                        <LegendDot color="bg-red-500" label="Crítico" count={critico} />
-                        <LegendDot color="bg-amber-400" label="Moderado" count={report.riskDistribution.moderado} />
-                        <LegendDot color="bg-emerald-500" label="Adequado" count={adequado} />
-                      </>
+                  {/* Stacked bar — shows portfolio status funnel */}
+                  <div className="mt-3 flex h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                    {pct(st.convertido, totalAll) > 0 && (
+                      <div className="bg-emerald-500 transition-all duration-700" style={{ width: `${pct(st.convertido, totalAll)}%` }} />
                     )}
+                    {pct(st.parcial, totalAll) > 0 && (
+                      <div className="bg-amber-400 transition-all duration-700" style={{ width: `${pct(st.parcial, totalAll)}%` }} />
+                    )}
+                    {pct(st.aberto, totalAll) > 0 && (
+                      <div className="bg-brand-400 transition-all duration-700" style={{ width: `${pct(st.aberto, totalAll)}%` }} />
+                    )}
+                    {pct(st.arquivado, totalAll) > 0 && (
+                      <div className="bg-slate-300 transition-all duration-700" style={{ width: `${pct(st.arquivado, totalAll)}%` }} />
+                    )}
+                  </div>
+                  <div className="mt-2 flex flex-wrap items-center gap-3 sm:gap-4">
+                    {st.convertido > 0 && <LegendDot color="bg-emerald-500" label="Convertidas" count={st.convertido} />}
+                    {st.parcial > 0 && <LegendDot color="bg-amber-400" label="Parciais" count={st.parcial} />}
+                    {st.aberto > 0 && <LegendDot color="bg-brand-400" label="Pendentes" count={st.aberto} />}
+                    {st.arquivado > 0 && <LegendDot color="bg-slate-300" label="Arquivadas" count={st.arquivado} />}
                   </div>
                 </div>
 
@@ -222,27 +222,27 @@ export default function Dashboard() {
               <IndicatorCard
                 icon={ShieldAlert}
                 iconBg="bg-red-50" iconColor="text-red-500"
-                label="Clientes em Risco"
+                label="Pendentes em Risco"
                 value={critico}
-                sub={critico > 0 ? 'precisam de ação urgente' : 'nenhum cliente crítico'}
+                sub={critico > 0 ? 'precisam de ação urgente' : 'nenhum pendente crítico'}
                 alert={critico > 0}
                 delay={0}
               />
               <IndicatorCard
                 icon={Target}
                 iconBg="bg-orange-50" iconColor="text-orange-500"
-                label="Oportunidades de Venda"
+                label="Oportunidades"
                 value={aumentar}
-                sub={aumentar > 0 ? 'clientes com gap de cobertura' : 'sem oportunidades pendentes'}
+                sub={aumentar > 0 ? 'pendentes com gap de cobertura' : 'sem oportunidades pendentes'}
                 alert={aumentar > 3}
                 delay={75}
               />
               <IndicatorCard
                 icon={ShieldCheck}
                 iconBg="bg-emerald-50" iconColor="text-emerald-500"
-                label="Clientes Protegidos"
-                value={adequado}
-                sub={`${pct(adequado, total)}% da carteira adequada`}
+                label="Taxa de Conversão"
+                value={`${conversionRate}%`}
+                sub={`${converted} de ${totalAll} convertida${converted !== 1 ? 's' : ''}`}
                 delay={150}
               />
               <IndicatorCard
@@ -433,9 +433,10 @@ function IndicatorCard({
 }: {
   icon: React.ElementType
   iconBg: string; iconColor: string
-  label: string; value: number
+  label: string; value: number | string
   sub?: string; alert?: boolean; delay?: number
 }) {
+  const display = typeof value === 'number' ? value.toLocaleString('pt-BR') : value
   return (
     <div
       className={`rounded-2xl border bg-white p-3 sm:p-4 shadow-card transition-all duration-200 hover:shadow-card-hover hover:-translate-y-0.5 animate-fadeIn ${alert ? 'border-orange-200' : 'border-slate-200'}`}
@@ -444,7 +445,7 @@ function IndicatorCard({
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{label}</p>
-          <p className="mt-1 sm:mt-1.5 text-xl sm:text-2xl font-extrabold text-slate-900 tabular-nums">{value.toLocaleString('pt-BR')}</p>
+          <p className="mt-1 sm:mt-1.5 text-xl sm:text-2xl font-extrabold text-slate-900 tabular-nums">{display}</p>
           {sub && <p className="mt-0.5 text-[11px] text-slate-500 leading-snug">{sub}</p>}
         </div>
         <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${iconBg}`}>

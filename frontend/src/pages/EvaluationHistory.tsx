@@ -156,14 +156,17 @@ export default function EvaluationHistory() {
     return true
   })
 
-  const activeItems = items.filter((e) => {
-    const s = e.status || 'ABERTO'
-    return s === 'ABERTO' || s === 'CONVERTIDO_PARCIAL'
-  })
+  const pendingItems = items.filter((e) => (e.status || 'ABERTO') === 'ABERTO')
+  const statusCounts = {
+    aberto:     items.filter((e) => (e.status || 'ABERTO') === 'ABERTO').length,
+    convertido: items.filter((e) => e.status === 'CONVERTIDO').length,
+    parcial:    items.filter((e) => e.status === 'CONVERTIDO_PARCIAL').length,
+    arquivado:  items.filter((e) => e.status === 'ARQUIVADO').length,
+  }
   const riskCounts = {
-    critico:  activeItems.filter((e) => e.risk === 'CRITICO').length,
-    moderado: activeItems.filter((e) => e.risk === 'MODERADO').length,
-    adequado: activeItems.filter((e) => e.risk === 'ADEQUADO').length,
+    critico:  pendingItems.filter((e) => e.risk === 'CRITICO').length,
+    moderado: pendingItems.filter((e) => e.risk === 'MODERADO').length,
+    adequado: pendingItems.filter((e) => e.risk === 'ADEQUADO').length,
   }
 
   const hasActiveFilters = !!(search || filterAction || filterRisk || filterUser || filterType || filterStatus)
@@ -209,12 +212,12 @@ export default function EvaluationHistory() {
         {!loading && !error && items.length > 0 && (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <SummaryCard
-              label="Abertos"
-              value={activeItems.length}
+              label="Pendentes"
+              value={statusCounts.aberto}
               icon={Users}
               iconBg="bg-slate-100"
               iconColor="text-slate-600"
-              hint={`de ${items.length} total`}
+              hint={`${statusCounts.convertido + statusCounts.parcial} convertida${(statusCounts.convertido + statusCounts.parcial) !== 1 ? 's' : ''} · ${statusCounts.arquivado} arquivada${statusCounts.arquivado !== 1 ? 's' : ''}`}
             />
             <SummaryCard
               label="Risco Crítico"

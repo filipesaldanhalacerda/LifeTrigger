@@ -9,8 +9,8 @@ import {
 import { TopBar } from '../components/layout/TopBar'
 import { Badge } from '../components/ui/Badge'
 import { getEvaluations, getActiveTenantId } from '../lib/api'
-import { actionColors, actionLabel, riskColors, riskLabel, formatDate } from '../lib/utils'
-import type { EvaluationSummary, RiskClassification, RecommendedAction } from '../types/api'
+import { actionColors, actionLabel, riskColors, riskLabel, formatDate, evalStatusLabel, evalStatusColors } from '../lib/utils'
+import type { EvaluationSummary, RiskClassification, RecommendedAction, EvaluationStatusType } from '../types/api'
 
 const ACTION_ICONS: Record<string, React.ElementType> = {
   AUMENTAR: TrendingUp,
@@ -27,6 +27,7 @@ interface ClientGroup {
   latestScore: number
   latestAction: string
   latestDate: string
+  latestStatus: string
 }
 
 function buildGroups(items: EvaluationSummary[]): ClientGroup[] {
@@ -47,6 +48,7 @@ function buildGroups(items: EvaluationSummary[]): ClientGroup[] {
       latestScore:  latest.score,
       latestAction: latest.action,
       latestDate:   latest.timestamp,
+      latestStatus: latest.status || 'ABERTO',
     }
   }).sort((a, b) => new Date(b.latestDate).getTime() - new Date(a.latestDate).getTime())
 }
@@ -120,6 +122,13 @@ function ClientGroupRow({ group }: { group: ClientGroup }) {
             </div>
             <span className="text-xs font-bold tabular-nums text-slate-700">{group.latestScore.toFixed(0)}</span>
           </div>
+        </td>
+
+        {/* Status badge */}
+        <td className="px-4 py-3">
+          <Badge className={evalStatusColors(group.latestStatus as EvaluationStatusType)} size="sm">
+            {evalStatusLabel(group.latestStatus as EvaluationStatusType)}
+          </Badge>
         </td>
 
         <td className="px-4 py-3 text-right">
@@ -212,6 +221,7 @@ function MobileClientCard({ group }: { group: ClientGroup }) {
           <div className="mt-1 flex flex-wrap items-center gap-1.5">
             <Badge className={riskColors(group.latestRisk)} size="sm">{riskLabel(group.latestRisk)}</Badge>
             <Badge className={actionColors(group.latestAction as RecommendedAction)} size="sm">{actionLabel(group.latestAction as RecommendedAction)}</Badge>
+            <Badge className={evalStatusColors(group.latestStatus as EvaluationStatusType)} size="sm">{evalStatusLabel(group.latestStatus as EvaluationStatusType)}</Badge>
           </div>
           <div className="mt-1.5 flex items-center gap-3">
             <div className="flex items-center gap-2">
@@ -402,6 +412,9 @@ export default function ClientHistory() {
                       </th>
                       <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                         Score
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        Status
                       </th>
                       <th className="px-4 py-3 w-8" />
                     </tr>

@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import {
-  TrendingUp,
+  TrendingUp, CheckCircle,
   BarChart2, Users, AlertTriangle, Zap,
   Loader2, Download,
 } from 'lucide-react'
@@ -76,6 +76,7 @@ interface BrokerStats {
   userId: string
   email: string
   total: number
+  converted: number
   critico: number
   moderado: number
   adequado: number
@@ -112,10 +113,8 @@ function BrokerRow({ stats, rank }: { stats: BrokerStats; rank: number }) {
         </div>
       </td>
       <td className="px-4 py-3">
-        <span className={`text-xs font-semibold tabular-nums ${pct(stats.aumentar, stats.total) > 50 ? 'text-orange-600' : 'text-slate-600'}`}>
-          {stats.aumentar}
-        </span>
-        <span className="ml-1 text-[11px] text-slate-400">aumentar</span>
+        <span className="text-xs font-semibold tabular-nums text-emerald-600">{stats.converted}</span>
+        <span className="ml-1 text-[11px] text-slate-400">/ {stats.total}</span>
       </td>
     </tr>
   )
@@ -188,16 +187,20 @@ export default function Reports() {
 
   useEffect(() => { void load() }, [load])
 
-  const total = report?.totalEvaluations ?? 0
-  const critPct    = pct(report?.riskDistribution.critico ?? 0, total)
-  const aumentarPct = pct(report?.actionDistribution.aumentar ?? 0, total)
+  const pending = report?.totalEvaluations ?? 0
+  const totalAll = report?.totalAll ?? pending
+  const st = report?.statusDistribution ?? { aberto: 0, convertido: 0, parcial: 0, arquivado: 0 }
+  const converted = st.convertido + st.parcial
+  const conversionRate = totalAll > 0 ? Math.round((converted / totalAll) * 100) : 0
+  const critPct    = pct(report?.riskDistribution.critico ?? 0, pending)
+  const aumentarPct = pct(report?.actionDistribution.aumentar ?? 0, pending)
 
   // ── Broker performance aggregation ──────────────────────────────
   const brokerStats: BrokerStats[] = (() => {
     const map = new Map<string, BrokerStats>()
     const brokers = users.filter((u) => u.role === 'Broker')
     brokers.forEach((u) => {
-      map.set(u.id, { userId: u.id, email: u.email, total: 0, critico: 0, moderado: 0, adequado: 0, aumentar: 0 })
+      map.set(u.id, { userId: u.id, email: u.email, total: 0, converted: 0, critico: 0, moderado: 0, adequado: 0, aumentar: 0 })
     })
     evals.forEach((ev) => {
       const uid = ev.createdByUserId
@@ -205,14 +208,17 @@ export default function Reports() {
       if (!map.has(uid)) {
         // Broker from another session or unknown
         const email = users.find((u) => u.id === uid)?.email ?? uid.slice(0, 8) + '…'
-        map.set(uid, { userId: uid, email, total: 0, critico: 0, moderado: 0, adequado: 0, aumentar: 0 })
+        map.set(uid, { userId: uid, email, total: 0, converted: 0, critico: 0, moderado: 0, adequado: 0, aumentar: 0 })
       }
       const s = map.get(uid)!
       s.total++
-      if (ev.risk === 'CRITICO')  s.critico++
-      if (ev.risk === 'MODERADO') s.moderado++
-      if (ev.risk === 'ADEQUADO') s.adequado++
-      if (ev.action === 'AUMENTAR') s.aumentar++
+      if (ev.status === 'CONVERTIDO' || ev.status === 'CONVERTIDO_PARCIAL') s.converted++
+      if (!ev.status || ev.status === 'ABERTO') {
+        if (ev.risk === 'CRITICO')  s.critico++
+        if (ev.risk === 'MODERADO') s.moderado++
+        if (ev.risk === 'ADEQUADO') s.adequado++
+        if (ev.action === 'AUMENTAR') s.aumentar++
+      }
     })
     return [...map.values()].filter((s) => s.total > 0).sort((a, b) => b.total - a.total)
   })()
@@ -221,7 +227,7 @@ export default function Reports() {
     <div>
       <TopBar
         title="Relatórios Gerenciais"
-        subtitle={loading ? 'Carregando…' : `${total} avaliações no período`}
+        subtitle={loading ? 'Carregando…' : `${totalAll} avaliações no período · ${pending} pendente${pending !== 1 ? 's' : ''}`}
       />
 
       <div className="p-4 sm:p-6 space-y-4 sm:space-y-5 animate-fadeIn">
@@ -270,16 +276,23 @@ export default function Reports() {
               <MetricCard
                 icon={BarChart2}
                 iconBg="bg-brand-50" iconColor="text-brand-600"
-                label="Total de Avaliações"
-                value={total.toLocaleString('pt-BR')}
-                sub="no período selecionado"
+                label="Total no Período"
+                value={totalAll.toLocaleString('pt-BR')}
+                sub={`${pending} pendente${pending !== 1 ? 's' : ''} · ${st.arquivado} arquivada${st.arquivado !== 1 ? 's' : ''}`}
+              />
+              <MetricCard
+                icon={CheckCircle}
+                iconBg="bg-emerald-50" iconColor="text-emerald-500"
+                label="Taxa de Conversão"
+                value={`${conversionRate}%`}
+                sub={`${st.convertido} total · ${st.parcial} parcial`}
               />
               <MetricCard
                 icon={AlertTriangle}
                 iconBg="bg-red-50" iconColor="text-red-500"
-                label="Risco Crítico"
+                label="Pendentes Críticos"
                 value={`${critPct}%`}
-                sub={`${report.riskDistribution.critico} clientes`}
+                sub={`${report.riskDistribution.critico} de ${pending} pendentes`}
                 highlight={critPct > 30}
               />
               <MetricCard
@@ -287,15 +300,8 @@ export default function Reports() {
                 iconBg="bg-orange-50" iconColor="text-orange-500"
                 label="Precisam Aumentar"
                 value={`${aumentarPct}%`}
-                sub={`${report.actionDistribution.aumentar} com gap`}
+                sub={`${report.actionDistribution.aumentar} pendentes com gap`}
                 highlight={aumentarPct > 40}
-              />
-              <MetricCard
-                icon={Zap}
-                iconBg="bg-violet-50" iconColor="text-violet-600"
-                label="Gatilhos de Vida"
-                value={report.triggerCount.toLocaleString('pt-BR')}
-                sub="eventos no período"
               />
             </div>
 
@@ -304,23 +310,23 @@ export default function Reports() {
               {/* Risk */}
               <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
                 <h2 className="mb-1 text-sm font-bold text-slate-900">Perfil de Risco</h2>
-                <p className="mb-4 text-xs text-slate-400">Distribuição das classificações no período</p>
+                <p className="mb-4 text-xs text-slate-400">Distribuição das {pending} avaliações pendentes</p>
                 <div className="space-y-4">
-                  <DistBar dot="bg-red-500"     label="Crítico"  value={report.riskDistribution.critico}  total={total} barColor="bg-red-500" />
-                  <DistBar dot="bg-amber-400"   label="Moderado" value={report.riskDistribution.moderado} total={total} barColor="bg-amber-400" />
-                  <DistBar dot="bg-emerald-500" label="Adequado" value={report.riskDistribution.adequado} total={total} barColor="bg-emerald-500" />
+                  <DistBar dot="bg-red-500"     label="Crítico"  value={report.riskDistribution.critico}  total={pending} barColor="bg-red-500" />
+                  <DistBar dot="bg-amber-400"   label="Moderado" value={report.riskDistribution.moderado} total={pending} barColor="bg-amber-400" />
+                  <DistBar dot="bg-emerald-500" label="Adequado" value={report.riskDistribution.adequado} total={pending} barColor="bg-emerald-500" />
                 </div>
               </div>
 
               {/* Action */}
               <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
                 <h2 className="mb-1 text-sm font-bold text-slate-900">Recomendações do Motor</h2>
-                <p className="mb-4 text-xs text-slate-400">Ação indicada para os clientes no período</p>
+                <p className="mb-4 text-xs text-slate-400">Ação indicada para as {pending} avaliações pendentes</p>
                 <div className="space-y-4">
-                  <DistBar dot="bg-red-400"     label="Aumentar" value={report.actionDistribution.aumentar} total={total} barColor="bg-red-400" />
-                  <DistBar dot="bg-emerald-400" label="Manter"   value={report.actionDistribution.manter}   total={total} barColor="bg-emerald-400" />
-                  <DistBar dot="bg-violet-400"  label="Revisar"  value={report.actionDistribution.revisar}  total={total} barColor="bg-violet-400" />
-                  <DistBar dot="bg-sky-400"     label="Reduzir"  value={report.actionDistribution.reduzir}  total={total} barColor="bg-sky-400" />
+                  <DistBar dot="bg-red-400"     label="Aumentar" value={report.actionDistribution.aumentar} total={pending} barColor="bg-red-400" />
+                  <DistBar dot="bg-emerald-400" label="Manter"   value={report.actionDistribution.manter}   total={pending} barColor="bg-emerald-400" />
+                  <DistBar dot="bg-violet-400"  label="Revisar"  value={report.actionDistribution.revisar}  total={pending} barColor="bg-violet-400" />
+                  <DistBar dot="bg-sky-400"     label="Reduzir"  value={report.actionDistribution.reduzir}  total={pending} barColor="bg-sky-400" />
                 </div>
               </div>
             </div>
@@ -365,8 +371,8 @@ export default function Reports() {
                             </div>
                           </div>
                           <div className="text-right shrink-0">
-                            <span className="text-xs font-semibold text-orange-600 tabular-nums">{stats.aumentar}</span>
-                            <span className="ml-0.5 text-[10px] text-slate-400">oport.</span>
+                            <span className="text-xs font-semibold text-emerald-600 tabular-nums">{stats.converted}</span>
+                            <span className="ml-0.5 text-[10px] text-slate-400">conv.</span>
                           </div>
                         </div>
                       </div>
@@ -383,7 +389,7 @@ export default function Reports() {
                         <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Avaliações</th>
                         <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">% Crítico</th>
                         <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">% Adequado</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Oportunidades</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Conversões</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -397,7 +403,7 @@ export default function Reports() {
             )}
 
             {/* ── No data state ── */}
-            {total === 0 && (
+            {totalAll === 0 && (
               <div className="py-16 text-center">
                 <BarChart2 className="mx-auto mb-3 h-10 w-10 text-slate-200" />
                 <p className="text-sm font-semibold text-slate-700">Nenhum dado no período</p>

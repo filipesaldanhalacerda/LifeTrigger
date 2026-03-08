@@ -357,22 +357,37 @@ public class EvaluationsController : ControllerBase
             return Ok(new
             {
                 totalEvaluations   = 0,
+                totalAll           = 0,
+                statusDistribution = new { aberto = 0, convertido = 0, parcial = 0, arquivado = 0 },
                 riskDistribution   = new { critico = 0, moderado = 0, adequado = 0 },
                 actionDistribution = new { aumentar = 0, manter = 0, reduzir = 0, revisar = 0 },
                 triggerCount       = 0,
             });
         }
 
-        // ABERTO and CONVERTIDO_PARCIAL count towards risk/action distributions (dashboard health)
-        var active = evaluations.Where(e => e.Status == EvalStatus.ABERTO || e.Status == EvalStatus.CONVERTIDO_PARCIAL).ToList();
-        var riskDist     = active.GroupBy(e => e.Result.RiskClassification).ToDictionary(g => g.Key, g => g.Count());
-        var actionDist   = active.GroupBy(e => e.Result.RecommendedAction).ToDictionary(g => g.Key, g => g.Count());
+        // Status counts
+        var aberto     = evaluations.Count(e => e.Status == EvalStatus.ABERTO);
+        var convertido = evaluations.Count(e => e.Status == EvalStatus.CONVERTIDO);
+        var parcial    = evaluations.Count(e => e.Status == EvalStatus.CONVERTIDO_PARCIAL);
+        var arquivado  = evaluations.Count(e => e.Status == EvalStatus.ARQUIVADO);
+
+        // Risk/action distributions: only ABERTO counts (pending evaluations that need action)
+        var pending = evaluations.Where(e => e.Status == EvalStatus.ABERTO).ToList();
+        var riskDist     = pending.GroupBy(e => e.Result.RiskClassification).ToDictionary(g => g.Key, g => g.Count());
+        var actionDist   = pending.GroupBy(e => e.Result.RecommendedAction).ToDictionary(g => g.Key, g => g.Count());
         var triggerCount = evaluations.Count(e => e.Request?.OperationalData?.RecentLifeTrigger == true);
 
         return Ok(new
         {
-            totalEvaluations = active.Count,
+            totalEvaluations = pending.Count,
             totalAll = total,
+            statusDistribution = new
+            {
+                aberto,
+                convertido,
+                parcial,
+                arquivado,
+            },
             riskDistribution = new
             {
                 critico  = riskDist.GetValueOrDefault(RiskClassification.CRITICO,  0),
