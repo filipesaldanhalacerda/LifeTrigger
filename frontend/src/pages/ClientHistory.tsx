@@ -3,13 +3,16 @@ import { useCopyToClipboard } from '../hooks/useCopyToClipboard'
 import { useNavigate } from 'react-router-dom'
 import {
   Search, Users, TrendingUp, TrendingDown, Minus, RotateCcw,
-  Loader2, AlertCircle, ChevronRight, ChevronDown,
+  AlertCircle, ChevronRight, ChevronDown,
   ShieldAlert, ShieldQuestion, ShieldCheck, Copy, Check,
+  CircleDot, Archive, BadgeCheck, PieChart, X,
 } from 'lucide-react'
 import { TopBar } from '../components/layout/TopBar'
 import { Badge } from '../components/ui/Badge'
+import { DateRangePicker } from '../components/ui/DateRangePicker'
 import { getEvaluations, getActiveTenantId } from '../lib/api'
 import { actionColors, actionLabel, riskColors, riskLabel, formatDate, evalStatusLabel, evalStatusColors } from '../lib/utils'
+import { daysAgo, today } from '../lib/dates'
 import type { EvaluationSummary, RiskClassification, RecommendedAction, EvaluationStatusType } from '../types/api'
 
 const ACTION_ICONS: Record<string, React.ElementType> = {
@@ -18,6 +21,13 @@ const ACTION_ICONS: Record<string, React.ElementType> = {
   REDUZIR: TrendingDown,
   REVISAR: RotateCcw,
 }
+
+const STATUS_OPTIONS: { key: EvaluationStatusType; icon: React.ElementType; color: string; activeBg: string; activeText: string }[] = [
+  { key: 'ABERTO', icon: CircleDot, color: 'text-blue-500', activeBg: 'bg-blue-50 border-blue-300 ring-2 ring-blue-100', activeText: 'text-blue-700' },
+  { key: 'CONVERTIDO', icon: BadgeCheck, color: 'text-emerald-500', activeBg: 'bg-emerald-50 border-emerald-300 ring-2 ring-emerald-100', activeText: 'text-emerald-700' },
+  { key: 'CONVERTIDO_PARCIAL', icon: PieChart, color: 'text-amber-500', activeBg: 'bg-amber-50 border-amber-300 ring-2 ring-amber-100', activeText: 'text-amber-700' },
+  { key: 'ARQUIVADO', icon: Archive, color: 'text-slate-400', activeBg: 'bg-slate-100 border-slate-300 ring-2 ring-slate-200', activeText: 'text-slate-600' },
+]
 
 // ── Group evaluations by consentId ────────────────────────────────
 interface ClientGroup {
@@ -282,81 +292,223 @@ export default function ClientHistory() {
   const [loading, setLoading] = useState(true)
   const [error,   setError]   = useState<string | null>(null)
   const [search,  setSearch]  = useState('')
+  const [filterRisk, setFilterRisk]     = useState<string>('')
+  const [filterStatus, setFilterStatus] = useState<string>('')
+  const [filterAction, setFilterAction] = useState<string>('')
+  const [startDate, setStartDate]       = useState(() => daysAgo(90))
+  const [endDate, setEndDate]           = useState(() => today())
 
   function load() {
     setLoading(true)
     setError(null)
-    getEvaluations(getActiveTenantId(), { limit: 200 })
+    getEvaluations(getActiveTenantId(), { startDate, endDate, limit: 200 })
       .then((res) => setItems(res.items))
       .catch(() => setError('Não foi possível carregar o histórico de clientes.'))
       .finally(() => setLoading(false))
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => { load() }, [startDate, endDate])
+
+  function clearFilters() {
+    setSearch('')
+    setFilterRisk('')
+    setFilterStatus('')
+    setFilterAction('')
+  }
 
   const groups = buildGroups(items)
-  const filtered = search.trim()
-    ? groups.filter((g) => g.consentId.toLowerCase().includes(search.toLowerCase()))
-    : groups
+
+  // Filter groups by client-level attributes (latest evaluation)
+  const filtered = groups.filter((g) => {
+    if (search.trim() && !g.consentId.toLowerCase().includes(search.toLowerCase())) return false
+    if (filterRisk && g.latestRisk !== filterRisk) return false
+    if (filterStatus && g.latestStatus !== filterStatus) return false
+    if (filterAction && g.latestAction !== filterAction) return false
+    return true
+  })
+
+  const hasActiveFilters = !!(search || filterRisk || filterStatus || filterAction)
+
+  // Counts for pills (before search/dropdown filters, so user sees total context)
+  const riskCounts = {
+    CRITICO:  groups.filter((g) => g.latestRisk === 'CRITICO').length,
+    MODERADO: groups.filter((g) => g.latestRisk === 'MODERADO').length,
+    ADEQUADO: groups.filter((g) => g.latestRisk === 'ADEQUADO').length,
+  }
+  const statusCounts = {
+    ABERTO:             groups.filter((g) => g.latestStatus === 'ABERTO').length,
+    CONVERTIDO:         groups.filter((g) => g.latestStatus === 'CONVERTIDO').length,
+    CONVERTIDO_PARCIAL: groups.filter((g) => g.latestStatus === 'CONVERTIDO_PARCIAL').length,
+    ARQUIVADO:          groups.filter((g) => g.latestStatus === 'ARQUIVADO').length,
+  }
 
   return (
     <div>
       <TopBar
         title="Meus Clientes"
-        subtitle={loading ? 'Carregando…' : `${groups.length} cliente${groups.length !== 1 ? 's' : ''} · ${items.length} avaliações`}
+        subtitle={loading ? 'Carregando…' : `${filtered.length} de ${groups.length} clientes · ${items.length} avaliações`}
       />
 
       <div className="p-4 sm:p-6 space-y-4 sm:space-y-5 animate-fadeIn">
 
-        {/* ── Summary cards ── */}
-        {!loading && !error && items.length > 0 && (
+        {/* ── Summary cards (clickable for risk filter) ── */}
+        {!loading && !error && groups.length > 0 && (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-card">
-              <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-lg bg-brand-50">
-                <Users className="h-4 w-4 text-brand-600" />
+            <button
+              type="button"
+              onClick={() => setFilterRisk('')}
+              className={`w-full rounded-2xl border p-4 text-left shadow-card transition-all ${
+                !filterRisk
+                  ? 'border-brand-300 bg-brand-50 ring-2 ring-brand-100'
+                  : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm cursor-pointer'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-50">
+                  <Users className="h-4 w-4 text-brand-600" />
+                </div>
+                {!filterRisk && (
+                  <span className="rounded-full bg-brand-100 px-2 py-0.5 text-[10px] font-semibold text-brand-600">Todos</span>
+                )}
               </div>
               <p className="text-xl font-bold tabular-nums text-slate-900">{groups.length}</p>
-              <p className="text-xs font-semibold text-slate-700">Clientes únicos</p>
+              <p className="text-xs font-semibold text-slate-700">Clientes</p>
               <p className="mt-0.5 text-[11px] text-slate-400">identificados por consentId</p>
-            </div>
-            {[
-              { label: 'Risco Crítico',  count: groups.filter((g) => g.latestRisk === 'CRITICO').length,  bg: 'bg-red-50',     icon: <ShieldAlert   className="h-4 w-4 text-red-500" /> },
-              { label: 'Risco Moderado', count: groups.filter((g) => g.latestRisk === 'MODERADO').length, bg: 'bg-amber-50',   icon: <ShieldQuestion className="h-4 w-4 text-amber-500" /> },
-              { label: 'Risco Adequado', count: groups.filter((g) => g.latestRisk === 'ADEQUADO').length, bg: 'bg-emerald-50', icon: <ShieldCheck   className="h-4 w-4 text-emerald-500" /> },
-            ].map(({ label, count, bg, icon }) => (
-              <div key={label} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-card">
-                <div className={`mb-2 flex h-8 w-8 items-center justify-center rounded-lg ${bg}`}>{icon}</div>
-                <p className="text-xl font-bold tabular-nums text-slate-900">{count}</p>
-                <p className="text-xs font-semibold text-slate-700">{label}</p>
-                <p className="mt-0.5 text-[11px] text-slate-400">última avaliação</p>
-              </div>
-            ))}
+            </button>
+            {([
+              { risk: 'CRITICO' as const,  label: 'Risco Crítico',  bg: 'bg-red-50',     iconColor: 'text-red-600',     Icon: ShieldAlert },
+              { risk: 'MODERADO' as const, label: 'Risco Moderado', bg: 'bg-amber-50',   iconColor: 'text-amber-600',   Icon: ShieldQuestion },
+              { risk: 'ADEQUADO' as const, label: 'Risco Adequado', bg: 'bg-emerald-50', iconColor: 'text-emerald-600', Icon: ShieldCheck },
+            ] as const).map(({ risk, label, bg, iconColor, Icon }) => {
+              const isActive = filterRisk === risk
+              return (
+                <button
+                  key={risk}
+                  type="button"
+                  onClick={() => setFilterRisk(isActive ? '' : risk)}
+                  className={`w-full rounded-2xl border p-4 text-left shadow-card transition-all ${
+                    isActive
+                      ? 'border-brand-300 bg-brand-50 ring-2 ring-brand-100'
+                      : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm cursor-pointer'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${bg}`}>
+                      <Icon className={`h-4 w-4 ${iconColor}`} />
+                    </div>
+                    {isActive && (
+                      <span className="rounded-full bg-brand-100 px-2 py-0.5 text-[10px] font-semibold text-brand-600">Filtrado</span>
+                    )}
+                  </div>
+                  <p className="text-xl font-bold tabular-nums text-slate-900">{riskCounts[risk]}</p>
+                  <p className="text-xs font-semibold text-slate-700">{label}</p>
+                  <p className="mt-0.5 text-[11px] text-slate-400">última avaliação</p>
+                </button>
+              )
+            })}
           </div>
         )}
 
-        {/* ── Search ── */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar por consentId…"
-            className="w-full max-w-sm rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm shadow-card focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100"
-          />
+        {/* ── Filter section ── */}
+        <div className="space-y-3">
+
+          {/* Row 1: Search + DateRangePicker */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+            <div className="relative flex-1 min-w-0 sm:min-w-52">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Buscar por consentId…"
+                className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm shadow-card focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100"
+              />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+            <DateRangePicker
+              startDate={startDate}
+              endDate={endDate}
+              maxDate={today()}
+              onChange={(s, e) => { setStartDate(s); setEndDate(e) }}
+              align="right"
+            />
+          </div>
+
+          {/* Row 2: Status pills + action dropdown */}
+          {!loading && !error && groups.length > 0 && (
+            <div className="flex items-center gap-2 flex-wrap">
+              {STATUS_OPTIONS.map(({ key, icon: SIcon, color, activeBg, activeText }) => {
+                const isActive = filterStatus === key
+                const count = statusCounts[key]
+                if (count === 0 && !isActive) return null
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setFilterStatus(isActive ? '' : key)}
+                    className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-all ${
+                      isActive
+                        ? activeBg + ' ' + activeText
+                        : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'
+                    }`}
+                  >
+                    <SIcon className={`h-3.5 w-3.5 ${isActive ? activeText : color}`} />
+                    {evalStatusLabel(key)}
+                    <span className={`ml-0.5 tabular-nums ${isActive ? 'opacity-80' : 'text-slate-400'}`}>
+                      {count}
+                    </span>
+                  </button>
+                )
+              })}
+
+              {/* Separator */}
+              <div className="hidden sm:block h-5 w-px bg-slate-200" />
+
+              <select
+                value={filterAction}
+                onChange={(e) => setFilterAction(e.target.value)}
+                className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs shadow-card focus:border-brand-400 focus:outline-none"
+              >
+                <option value="">Ação</option>
+                <option value="AUMENTAR">Aumentar</option>
+                <option value="MANTER">Manter</option>
+                <option value="REDUZIR">Reduzir</option>
+                <option value="REVISAR">Revisar</option>
+              </select>
+
+              {hasActiveFilters && (
+                <button
+                  onClick={clearFilters}
+                  className="rounded-full border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] text-slate-500 shadow-card hover:text-slate-700 hover:bg-slate-50 transition-colors"
+                >
+                  Limpar filtros
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         {/* ── Loading ── */}
         {loading && (
-          <div className="flex items-center justify-center gap-2 py-20 text-slate-400">
-            <Loader2 className="h-5 w-5 animate-spin text-brand-500" />
-            <span className="text-sm">Carregando histórico de clientes…</span>
+          <div className="space-y-2">
+            <div className="skeleton h-14 w-full rounded-xl" />
+            <div className="skeleton h-14 w-full rounded-xl" />
+            <div className="skeleton h-14 w-full rounded-xl" />
+            <div className="skeleton h-14 w-full rounded-xl" />
           </div>
         )}
 
         {/* ── Error ── */}
         {!loading && error && (
-          <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          <div className="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
             <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
             <div>
               <p className="font-semibold">Erro ao carregar</p>
@@ -372,20 +524,28 @@ export default function ClientHistory() {
               <div className="py-16 text-center">
                 <Users className="mx-auto mb-3 h-10 w-10 text-slate-200" />
                 <p className="text-sm font-semibold text-slate-700">
-                  {groups.length === 0 ? 'Nenhuma avaliação realizada ainda' : 'Nenhum cliente encontrado'}
+                  {groups.length === 0 ? 'Nenhum cliente no período selecionado' : 'Nenhum cliente para os filtros aplicados'}
                 </p>
                 <p className="mt-1 text-xs text-slate-400">
                   {groups.length === 0
-                    ? 'Realize a primeira avaliação para visualizar o histórico de clientes.'
-                    : 'Tente um consentId diferente.'}
+                    ? 'Tente ampliar o intervalo de datas ou realize a primeira avaliação.'
+                    : 'Tente remover os filtros ou buscar por outro consentId.'}
                 </p>
+                {hasActiveFilters && (
+                  <button
+                    onClick={clearFilters}
+                    className="mt-4 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 transition-colors"
+                  >
+                    Limpar filtros
+                  </button>
+                )}
               </div>
             ) : (
               <>
                 <div className="border-b border-slate-100 bg-slate-50 px-4 py-2">
                   <p className="text-[11px] text-slate-500">
                     <span className="font-semibold text-slate-700 tabular-nums">{filtered.length}</span>{' '}
-                    cliente{filtered.length !== 1 ? 's' : ''} — clique em uma linha para ver o histórico completo de avaliações.
+                    cliente{filtered.length !== 1 ? 's' : ''} — clique para expandir o histórico de avaliações.
                   </p>
                 </div>
                 {/* Mobile card list */}
@@ -429,6 +589,13 @@ export default function ClientHistory() {
               </>
             )}
           </div>
+        )}
+
+        {/* Limit hint */}
+        {items.length >= 200 && (
+          <p className="text-center text-[11px] text-slate-400">
+            Exibindo os 200 registros mais recentes. Use o filtro de data para encontrar clientes específicos.
+          </p>
         )}
       </div>
     </div>
