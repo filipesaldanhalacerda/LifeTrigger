@@ -2,11 +2,43 @@ import { useEffect, useState } from 'react'
 import {
   Activity, Database, Server, CheckCircle, XCircle,
   Loader2, HardDrive, Users, Shield,
-  RefreshCw, Zap, AlertTriangle,
+  RefreshCw, Zap, AlertTriangle, Globe, ExternalLink, Cloud,
 } from 'lucide-react'
 import { TopBar } from '../components/layout/TopBar'
 import { getAuthDiagnostics, getEngineDiagnostics, fetchHealth } from '../lib/api'
 import type { ServiceDiagnostics } from '../lib/api'
+
+// ── Infrastructure config ─────────────────────────────────────────
+const INFRA = {
+  frontend: {
+    name: 'Frontend',
+    provider: 'Vercel',
+    region: 'Edge (Global CDN)',
+    dashboard: 'https://vercel.com',
+  },
+  authApi: {
+    name: 'Auth API',
+    provider: 'Render',
+    region: 'Oregon (US West)',
+    url: 'https://lifetrigger-auth.onrender.com',
+    dashboard: 'https://dashboard.render.com',
+  },
+  engineApi: {
+    name: 'Engine API',
+    provider: 'Render',
+    region: 'Oregon (US West)',
+    url: 'https://lifetrigger-engine.onrender.com',
+    dashboard: 'https://dashboard.render.com',
+  },
+  database: {
+    name: 'PostgreSQL',
+    provider: 'Render',
+    region: 'Oregon (US West)',
+    host: 'oregon-postgres.render.com',
+    dbName: 'lifetrigger',
+    dashboard: 'https://dashboard.render.com',
+  },
+}
 
 export default function PlatformHealth() {
   const [authDiag, setAuthDiag] = useState<ServiceDiagnostics | null>(null)
@@ -64,6 +96,12 @@ export default function PlatformHealth() {
     : authHealth === 'offline' || engineHealth === 'offline'
       ? 'partial_outage'
       : 'degraded'
+
+  // Determine DB status from both diagnostics
+  const dbConnected = (authDiag?.database.connected ?? false) || (engineDiag?.database.connected ?? false)
+  const dbHealth: 'healthy' | 'degraded' | 'offline' =
+    (authDiag?.database.connected && engineDiag?.database.connected) ? 'healthy'
+      : dbConnected ? 'degraded' : 'offline'
 
   return (
     <div>
@@ -128,6 +166,51 @@ export default function PlatformHealth() {
           </div>
         )}
 
+        {/* Infrastructure overview */}
+        <div className="rounded-2xl border border-slate-200 bg-white shadow-card overflow-hidden">
+          <div className="flex items-center gap-2 border-b border-slate-100 px-4 sm:px-5 py-4">
+            <Cloud className="h-4 w-4 text-slate-400" />
+            <h2 className="text-sm font-bold text-slate-900">Infraestrutura de Produção</h2>
+          </div>
+          <div className="divide-y divide-slate-100">
+            <InfraRow
+              icon={Globe}
+              name={INFRA.frontend.name}
+              provider={INFRA.frontend.provider}
+              region={INFRA.frontend.region}
+              status="healthy"
+              dashboardUrl={INFRA.frontend.dashboard}
+            />
+            <InfraRow
+              icon={Shield}
+              name={INFRA.authApi.name}
+              provider={INFRA.authApi.provider}
+              region={INFRA.authApi.region}
+              detail={INFRA.authApi.url}
+              status={authHealth}
+              dashboardUrl={INFRA.authApi.dashboard}
+            />
+            <InfraRow
+              icon={Zap}
+              name={INFRA.engineApi.name}
+              provider={INFRA.engineApi.provider}
+              region={INFRA.engineApi.region}
+              detail={INFRA.engineApi.url}
+              status={engineHealth}
+              dashboardUrl={INFRA.engineApi.dashboard}
+            />
+            <InfraRow
+              icon={Database}
+              name={INFRA.database.name}
+              provider={INFRA.database.provider}
+              region={INFRA.database.region}
+              detail={`${INFRA.database.dbName} @ ${INFRA.database.host}`}
+              status={dbHealth}
+              dashboardUrl={INFRA.database.dashboard}
+            />
+          </div>
+        </div>
+
         {/* Service cards */}
         <div className="grid gap-4 lg:grid-cols-2">
           <ServiceCard
@@ -146,28 +229,99 @@ export default function PlatformHealth() {
           />
         </div>
 
-        {/* Database details side by side */}
-        <div className="grid gap-4 lg:grid-cols-2">
-          <DbCard
-            title="Banco Auth"
-            diagnostics={authDiag}
-            tables={[
-              { label: 'Usuários', key: 'users', icon: Users },
-              { label: 'Tenants', key: 'tenants', icon: Server },
-              { label: 'Eventos de Login', key: 'loginEvents', icon: Activity },
-              { label: 'Refresh Tokens', key: 'refreshTokens', icon: Shield },
-              { label: 'Sessões Ativas', key: 'activeSessions', icon: CheckCircle },
-            ]}
-          />
-          <DbCard
-            title="Banco Engine"
-            diagnostics={engineDiag}
-            tables={[
-              { label: 'Avaliações', key: 'evaluations', icon: Activity },
-              { label: 'Config. Tenant', key: 'tenantSettings', icon: Server },
-              { label: 'Chaves Idempotência', key: 'idempotencyKeys', icon: Shield },
-            ]}
-          />
+        {/* Database details */}
+        <div className="rounded-2xl border border-slate-200 bg-white shadow-card overflow-hidden">
+          <div className="flex items-center gap-2 border-b border-slate-100 px-4 sm:px-5 py-4">
+            <Database className="h-4 w-4 text-slate-400" />
+            <h2 className="text-sm font-bold text-slate-900">Banco de Dados — {INFRA.database.dbName}</h2>
+            <span className="text-[10px] text-slate-400 bg-slate-100 rounded px-1.5 py-0.5 font-medium">
+              Render PostgreSQL
+            </span>
+            {(authDiag || engineDiag) && (
+              <span className="ml-auto text-xs text-slate-400">
+                {authDiag?.database.sizeHuman ?? engineDiag?.database.sizeHuman ?? '—'}
+              </span>
+            )}
+          </div>
+
+          {(authDiag || engineDiag) ? (
+            <div>
+              {/* Connection capacity bar */}
+              {(() => {
+                const active = authDiag?.database.activeConnections ?? engineDiag?.database.activeConnections
+                const max = authDiag?.database.maxConnections ?? engineDiag?.database.maxConnections
+                if (active == null || max == null) return null
+                const pct = active / max
+                return (
+                  <div className="px-4 sm:px-5 py-3 border-b border-slate-100">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <p className="text-xs font-medium text-slate-600">Conexões</p>
+                      <p className="text-xs tabular-nums text-slate-500">{active} / {max}</p>
+                    </div>
+                    <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all ${
+                          pct > 0.8 ? 'bg-red-500' : pct > 0.5 ? 'bg-amber-500' : 'bg-emerald-500'
+                        }`}
+                        style={{ width: `${Math.min(100, pct * 100)}%`, minWidth: '4px' }}
+                      />
+                    </div>
+                  </div>
+                )
+              })()}
+
+              {/* Two columns: Auth tables | Engine tables */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-slate-100">
+                <div>
+                  <p className="px-4 sm:px-5 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                    Tabelas Auth
+                  </p>
+                  <div className="divide-y divide-slate-50">
+                    {[
+                      { label: 'Usuários', key: 'users', icon: Users },
+                      { label: 'Tenants', key: 'tenants', icon: Server },
+                      { label: 'Eventos de Login', key: 'loginEvents', icon: Activity },
+                      { label: 'Refresh Tokens', key: 'refreshTokens', icon: Shield },
+                      { label: 'Sessões Ativas', key: 'activeSessions', icon: CheckCircle },
+                    ].map(({ label, key, icon: TIcon }) => (
+                      <div key={key} className="flex items-center gap-3 px-4 sm:px-5 py-2.5">
+                        <TIcon className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                        <span className="text-sm text-slate-600 flex-1">{label}</span>
+                        <span className="text-sm font-bold tabular-nums text-slate-800">
+                          {authDiag?.tables[key]?.toLocaleString('pt-BR') ?? '—'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <p className="px-4 sm:px-5 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                    Tabelas Engine
+                  </p>
+                  <div className="divide-y divide-slate-50">
+                    {[
+                      { label: 'Avaliações', key: 'evaluations', icon: Activity },
+                      { label: 'Config. Tenant', key: 'tenantSettings', icon: Server },
+                      { label: 'Chaves Idempotência', key: 'idempotencyKeys', icon: Shield },
+                    ].map(({ label, key, icon: TIcon }) => (
+                      <div key={key} className="flex items-center gap-3 px-4 sm:px-5 py-2.5">
+                        <TIcon className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                        <span className="text-sm text-slate-600 flex-1">{label}</span>
+                        <span className="text-sm font-bold tabular-nums text-slate-800">
+                          {engineDiag?.tables[key]?.toLocaleString('pt-BR') ?? '—'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="p-8 text-center">
+              <HardDrive className="h-8 w-8 text-slate-200 mx-auto mb-2" />
+              <p className="text-sm text-slate-400">Indisponível</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -175,6 +329,43 @@ export default function PlatformHealth() {
 }
 
 // ── Sub-components ────────────────────────────────────────────────
+
+function InfraRow({
+  icon: Icon, name, provider, region, detail, status, dashboardUrl,
+}: {
+  icon: React.ElementType
+  name: string
+  provider: string
+  region: string
+  detail?: string
+  status: 'healthy' | 'degraded' | 'offline'
+  dashboardUrl: string
+}) {
+  return (
+    <div className="flex items-center gap-3 px-4 sm:px-5 py-3">
+      <Icon className="h-4 w-4 text-slate-400 shrink-0" />
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-slate-800">{name}</span>
+          <StatusDot status={status} />
+        </div>
+        <p className="text-xs text-slate-400 truncate">
+          {provider} · {region}
+          {detail && <span className="hidden sm:inline"> · {detail}</span>}
+        </p>
+      </div>
+      <a
+        href={dashboardUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="shrink-0 flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-medium text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-colors"
+      >
+        Dashboard
+        <ExternalLink className="h-3 w-3" />
+      </a>
+    </div>
+  )
+}
 
 function ServiceCard({
   name, description, status, diagnostics, icon: Icon,
@@ -237,75 +428,6 @@ function MetricCell({ label, value, good }: { label: string; value: string; good
   )
 }
 
-function DbCard({
-  title, diagnostics, tables,
-}: {
-  title: string
-  diagnostics: ServiceDiagnostics | null
-  tables: { label: string; key: string; icon: React.ElementType }[]
-}) {
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-white shadow-card overflow-hidden">
-      <div className="flex items-center gap-2 border-b border-slate-100 px-4 sm:px-5 py-4">
-        <Database className="h-4 w-4 text-slate-400" />
-        <h2 className="text-sm font-bold text-slate-900">{title}</h2>
-        {diagnostics && (
-          <span className="ml-auto text-xs text-slate-400">
-            {diagnostics.database.sizeHuman ?? '—'}
-          </span>
-        )}
-      </div>
-
-      {diagnostics ? (
-        <div className="divide-y divide-slate-100">
-          {/* Capacity bar */}
-          {diagnostics.database.activeConnections != null && diagnostics.database.maxConnections != null && (
-            <div className="px-4 sm:px-5 py-3">
-              <div className="flex items-center justify-between mb-1.5">
-                <p className="text-xs font-medium text-slate-600">Conexões</p>
-                <p className="text-xs tabular-nums text-slate-500">
-                  {diagnostics.database.activeConnections} / {diagnostics.database.maxConnections}
-                </p>
-              </div>
-              <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
-                <div
-                  className={`h-full rounded-full transition-all ${
-                    (diagnostics.database.activeConnections / diagnostics.database.maxConnections) > 0.8
-                      ? 'bg-red-500'
-                      : (diagnostics.database.activeConnections / diagnostics.database.maxConnections) > 0.5
-                        ? 'bg-amber-500'
-                        : 'bg-emerald-500'
-                  }`}
-                  style={{
-                    width: `${Math.min(100, (diagnostics.database.activeConnections / diagnostics.database.maxConnections) * 100)}%`,
-                    minWidth: '4px',
-                  }}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Table rows */}
-          {tables.map(({ label, key, icon: TIcon }) => (
-            <div key={key} className="flex items-center gap-3 px-4 sm:px-5 py-3">
-              <TIcon className="h-4 w-4 text-slate-400 shrink-0" />
-              <span className="text-sm text-slate-600 flex-1">{label}</span>
-              <span className="text-sm font-bold tabular-nums text-slate-800">
-                {diagnostics.tables[key]?.toLocaleString('pt-BR') ?? '—'}
-              </span>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="p-8 text-center">
-          <HardDrive className="h-8 w-8 text-slate-200 mx-auto mb-2" />
-          <p className="text-sm text-slate-400">Indisponível</p>
-        </div>
-      )}
-    </div>
-  )
-}
-
 function StatusBadge({ status }: { status: 'healthy' | 'degraded' | 'offline' }) {
   return (
     <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${
@@ -320,5 +442,15 @@ function StatusBadge({ status }: { status: 'healthy' | 'degraded' | 'offline' })
       }`} />
       {status === 'healthy' ? 'Online' : status === 'degraded' ? 'Degradado' : 'Offline'}
     </span>
+  )
+}
+
+function StatusDot({ status }: { status: 'healthy' | 'degraded' | 'offline' }) {
+  return (
+    <span className={`h-2 w-2 rounded-full shrink-0 ${
+      status === 'healthy' ? 'bg-emerald-500 animate-pulse'
+        : status === 'degraded' ? 'bg-amber-500'
+          : 'bg-red-500'
+    }`} />
   )
 }

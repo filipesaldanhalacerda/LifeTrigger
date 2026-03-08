@@ -1,132 +1,99 @@
 # LifeTrigger Engine
 
 > **Motor de Inteligência de Proteção de Vida para Corretoras de Seguros**
-> API SaaS B2B que transforma dados financeiros e familiares em diagnóstico de proteção auditável — em milissegundos.
+> SaaS B2B que transforma dados financeiros e familiares em diagnóstico de proteção auditável — em milissegundos.
 
 ---
 
-## O que é
+## Visão Geral
 
-O **LifeTrigger Engine** é um motor determinístico de análise de necessidade de seguro de vida. Ele recebe o contexto financeiro e familiar de um cliente e devolve:
+O **LifeTrigger Engine** é uma plataforma SaaS completa para corretoras de seguros de vida. O sistema recebe o contexto financeiro e familiar de um cliente e entrega:
 
-- O **capital segurado ideal** (calculado em 6 componentes: reposição de renda, liquidação de dívidas, reserva de transição, custos de educação, ITCMD e custos de inventário)
-- O **gap de proteção** em R$ e %
-- Uma **ação recomendada**: `AUMENTAR`, `MANTER`, `REDUZIR` ou `REVISAR`
-- Uma **classificação de risco**: `CRÍTICO`, `MODERADO` ou `ADEQUADO`
-- **Justificativas em português** para cada componente do cálculo
-- Um **AuditHash SHA-256** garantindo imutabilidade do resultado
+- **Capital segurado ideal** calculado em 6 componentes (reposição de renda, dívidas, reserva de transição, educação, ITCMD, inventário)
+- **Gap de proteção** em R$ e %
+- **Ação recomendada**: `AUMENTAR`, `MANTER`, `REDUZIR` ou `REVISAR`
+- **Classificação de risco**: `CRÍTICO`, `MODERADO` ou `ADEQUADO`
+- **Scores bi-dimensionais**: Protection Score (0–100) e Coverage Efficiency Score (0–100)
+- **Justificativas em português** para cada componente
+- **AuditHash SHA-256** garantindo imutabilidade do resultado
 
-O núcleo matemático é **100% determinístico** — o mesmo input sempre produz o mesmo output, sem heurística, sem IA, sem variância. Isso é essencial para compliance regulatório e defesa em sinistros.
-
----
-
-## Para quem serve
-
-| Caso de Uso | Como o motor resolve |
-|-------------|----------------------|
-| **Prospecção ativa** | Fornece diagnóstico técnico imediato para o corretor abrir a conversa com dados, não com feeling |
-| **Análise de carteira** | Identifica quais clientes estão em CRÍTICO ou com cobertura desatualizada para priorizar contatos |
-| **Eventos de vida** | Detecta casamento, filho, imóvel via `/triggers` e recalcula o gap automaticamente |
-| **Quiz no site/WhatsApp** | A corretora conecta o endpoint diretamente num formulário B2C — o cliente vê o próprio risco em tempo real |
-| **Conformidade** | Audit hash criptográfico prova que a recomendação foi feita com matemática, não com interesse comercial |
+O núcleo matemático é **100% determinístico** — mesmo input, mesmo output, sem IA, sem variância.
 
 ---
 
-## Capacidades do Motor
+## Infraestrutura de Produção
 
-### Cálculo de Cobertura Recomendada
-O motor soma 6 componentes configuráveis:
+| Serviço | Plataforma | URL |
+|---------|-----------|-----|
+| **Frontend** | Vercel | Deploy automático via push no `main` |
+| **Engine API** | Render | `https://lifetrigger-engine.onrender.com` |
+| **Auth API** | Render | `https://lifetrigger-auth.onrender.com` |
+| **Banco de Dados** | Render (Oregon) | PostgreSQL gerenciado (`lifetrigger`) |
+
+### Repositório
+
+- **GitHub**: `filipesaldanhalacerda/LifeTrigger` (branch `main`)
+- Deploy do frontend é **automático** via Vercel (conectado ao GitHub)
+- Deploy dos backends no Render via **Dockerfiles** na raiz do repo
+
+### Como o roteamento funciona em produção
+
+O frontend (Vercel) faz proxy das chamadas de API via rewrites configurados em `frontend/vercel.json`:
 
 ```
-Cobertura = Reposição de Renda + Liquidação de Dívidas + Reserva de Transição + Custos de Educação + ITCMD + Custos de Inventário
+/api/auth/*    → Auth API no Render  (/api/v1/*)
+/api/engine/*  → Engine API no Render (/api/v1/*)
+/(*)           → index.html (SPA fallback)
 ```
 
-- **Reposição de renda**: 2 anos (sem dependentes) até 8+ anos (com dependentes), ajustável por corretora
-- **Liquidação de dívidas**: valor total da dívida ativa do cliente
-- **Reserva de transição**: meses de renda para manter o padrão de vida — calculado com base no fundo de emergência existente
-- **Custos de educação**: valor estimado total de educação dos dependentes (opcional)
-- **ITCMD (imposto de herança)**: calculado sobre o patrimônio total com alíquota variável por estado (2–8%)
-- **Custos de inventário**: honorários e custos legais de inventário (padrão 10% do patrimônio)
+> **Importante**: as URLs de destino dos rewrites estão em `frontend/vercel.json`. Se trocar o domínio de algum serviço no Render, atualize esse arquivo.
 
-### Scores Bi-dimensionais
+### Variáveis de ambiente em produção
 
-| Score | O que mede | Faixa |
-|-------|-----------|-------|
-| **Protection Score** | Qualidade da proteção atual vs. necessidade calculada | 0–100 |
-| **Coverage Efficiency Score** | Eficiência do capital alocado (penaliza super-seguro e capital ocioso) | 0–100 |
+#### Engine API (Render)
 
-### Guardrails por Corretora
-Cada corretora (tenant) configura os próprios limites via API Admin:
+| Variável | Descrição |
+|----------|-----------|
+| `ConnectionStrings__DefaultConnection` | Connection string PostgreSQL (Render) |
+| `JwtConfig__Secret` | Chave HMAC-SHA256 para validar JWTs (mesma da Auth API) |
+| `Cors__AllowedOrigins__0` | URL do frontend no Vercel |
 
-```json
-{
-  "incomeReplacementYearsSingle": 2,
-  "incomeReplacementYearsWithDependents": 5,
-  "emergencyFundBufferMonths": 6,
-  "maxTotalCoverageMultiplier": 20,
-  "minCoverageAnnualIncomeMultiplier": 2
-}
-```
+#### Auth API (Render)
 
-### Life Triggers (Gatilhos de Vida)
-O endpoint `/api/v1/triggers` recebe eventos de vida e força a ação `REVISAR`:
+| Variável | Descrição |
+|----------|-----------|
+| `ConnectionStrings__DefaultConnection` | Connection string PostgreSQL (Render) |
+| `JwtConfig__Secret` | Chave HMAC-SHA256 para assinar JWTs (mesma do Engine) |
+| `Cors__AllowedOrigins__0` | URL do frontend no Vercel |
 
-```json
-{
-  "triggerType": "NovoFilho",
-  "description": "Nascimento do segundo filho",
-  "eventDate": "2026-02-15T00:00:00Z",
-  "baseRequest": { ... }
-}
-```
+#### Frontend (Vercel)
 
-Tipos suportados: `Casamento`, `NovoFilho`, `Imovel`, `Aumento_Salario`, e qualquer string personalizada.
+| Variável | Descrição |
+|----------|-----------|
+| `VITE_AUTH_API_URL` | `/api/auth` (usa rewrites do Vercel) |
+| `VITE_ENGINE_API_URL` | `/api/engine` (usa rewrites do Vercel) |
 
----
-
-## Endpoints da API
-
-| Método | Rota | Descrição |
-|--------|------|-----------|
-| `POST` | `/api/v1/evaluations` | Avaliação principal — retorna diagnóstico completo |
-| `GET` | `/api/v1/evaluations/{id}` | Recupera avaliação histórica |
-| `GET` | `/api/v1/admin/audit/evaluations/{id}/verify` | Verifica integridade do AuditHash |
-| `GET` | `/api/v1/evaluations/admin/reports/pilot` | Relatório agregado sem PII |
-| `DELETE` | `/api/v1/evaluations/admin/demo-environments/tenants/{tenantId}` | Limpa dados de demo |
-| `POST` | `/api/v1/triggers` | Registra evento de vida e recalcula |
-| `GET` | `/api/v1/admin/tenants/{tenantId}/settings` | Lê configurações do tenant |
-| `PUT` | `/api/v1/admin/tenants/{tenantId}/settings` | Atualiza parâmetros do tenant |
-| `GET` | `/api/v1/engine/versions` | Versão do motor e do ruleset |
-| `POST` | `/api/v1/auth/mock-token` | Gera JWT de desenvolvimento |
-| `GET` | `/health` | Health check da aplicação |
-
-Todos os endpoints (exceto `/health` e `/auth/mock-token`) exigem `Authorization: Bearer <token>`.
-Os endpoints de `POST /evaluations` e `POST /triggers` exigem o header `Idempotency-Key`.
-
----
-
-## Conformidade e Segurança
-
-- **LGPD nativa**: campo `hasExplicitActiveConsent` obrigatório — se ausente, retorna `422 CONSENT_REQUIRED`
-- **Sem PII na API**: o motor opera apenas com dados numéricos e categóricos. Nome, CPF, e-mail nunca trafegam
-- **Multi-tenant estrito**: isolamento por `tenant_id` extraído do JWT em todas as operações de I/O
-- **AuditHash SHA-256**: cada avaliação recebe um hash imutável verificável a qualquer momento
-- **Rate Limiting**: 60 req/min por IP (fixed window) nos endpoints de avaliação
-- **Idempotência**: requisições repetidas com o mesmo `Idempotency-Key` não reprocessam o core nem reinserem no banco
-- **Correlation ID**: header `X-Correlation-ID` propagado em todas as respostas para rastreabilidade distribuída
+> **Regra de ouro**: `JwtConfig__Secret` deve ser **idêntica** nas duas APIs. O Engine valida tokens emitidos pela Auth usando a mesma chave.
 
 ---
 
 ## Stack Técnica
 
-| Camada | Tecnologia |
-|--------|-----------|
-| Runtime | .NET 9.0 / ASP.NET Core |
-| Banco de dados | PostgreSQL (via Npgsql + EF Core 9) |
-| Autenticação | JWT Bearer |
-| Documentação | Swagger/OpenAPI (Swashbuckle) |
-| Testes | xUnit + FluentAssertions + Golden Files |
-| Arquitetura | Clean Architecture / DDD (Domain, Application, Infrastructure, Api) |
+| Camada | Tecnologia | Versão |
+|--------|-----------|--------|
+| Backend Runtime | .NET 9.0 / ASP.NET Core | 9.0 |
+| Frontend Framework | React | 19.0 |
+| Build Tool | Vite | 6.1 |
+| Estilização | Tailwind CSS (via Vite plugin) | 4.0 |
+| Roteamento Frontend | React Router | 7.1 |
+| Ícones | Lucide React | 0.474 |
+| Banco de Dados | PostgreSQL (Render) | 14+ |
+| ORM | Entity Framework Core (Npgsql) | 9.0 |
+| Autenticação | JWT Bearer (HMAC-SHA256) | — |
+| Documentação API | Swagger / OpenAPI (Swashbuckle) | 7.2 |
+| Testes | xUnit + FluentAssertions + Golden Files | — |
+| Containers | Docker (multi-stage builds) | — |
+| Linguagens | TypeScript 5.7 (front) / C# 12 (back) | — |
 
 ---
 
@@ -134,95 +101,262 @@ Os endpoints de `POST /evaluations` e `POST /triggers` exigem o header `Idempote
 
 ```
 LifeTriggerEngine/
-├── src/
-│   ├── LifeTrigger.Engine.Domain/          # Entidades, Enums, Contratos de Request/Response
-│   ├── LifeTrigger.Engine.Application/     # Motor de cálculo, Interfaces, Validadores
-│   ├── LifeTrigger.Engine.Infrastructure/  # EF Core, Repositórios, Serviços de infraestrutura
-│   └── LifeTrigger.Engine.Api/             # Controllers, Middlewares, Filters, Program.cs
+├── src/                                        # Engine API (.NET 9)
+│   ├── LifeTrigger.Engine.Domain/              #   Entidades, Enums, Contratos
+│   ├── LifeTrigger.Engine.Application/         #   Motor de cálculo, Validadores
+│   ├── LifeTrigger.Engine.Infrastructure/      #   EF Core, Repositórios
+│   └── LifeTrigger.Engine.Api/                 #   Controllers, Middleware, Program.cs
+│
+├── auth-api/                                   # Auth API (.NET 9)
+│   └── src/
+│       ├── LifeTrigger.Auth.Domain/            #   User, Tenant, RefreshToken
+│       ├── LifeTrigger.Auth.Application/       #   TokenService, Interfaces
+│       ├── LifeTrigger.Auth.Infrastructure/    #   AuthDbContext, Seeder
+│       └── LifeTrigger.Auth.Api/               #   Controllers, Program.cs
+│
+├── frontend/                                   # React SPA
+│   ├── src/
+│   │   ├── components/                         #   UI components, layout
+│   │   ├── pages/                              #   Todas as telas do SaaS
+│   │   ├── contexts/                           #   AuthContext, ThemeContext
+│   │   ├── hooks/                              #   Custom hooks
+│   │   └── lib/                                #   api.ts, utils
+│   ├── vercel.json                             #   Rewrites de produção
+│   ├── vite.config.ts                          #   Proxy de desenvolvimento
+│   └── package.json
+│
 ├── tests/
-│   └── LifeTrigger.Engine.Tests/           # Testes unitários + Golden Files de regressão
-├── docs/
-│   ├── PARTNER_API_DOCS.md                 # Referência completa da API para parceiros
-│   ├── INTEGRATION_SETUP.md               # Guia de integração passo a passo
-│   ├── QUICK_START_DEMO.md                # Rodando o demo em 5 minutos
-│   ├── PILOT_GUIDE.md                     # Guia de piloto para corretoras
-│   ├── TECHNICAL_REFERENCE.md             # Referência técnica interna
-│   └── PITCH_DECK_SUPPORT.md              # Material de apoio comercial
-└── ARCHITECTURE.md                         # Decisões arquiteturais e design do sistema
+│   └── LifeTrigger.Engine.Tests/               # xUnit + Golden Files
+│
+├── docs/                                       # Documentação técnica e comercial
+│   ├── PARTNER_API_DOCS.md                     #   Referência da API para parceiros
+│   ├── INTEGRATION_SETUP.md                    #   Guia de integração
+│   ├── QUICK_START_DEMO.md                     #   Demo em 5 minutos
+│   ├── PILOT_GUIDE.md                          #   Guia de piloto para corretoras
+│   ├── TECHNICAL_REFERENCE.md                  #   Referência técnica interna
+│   ├── PITCH_DECK_SUPPORT.md                   #   Material comercial
+│   ├── database_schema.sql                     #   Schema SQL de referência
+│   └── openapi.yaml                            #   Especificação OpenAPI
+│
+├── Dockerfile                                  # Container do Engine API
+├── auth-api/Dockerfile                         # Container da Auth API
+├── ARCHITECTURE.md                             # Decisões arquiteturais
+├── package.json                                # Orquestração dev (concurrently)
+└── LifeTrigger.Engine.sln                      # Solution .NET
 ```
 
 ---
 
-## Quick Start
+## Banco de Dados
 
-### Pré-requisitos
-- [.NET 9.0 SDK](https://dotnet.microsoft.com/download/dotnet/9.0)
-- PostgreSQL rodando localmente (ou Docker)
+O sistema usa **um banco PostgreSQL único** no Render, compartilhado pelas duas APIs (mesmo schema `public`):
 
-### 1. Clone e configure
+### Tabelas da Auth API
 
-```bash
-git clone <repo-url>
-cd LifeTriggerEngine
+```
+tenants          → Corretoras cadastradas
+users            → Usuários do sistema (vinculados a tenants)
+refresh_tokens   → Tokens de refresh (SHA-256 hash, rotação obrigatória)
+login_events     → Registro de logins (IP, UserAgent, timestamp)
 ```
 
-Edite `src/LifeTrigger.Engine.Api/appsettings.json` com sua connection string:
+### Tabelas do Engine API
 
+```
+Evaluations      → Avaliações de proteção (Request/Result em JSONB)
+TenantSettings   → Parâmetros configuráveis por corretora
+IdempotencyKeys  → Cache de idempotência para POST requests
+```
+
+### Detalhes importantes
+
+- **Sem FKs entre tabelas das duas APIs** — `TenantId` e `CreatedByUserId` no Engine são colunas denormalizadas
+- **Request e Result** são armazenados como **JSONB** na tabela `Evaluations`
+- **Enums** são armazenados como **integers** no banco e retornados como **strings** na API
+- **Migrations** são aplicadas **automaticamente** no startup (ambas as APIs)
+- Para criar novas migrations:
+
+```bash
+# Engine API (da raiz)
+dotnet ef migrations add NomeDaMigration \
+  --project src/LifeTrigger.Engine.Infrastructure \
+  --startup-project src/LifeTrigger.Engine.Api
+
+# Auth API (da pasta auth-api/)
+cd auth-api
+dotnet ef migrations add NomeDaMigration \
+  --project src/LifeTrigger.Auth.Infrastructure \
+  --startup-project src/LifeTrigger.Auth.Api
+```
+
+### Limpeza da base (reset para produção)
+
+```sql
+-- Apagar todas as avaliações e caches
+DELETE FROM "Evaluations";
+DELETE FROM "IdempotencyKeys";
+-- (Opcional) DELETE FROM "TenantSettings";
+```
+
+Não há cascading constraints — a ordem dos DELETEs não importa.
+
+---
+
+## Sistema de Perfis (Roles)
+
+5 roles cumulativos — quem tem role superior herda todas as permissões inferiores:
+
+```
+SuperAdmin (5)     → Administração da plataforma inteira
+  └─ TenantOwner (4) → Configurações e billing da corretora
+      └─ Manager (3)    → Equipe, relatórios, auditoria, motor
+          └─ Broker (2)    → Avaliações, gatilhos, clientes
+              └─ Viewer (1)    → Visualização read-only
+```
+
+### Telas do frontend por perfil
+
+| Role | Telas |
+|------|-------|
+| **Viewer** | Dashboard (read-only), Histórico, Guia do Sistema |
+| **Broker** | + Nova Avaliação, Meus Clientes |
+| **Manager** | + Equipe, Relatórios, Auditoria, Motor |
+| **TenantOwner** | + Configurações, Plano & Faturamento |
+| **SuperAdmin** | + Corretoras, Usuários Globais, Monitor de Acessos, Análise do Motor, Saúde da Plataforma |
+
+---
+
+## Endpoints da API
+
+### Auth API (`/api/v1/auth`, `/api/v1/tenants`, `/api/v1/users`)
+
+| Método | Rota | Auth | Descrição |
+|--------|------|------|-----------|
+| `POST` | `/api/v1/auth/login` | — | Login → access token + refresh token |
+| `POST` | `/api/v1/auth/refresh` | — | Renova tokens (rotação obrigatória) |
+| `POST` | `/api/v1/auth/logout` | Bearer | Revoga refresh token |
+| `GET` | `/api/v1/auth/me` | Bearer | Dados do usuário autenticado |
+| `POST` | `/api/v1/tenants` | SuperAdmin | Cria tenant |
+| `GET` | `/api/v1/tenants` | SuperAdmin | Lista tenants |
+| `PATCH` | `/api/v1/tenants/{id}/status` | SuperAdmin | Ativa/desativa tenant |
+| `POST` | `/api/v1/users` | TenantOwner+ | Cria usuário |
+| `GET` | `/api/v1/users` | TenantOwner+ | Lista usuários |
+| `PATCH` | `/api/v1/users/{id}/status` | TenantOwner+ | Ativa/desativa usuário |
+| `POST` | `/api/v1/users/{id}/reset-password` | TenantOwner+ | Redefine senha |
+
+### Engine API (`/api/v1`)
+
+| Método | Rota | Auth | Descrição |
+|--------|------|------|-----------|
+| `POST` | `/api/v1/evaluations` | Broker+ | Avaliação de proteção (requer `Idempotency-Key`) |
+| `GET` | `/api/v1/evaluations/{id}` | Broker+ | Recupera avaliação |
+| `PATCH` | `/api/v1/evaluations/{id}/status` | Broker+ | Altera status da avaliação |
+| `GET` | `/api/v1/evaluations` | Broker+ | Lista avaliações do tenant |
+| `POST` | `/api/v1/triggers` | Broker+ | Registra gatilho de vida (requer `Idempotency-Key`) |
+| `GET` | `/api/v1/admin/audit/evaluations/{id}/verify` | Manager+ | Verifica integridade do AuditHash |
+| `GET` | `/api/v1/admin/tenants/{tenantId}/settings` | TenantOwner+ | Lê configurações do tenant |
+| `PUT` | `/api/v1/admin/tenants/{tenantId}/settings` | TenantOwner+ | Atualiza parâmetros do motor |
+| `GET` | `/api/v1/engine/versions` | Qualquer | Versão do motor e ruleset |
+| `GET` | `/health` | — | Health check |
+
+---
+
+## Conformidade e Segurança
+
+| Mecanismo | Implementação |
+|-----------|--------------|
+| **LGPD** | Campo `hasExplicitActiveConsent` obrigatório — rejeita com 422 se ausente |
+| **Sem PII** | Motor opera só com dados numéricos/categóricos — sem nome, CPF ou e-mail |
+| **Multi-tenant** | `TenantId` extraído do JWT, sobrescreve o body (anti-spoofing) |
+| **Senhas** | BCrypt (work factor 11) |
+| **Access Token** | JWT HMAC-SHA256, expira em 1 hora |
+| **Refresh Token** | 64 bytes aleatórios, armazenado como SHA-256, rotação obrigatória |
+| **AuditHash** | SHA-256 por avaliação, verificável via endpoint dedicado |
+| **Rate Limiting** | 60 req/min (Engine), 10 req/min login, 120 req/min geral |
+| **Idempotência** | `Idempotency-Key` obrigatório em POST — replay retorna resposta cacheada |
+| **Correlation ID** | `X-Correlation-ID` propagado em todas as respostas |
+| **CORS** | Configurável via env var, restringe origens permitidas |
+
+---
+
+## Desenvolvimento Local
+
+### Pré-requisitos
+
+- [.NET 9.0 SDK](https://dotnet.microsoft.com/download/dotnet/9.0)
+- [Node.js 18+](https://nodejs.org/)
+- PostgreSQL local ou connection string do Render
+- `dotnet-ef` global: `dotnet tool install --global dotnet-ef`
+
+### 1. Clone e instale dependências
+
+```bash
+git clone git@github.com:filipesaldanhalacerda/LifeTrigger.git
+cd LifeTriggerEngine
+npm install            # concurrently (orquestração)
+cd frontend && npm install && cd ..
+```
+
+### 2. Configure as connection strings
+
+Edite os arquivos `appsettings.Development.json`:
+
+**Engine API** (`src/LifeTrigger.Engine.Api/appsettings.Development.json`):
 ```json
 {
   "ConnectionStrings": {
     "DefaultConnection": "Host=localhost;Database=LifeTriggerDb;Username=postgres;Password=sua_senha"
+  },
+  "JwtConfig": {
+    "Secret": "SuperSecretKeyForLocalDevelopmentDoNotUseInProd1234!"
   }
 }
 ```
 
-### 2. Execute
+**Auth API** (`auth-api/src/LifeTrigger.Auth.Api/appsettings.Development.json`):
+```json
+{
+  "Urls": "http://localhost:5086",
+  "ConnectionStrings": {
+    "DefaultConnection": "Host=localhost;Database=LifeTriggerAuthDb;Username=postgres;Password=sua_senha"
+  },
+  "JwtConfig": {
+    "Secret": "SuperSecretKeyForLocalDevelopmentDoNotUseInProd1234!"
+  }
+}
+```
+
+> As duas APIs **devem** usar o mesmo `JwtConfig:Secret`.
+
+### 3. Inicie tudo com um comando
 
 ```bash
-dotnet run --project src/LifeTrigger.Engine.Api
+npm run dev
 ```
 
-O motor aplica as migrations automaticamente no boot. Em `Development`, dados de demo são inseridos automaticamente.
+Isso inicia em paralelo (via `concurrently`):
+- **AUTH** — Auth API em `http://localhost:5086`
+- **ENGINE** — Engine API em `http://localhost:5001`
+- **FRONT** — Frontend em `http://localhost:5173`
 
-### 3. Acesse o Swagger
+O Vite faz proxy automático das chamadas — o frontend acessa tudo em `localhost:5173`.
 
-```
-https://localhost:5001/swagger
-```
+### 4. Verificar inicialização
 
-### 4. Obtenha um JWT de desenvolvimento
+| Serviço | URL | Esperado |
+|---------|-----|----------|
+| Auth API | http://localhost:5086/swagger | Swagger UI |
+| Engine API | http://localhost:5001/swagger | Swagger UI |
+| Engine Health | http://localhost:5001/health | `Healthy` |
+| Frontend | http://localhost:5173 | Tela de login |
 
-```bash
-curl -X POST https://localhost:5001/api/v1/auth/mock-token \
-  -H "Content-Type: application/json" \
-  -d '{"tenantId": "A1A1A1A1-A1A1-A1A1-A1A1-A1A1A1A1A1A1"}'
-```
+### Usuários demo (criados automaticamente no 1º boot)
 
-### 5. Execute uma avaliação
-
-```bash
-curl -X POST https://localhost:5001/api/v1/evaluations \
-  -H "Authorization: Bearer <token>" \
-  -H "Idempotency-Key: demo-001" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "personalContext": { "age": 35, "professionRiskLevel": "BAIXO", "isSmoker": false },
-    "financialContext": {
-      "monthlyIncome": { "exactValue": 15000 },
-      "debts": { "totalAmount": 200000, "remainingTermMonths": 120 },
-      "emergencyFundMonths": 2,
-      "educationCosts": { "totalEstimatedCost": 120000 },
-      "estate": { "totalEstateValue": 800000, "state": "SP" }
-    },
-    "familyContext": { "dependentsCount": 2, "dependentsAges": [5, 8] },
-    "operationalData": {
-      "originChannel": "API",
-      "hasExplicitActiveConsent": true,
-      "consentId": "consent-demo-001",
-      "tenantId": "A1A1A1A1-A1A1-A1A1-A1A1-A1A1A1A1A1A1"
-    }
-  }'
-```
+| Email | Senha | Role |
+|-------|-------|------|
+| `superadmin@lifetrigger.io` | `Super@123!` | SuperAdmin |
+| `admin@alpha.demo` | `Alpha@123!` | TenantOwner |
+| `broker@alpha.demo` | `Alpha@123!` | Broker |
 
 ---
 
@@ -233,9 +367,24 @@ dotnet test tests/LifeTrigger.Engine.Tests --configuration Release
 ```
 
 A suíte inclui:
-- **Testes unitários** do motor de cálculo (34 cenários)
+- **Testes unitários** do motor de cálculo (34+ cenários)
 - **Golden Files** — pares `input.json` → `expected_output.json` para regressão determinística
-- Se um resultado mudar silenciosamente (score, ação, justificativa), o build quebra imediatamente
+- Se um resultado mudar silenciosamente, o build quebra imediatamente
+
+---
+
+## Design System do Frontend
+
+| Aspecto | Detalhe |
+|---------|---------|
+| **Font** | Plus Jakarta Sans (wght 300–800) via Google Fonts |
+| **Paleta primária** | Deep Teal (`brand-*`: #f0fdfa → #042f2e) |
+| **Accent** | Warm Amber/Gold (`accent-*`: #fffbeb → #78350f) |
+| **Sidebar** | Colapsável (w-64/w-20), gradiente teal-escuro, estado em `localStorage` |
+| **Cards** | `rounded-2xl shadow-card` |
+| **Animações** | `fadeIn`, `scaleIn`, `slideInLeft`, `pulse-brand`, `.skeleton` |
+| **Glass** | `.glass`, `.glass-dark` (backdrop-blur) |
+| **Tailwind** | v4 — sem `tailwind.config.js`, usa `@theme` no CSS |
 
 ---
 
@@ -250,20 +399,42 @@ A suíte inclui:
 | [docs/PILOT_GUIDE.md](docs/PILOT_GUIDE.md) | Corretoras | Guia de piloto e validação |
 | [docs/TECHNICAL_REFERENCE.md](docs/TECHNICAL_REFERENCE.md) | Engenharia | Referência técnica detalhada |
 | [docs/PITCH_DECK_SUPPORT.md](docs/PITCH_DECK_SUPPORT.md) | Comercial | Material de apoio para reuniões |
+| [docs/openapi.yaml](docs/openapi.yaml) | Devs | Especificação OpenAPI |
 
 ---
 
-## Configuração de Variáveis de Ambiente (Produção)
+## Notas Importantes para Manutenção
 
-| Variável | Descrição | Obrigatório |
-|----------|-----------|-------------|
-| `ConnectionStrings__DefaultConnection` | Connection string do PostgreSQL | Sim |
-| `JwtConfig__Secret` | Chave secreta para assinar JWTs | Sim |
+### Deploy
 
-> **Nunca use a chave padrão de desenvolvimento em produção.**
+- **Frontend**: push no `main` → Vercel detecta e faz deploy automático
+- **Backend**: push no `main` → Render detecta os Dockerfiles e rebuilda os containers
+- Se trocar o domínio de um serviço no Render, atualizar `frontend/vercel.json`
+
+### Banco de dados
+
+- Migrations são aplicadas **automaticamente** no startup de ambas as APIs
+- Banco de produção: Render PostgreSQL em Oregon (`dpg-d6lbt3jh46gs73douilg-a.oregon-postgres.render.com`)
+- Database name: `lifetrigger` / User: `lifetrigger`
+- Connection string requer `SSL Mode=Require;Trust Server Certificate=true`
+- Para acessar o banco: Render Dashboard → PostgreSQL → `lifetrigger` → Connections
+
+### JWT
+
+- Access token expira em **1 hora**; refresh token em **30 dias** com rotação
+- A claim `role` é do tipo string simples (não URL), configurada como `RoleClaimType = "role"` em ambas APIs
+- `tenantId` é extraído do JWT e **sobrescreve** qualquer valor enviado no body
+
+### Engine
+
+- O motor é **determinístico** — mesmo input = mesmo output, sempre
+- `brokerInsights` e `CoverageEfficiencyScore` são regenerados on-the-fly no GET para registros antigos
+- A API server bloqueia DLLs enquanto roda — restart necessário para carregar novo código
+- Enums: **integers no banco**, **strings na API** (JsonStringEnumConverter global no Program.cs)
 
 ---
 
 ## Licença
 
-Proprietário — todos os direitos reservados. Para licenciamento comercial, entre em contato.
+Proprietário — todos os direitos reservados.
+Desenvolvido por **AllTask Soluções Integradas** — alltasksolucoesintegradas@gmail.com

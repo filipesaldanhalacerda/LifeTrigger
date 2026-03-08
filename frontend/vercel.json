@@ -5,11 +5,11 @@
   "rewrites": [
     {
       "source": "/api/auth/:path*",
-      "destination": "https://your-auth-api.railway.app/api/v1/:path*"
+      "destination": "https://lifetrigger-auth.onrender.com/api/v1/:path*"
     },
     {
       "source": "/api/engine/:path*",
-      "destination": "https://your-engine-api.railway.app/api/v1/:path*"
+      "destination": "https://lifetrigger-engine.onrender.com/api/v1/:path*"
     },
     {
       "source": "/(.*)",
