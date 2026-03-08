@@ -13,7 +13,14 @@ import {
   actionColors, actionLabel, riskColors, riskLabel, formatDate,
 } from '../lib/utils'
 import { useAuth } from '../contexts/AuthContext'
-import type { PilotReport, EvaluationSummary, RecommendedAction } from '../types/api'
+import type { PilotReport, EvaluationSummary, RecommendedAction, EvaluationStatusType } from '../types/api'
+
+const STATUS_CONFIG: Record<EvaluationStatusType, { label: string; dot: string }> = {
+  ABERTO:            { label: 'Aberto',     dot: 'bg-blue-500'    },
+  CONVERTIDO:        { label: 'Convertido', dot: 'bg-emerald-500' },
+  CONVERTIDO_PARCIAL:{ label: 'Parcial',    dot: 'bg-amber-500'   },
+  ARQUIVADO:         { label: 'Arquivado',  dot: 'bg-slate-400'   },
+}
 
 const ACTION_ICONS: Record<RecommendedAction, React.ElementType> = {
   AUMENTAR: TrendingUp,
@@ -333,6 +340,10 @@ export default function Dashboard() {
                       const scoreColor =
                         ev.score >= 70 ? 'text-emerald-600' :
                         ev.score >= 40 ? 'text-amber-600'   : 'text-red-600'
+                      const barColor =
+                        ev.score >= 70 ? 'bg-emerald-500' :
+                        ev.score >= 40 ? 'bg-amber-500'   : 'bg-red-500'
+                      const statusCfg = STATUS_CONFIG[ev.status ?? 'ABERTO']
 
                       return (
                         <button
@@ -345,16 +356,25 @@ export default function Dashboard() {
                           </div>
 
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
                               <Badge className={riskColors(ev.risk)} size="sm">{riskLabel(ev.risk)}</Badge>
                               <Badge className={actionColors(ev.action)} size="sm">{actionLabel(ev.action)}</Badge>
+                              <span className="inline-flex items-center gap-1 text-[10px] font-medium text-slate-500">
+                                <span className={`h-1.5 w-1.5 rounded-full ${statusCfg.dot}`} />
+                                {statusCfg.label}
+                              </span>
                             </div>
                             <p className="mt-0.5 text-[11px] text-slate-400">{formatDate(ev.timestamp)}</p>
                           </div>
 
-                          <div className="hidden sm:flex items-center gap-1.5 shrink-0">
-                            <span className={`text-sm font-bold tabular-nums ${scoreColor}`}>{ev.score.toFixed(0)}</span>
-                            <span className="text-[10px] text-slate-400">pts</span>
+                          <div className="hidden sm:flex items-center gap-2 shrink-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className={`text-sm font-bold tabular-nums ${scoreColor}`}>{ev.score.toFixed(0)}</span>
+                              <span className="text-[10px] text-slate-400">pts</span>
+                            </div>
+                            <div className="w-16 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                              <div className={`h-full rounded-full ${barColor} transition-all`} style={{ width: `${Math.min(ev.score, 100)}%` }} />
+                            </div>
                           </div>
 
                           <ChevronRight className="h-4 w-4 text-slate-300 shrink-0 group-hover:text-slate-500 transition-colors" />
