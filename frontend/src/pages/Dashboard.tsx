@@ -73,13 +73,13 @@ export default function Dashboard() {
 
   useEffect(() => { void load() }, [load])
 
-  // Status funnel (compute first so totalAll can use it as fallback)
-  const st = report?.statusDistribution ?? { aberto: 0, convertido: 0, parcial: 0, arquivado: 0 }
-  const statusSum = st.aberto + st.convertido + st.parcial + st.arquivado
-
   // Pending = ABERTO only (risk/action distributions are based on this)
   const pending = report?.totalEvaluations ?? 0
-  const totalAll = report?.totalAll ?? (statusSum > 0 ? statusSum : pending)
+  const totalAll = report?.totalAll ?? pending
+
+  // Status funnel — if API doesn't include statusDistribution, derive from totalAll/pending
+  const rawSt = report?.statusDistribution
+  const st = rawSt ?? { aberto: pending, convertido: totalAll - pending, parcial: 0, arquivado: 0 }
   const critico = report?.riskDistribution.critico ?? 0
   const adequado = report?.riskDistribution.adequado ?? 0
   const aumentar = report?.actionDistribution.aumentar ?? 0
