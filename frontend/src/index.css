@@ -74,6 +74,12 @@
 .animate-scaleIn      { animation: scaleIn 0.2s ease-out both; }
 .animate-pulse-brand  { animation: pulse-brand 2s ease-in-out infinite; }
 
+@keyframes revealUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.reveal-up { animation: revealUp 0.65s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
 /* ── Skeleton loader ───────────────────────────────────────────── */
 .skeleton {
   background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);

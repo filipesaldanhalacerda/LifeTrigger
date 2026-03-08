@@ -7,6 +7,7 @@ import {
   Lightbulb, MessageSquare, Target, HelpCircle, Package, ArrowRight,
   Cigarette, Briefcase, Landmark, GraduationCap, CreditCard, Wallet,
   Info, ChevronDown, BadgeCheck, CircleDot, Archive, PieChart,
+  Activity, FileText, Hash,
 } from 'lucide-react'
 import { TopBar } from '../components/layout/TopBar'
 import { ScoreRing } from '../components/ui/ScoreRing'
@@ -31,18 +32,25 @@ const ACTION_EXPLANATION: Record<RecommendedAction, string> = {
   REVISAR:  'Os dados fornecidos são insuficientes ou apresentam situação atípica. Uma revisão manual com o cliente é necessária antes de qualquer recomendação.',
 }
 
-const ACTION_THEME: Record<RecommendedAction, { border: string; bg: string; text: string; iconColor: string; accentBg: string }> = {
-  AUMENTAR: { border: 'border-red-200',    bg: 'bg-red-50',    text: 'text-red-800',    iconColor: 'text-red-600',    accentBg: 'bg-red-100/60' },
-  MANTER:   { border: 'border-emerald-200', bg: 'bg-emerald-50', text: 'text-emerald-800', iconColor: 'text-emerald-600', accentBg: 'bg-emerald-100/60' },
-  REDUZIR:  { border: 'border-sky-200',    bg: 'bg-sky-50',    text: 'text-sky-800',    iconColor: 'text-sky-600',    accentBg: 'bg-sky-100/60' },
-  REVISAR:  { border: 'border-amber-200',  bg: 'bg-amber-50',  text: 'text-amber-800',  iconColor: 'text-amber-600',  accentBg: 'bg-amber-100/60' },
-}
-
 const ACTION_ICONS: Record<RecommendedAction, React.ElementType> = {
   AUMENTAR: TrendingUp,
   MANTER:   Minus,
   REDUZIR:  TrendingDown,
   REVISAR:  RotateCcw,
+}
+
+const HERO_ACTION: Record<RecommendedAction, string> = {
+  AUMENTAR: 'bg-red-500/15 text-red-200 ring-1 ring-red-400/20',
+  MANTER:   'bg-emerald-500/15 text-emerald-200 ring-1 ring-emerald-400/20',
+  REDUZIR:  'bg-sky-500/15 text-sky-200 ring-1 ring-sky-400/20',
+  REVISAR:  'bg-amber-500/15 text-amber-200 ring-1 ring-amber-400/20',
+}
+
+const HERO_ICON_BG: Record<RecommendedAction, string> = {
+  AUMENTAR: 'bg-red-500/20 ring-red-400/20',
+  MANTER:   'bg-emerald-500/20 ring-emerald-400/20',
+  REDUZIR:  'bg-sky-500/20 ring-sky-400/20',
+  REVISAR:  'bg-amber-500/20 ring-amber-400/20',
 }
 
 const SCORE_DESCRIPTIONS: Record<string, { title: string; description: string; tip: string }> = {
@@ -137,7 +145,7 @@ export default function EvaluationResult() {
     return (
       <div className="flex h-64 items-center justify-center gap-3 text-slate-500">
         <Loader2 className="h-5 w-5 animate-spin text-brand-500" />
-        <span className="text-sm">Carregando resultado...</span>
+        <span className="text-sm font-medium tracking-wide">Carregando resultado...</span>
       </div>
     )
   }
@@ -164,10 +172,12 @@ export default function EvaluationResult() {
     )
   }
 
-  const actionTheme = ACTION_THEME[result.recommendedAction]
   const ActionIcon  = ACTION_ICONS[result.recommendedAction]
   const req = record?.request
   const insightCount = result.brokerInsights?.length ?? 0
+  const scoreStatus = (s: number) => s < 30 ? 'Crítico' : s < 70 ? 'Moderado' : 'Adequado'
+  const scoreStatusColor = (s: number) => s < 30 ? 'text-red-600' : s < 70 ? 'text-amber-600' : 'text-emerald-600'
+  const scoreStatusBadge = (s: number) => s < 30 ? 'bg-red-100 text-red-700' : s < 70 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'
 
   return (
     <div>
@@ -176,10 +186,10 @@ export default function EvaluationResult() {
         subtitle={record?.request.operationalData.recentLifeTrigger ? 'Gatilho de Vida' : undefined}
       />
 
-      <div className="animate-fadeIn p-4 sm:p-6 space-y-4 sm:space-y-5">
+      <div className="p-4 sm:p-6 space-y-5">
 
-        {/* Back + ID */}
-        <div className="flex items-center justify-between gap-3">
+        {/* ═══ HEADER: Back + ID + Status ═══ */}
+        <div className="flex items-center justify-between gap-3 reveal-up">
           <button
             onClick={() => navigate(-1)}
             className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 transition-colors"
@@ -245,37 +255,99 @@ export default function EvaluationResult() {
           </div>
         </div>
 
-        {/* ── Diagnosis / recommendation card — always visible ── */}
-        <div className={`rounded-2xl border p-5 sm:p-6 shadow-card ${actionTheme.border} ${actionTheme.bg}`}>
-          <div className="flex items-start gap-4">
-            <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${actionTheme.accentBg}`}>
-              <ActionIcon className={`h-6 w-6 ${actionTheme.iconColor}`} />
-            </div>
-            <div className="flex-1">
-              <div className="flex flex-wrap items-center gap-2 mb-2">
-                <Badge className={`${riskColors(result.riskClassification)}`} size="md">
-                  {riskLabel(result.riskClassification)}
-                </Badge>
-                <Badge className={`${actionColors(result.recommendedAction)}`} size="md">
-                  {actionLabel(result.recommendedAction)} Cobertura
-                </Badge>
-                {result.audit?.timestamp && (
-                  <span className="flex items-center gap-1 text-xs text-slate-400">
-                    <Clock className="h-3.5 w-3.5" />
-                    {formatDate(result.audit.timestamp)}
-                  </span>
-                )}
+        {/* ═══ HERO: Dark Diagnosis Card ═══ */}
+        <div className="reveal-up relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-950 via-brand-900 to-brand-800 p-6 sm:p-8 shadow-2xl" style={{ animationDelay: '0.05s' }}>
+          {/* Decorative depth elements */}
+          <div className="pointer-events-none absolute inset-0" aria-hidden="true">
+            <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-brand-400/[0.07] blur-3xl" />
+            <div className="absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-accent-500/[0.05] blur-3xl" />
+            <div
+              className="absolute top-0 right-0 h-full w-1/2 opacity-[0.015]"
+              style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '24px 24px' }}
+            />
+          </div>
+
+          <div className="relative z-10">
+            <div className="flex flex-col sm:flex-row sm:items-start gap-5">
+              <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl ring-1 backdrop-blur-sm shadow-lg ${HERO_ICON_BG[result.recommendedAction]}`}>
+                <ActionIcon className="h-7 w-7 text-white" />
               </div>
-              <p className={`text-sm leading-relaxed ${actionTheme.text}`}>
-                {ACTION_EXPLANATION[result.recommendedAction]}
-              </p>
+              <div className="flex-1 min-w-0">
+                <div className="flex flex-wrap items-center gap-2 mb-3">
+                  <span className={`inline-flex items-center rounded-lg px-2.5 py-1 text-xs font-bold ${HERO_ACTION[result.recommendedAction]}`}>
+                    {actionLabel(result.recommendedAction)} Cobertura
+                  </span>
+                  <span className="inline-flex items-center rounded-lg bg-white/10 px-2.5 py-1 text-xs font-semibold text-white/80 ring-1 ring-white/10">
+                    {riskLabel(result.riskClassification)}
+                  </span>
+                  {result.audit?.timestamp && (
+                    <span className="flex items-center gap-1 text-xs text-brand-300">
+                      <Clock className="h-3.5 w-3.5" />
+                      {formatDate(result.audit.timestamp)}
+                    </span>
+                  )}
+                </div>
+                <p className="text-sm leading-relaxed text-brand-100/80 max-w-2xl">
+                  {ACTION_EXPLANATION[result.recommendedAction]}
+                </p>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* ── Tab bar ── */}
-        <div className="rounded-2xl border border-slate-200 bg-white shadow-card overflow-hidden">
-          <div className="grid grid-cols-3">
+        {/* ═══ METRIC STRIP: Scores at a glance ═══ */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {/* Protection Score */}
+          <div className="reveal-up flex flex-col items-center gap-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-elevated" style={{ animationDelay: '0.12s' }}>
+            <ScoreRing score={result.protectionScore} size={88} strokeWidth={7} />
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-2 mb-0.5">
+                <p className="text-sm font-bold text-slate-900">Proteção</p>
+                <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${scoreStatusBadge(result.protectionScore)}`}>
+                  {scoreStatus(result.protectionScore)}
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-500">Quanto da necessidade está coberta</p>
+            </div>
+          </div>
+          {/* Efficiency Score */}
+          <div className="reveal-up flex flex-col items-center gap-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-elevated" style={{ animationDelay: '0.2s' }}>
+            <ScoreRing score={result.coverageEfficiencyScore} size={88} strokeWidth={7} />
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-2 mb-0.5">
+                <p className="text-sm font-bold text-slate-900">Eficiência</p>
+                <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${scoreStatusBadge(result.coverageEfficiencyScore)}`}>
+                  {scoreStatus(result.coverageEfficiencyScore)}
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-500">Calibragem da apólice atual</p>
+            </div>
+          </div>
+          {/* Gap */}
+          <div className="reveal-up flex flex-col items-center gap-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-elevated" style={{ animationDelay: '0.28s' }}>
+            <div className="flex h-[88px] w-[88px] items-center justify-center">
+              <div className="text-center">
+                <p className={`text-4xl font-extrabold tabular-nums tracking-tight ${result.protectionGapPercentage > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
+                  {Math.abs(result.protectionGapPercentage).toFixed(0)}%
+                </p>
+                <p className={`text-xs font-semibold ${result.protectionGapPercentage > 0 ? 'text-red-500' : 'text-emerald-500'}`}>
+                  {result.protectionGapPercentage > 0 ? 'Déficit' : result.protectionGapPercentage < 0 ? 'Excedente' : 'Alinhado'}
+                </p>
+              </div>
+            </div>
+            <div className="text-center">
+              <p className="text-sm font-bold text-slate-900">Gap de Cobertura</p>
+              <p className="text-[11px] text-slate-500 tabular-nums">{formatCurrency(Math.abs(result.protectionGapAmount))}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* ═══ GRADIENT DIVIDER ═══ */}
+        <div className="h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+
+        {/* ═══ TAB BAR ═══ */}
+        <div className="reveal-up rounded-2xl border border-slate-200 bg-white shadow-card overflow-hidden" style={{ animationDelay: '0.15s' }}>
+          <div className="grid grid-cols-3 divide-x divide-slate-100">
             <TabButton
               id="resultado"
               active={activeTab}
@@ -304,58 +376,13 @@ export default function EvaluationResult() {
           </div>
         </div>
 
-        {/* ── Tab: Resultado ── */}
+        {/* ═══ TAB CONTENT: Resultado ═══ */}
         {activeTab === 'resultado' && (
           <div className="space-y-5">
 
-            {/* 1. Overview — Score rings side by side */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-card">
-              <div className="mb-5">
-                <h2 className="text-base font-bold text-slate-900">Visão Geral</h2>
-                <p className="mt-0.5 text-xs text-slate-500">
-                  Resumo dos principais indicadores calculados pelo motor de avaliação.
-                </p>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-                {/* Protection Score */}
-                <div className="flex flex-col items-center gap-3 rounded-xl border border-slate-100 bg-gradient-to-b from-slate-50 to-white p-5">
-                  <ScoreRing score={result.protectionScore} size={100} strokeWidth={8} />
-                  <div className="text-center">
-                    <p className="text-sm font-bold text-slate-900">Proteção</p>
-                    <p className="mt-0.5 text-[11px] text-slate-500">Quanto da necessidade está coberta</p>
-                  </div>
-                </div>
-                {/* Efficiency Score */}
-                <div className="flex flex-col items-center gap-3 rounded-xl border border-slate-100 bg-gradient-to-b from-slate-50 to-white p-5">
-                  <ScoreRing score={result.coverageEfficiencyScore} size={100} strokeWidth={8} />
-                  <div className="text-center">
-                    <p className="text-sm font-bold text-slate-900">Eficiência</p>
-                    <p className="mt-0.5 text-[11px] text-slate-500">Calibragem da apólice atual</p>
-                  </div>
-                </div>
-                {/* Gap Summary */}
-                <div className="flex flex-col items-center gap-3 rounded-xl border border-slate-100 bg-gradient-to-b from-slate-50 to-white p-5">
-                  <div className="flex h-[100px] w-[100px] items-center justify-center">
-                    <div className="text-center">
-                      <p className={`text-3xl font-extrabold tabular-nums ${result.protectionGapPercentage > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
-                        {Math.abs(result.protectionGapPercentage).toFixed(0)}%
-                      </p>
-                      <p className={`text-xs font-semibold ${result.protectionGapPercentage > 0 ? 'text-red-500' : 'text-emerald-500'}`}>
-                        {result.protectionGapPercentage > 0 ? 'Déficit' : result.protectionGapPercentage < 0 ? 'Excedente' : 'Alinhado'}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-sm font-bold text-slate-900">Gap de Cobertura</p>
-                    <p className="mt-0.5 text-[11px] text-slate-500">{formatCurrency(Math.abs(result.protectionGapAmount))}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* 1b. Trigger comparison — before vs after */}
+            {/* Trigger comparison — before vs after */}
             {record?.request.operationalData.recentLifeTrigger && previousResult && (
-              <div className="rounded-2xl border border-amber-200 bg-gradient-to-b from-amber-50 to-white p-5 sm:p-6 shadow-card">
+              <div className="reveal-up rounded-2xl border border-amber-200 bg-gradient-to-b from-amber-50 to-white p-5 sm:p-6 shadow-card" style={{ animationDelay: '0.05s' }}>
                 <div className="mb-5 flex items-center gap-2">
                   <Zap className="h-5 w-5 text-amber-600" />
                   <div>
@@ -404,8 +431,8 @@ export default function EvaluationResult() {
               </div>
             )}
 
-            {/* 2. Coverage gap — detailed */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-card">
+            {/* Coverage gap — detailed */}
+            <div className="reveal-up rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-card" style={{ animationDelay: '0.08s' }}>
               <div className="mb-5">
                 <h2 className="text-base font-bold text-slate-900">Cobertura vs. Necessidade</h2>
                 <p className="mt-0.5 text-xs text-slate-500">
@@ -417,7 +444,6 @@ export default function EvaluationResult() {
                 current={result.currentCoverageAmount}
                 recommended={result.recommendedCoverageAmount}
               />
-              {/* Coverage ratio */}
               <div className="mt-4 flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 px-4 py-2.5">
                 <span className="text-xs font-medium text-slate-500">Cobertura contratada representa</span>
                 <span className={`text-sm font-bold tabular-nums ${riskScoreColor(result.protectionScore)}`}>
@@ -429,15 +455,14 @@ export default function EvaluationResult() {
               </div>
             </div>
 
-            {/* 3. Scores — detailed with segmented bars */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-card">
+            {/* Scores — detailed with segmented bars */}
+            <div className="reveal-up rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-card" style={{ animationDelay: '0.16s' }}>
               <div className="mb-5">
                 <h2 className="text-base font-bold text-slate-900">Análise Detalhada dos Scores</h2>
                 <p className="mt-0.5 text-xs text-slate-500">
                   Cada score é calculado com base no perfil financeiro, familiar e no histórico do cliente.
                 </p>
               </div>
-              {/* Scale legend */}
               <div className="mb-5 flex flex-wrap items-center gap-x-5 gap-y-2 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
                 <p className="text-[11px] font-bold text-slate-500 shrink-0">Como ler a escala:</p>
                 <div className="flex flex-wrap items-center gap-3">
@@ -458,9 +483,9 @@ export default function EvaluationResult() {
               </div>
             </div>
 
-            {/* 4. Coverage breakdown */}
+            {/* Coverage breakdown */}
             {result.recommendedCoverageAmount > 0 && (
-              <div className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-card">
+              <div className="reveal-up rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-card" style={{ animationDelay: '0.24s' }}>
                 <div className="mb-5">
                   <h2 className="text-base font-bold text-slate-900">Composição da Cobertura Recomendada</h2>
                   <p className="mt-0.5 text-xs text-slate-500">
@@ -469,10 +494,8 @@ export default function EvaluationResult() {
                   </p>
                 </div>
 
-                {/* Stacked bar */}
                 <StackedCoverageBar result={result} />
 
-                {/* Individual breakdowns */}
                 <div className="mt-5 space-y-3">
                   {COVERAGE_ITEMS
                     .map((item) => ({ ...item, value: item.getValue(result) }))
@@ -507,7 +530,6 @@ export default function EvaluationResult() {
                     })}
                 </div>
 
-                {/* Total */}
                 <div className="mt-4 flex items-center justify-between rounded-xl border border-brand-100 bg-brand-50 px-4 py-3">
                   <span className="text-sm font-bold text-brand-800">Capital Segurado Recomendado</span>
                   <span className="text-base font-extrabold tabular-nums text-brand-700">
@@ -517,9 +539,9 @@ export default function EvaluationResult() {
               </div>
             )}
 
-            {/* 5. Justifications */}
+            {/* Justifications */}
             {result.justificationsRendered?.length > 0 && (
-              <div className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-card">
+              <div className="reveal-up rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-card" style={{ animationDelay: '0.32s' }}>
                 <div className="mb-4">
                   <h2 className="text-base font-bold text-slate-900">Justificativas do Cálculo</h2>
                   <p className="mt-0.5 text-xs text-slate-500">
@@ -537,18 +559,17 @@ export default function EvaluationResult() {
               </div>
             )}
 
-            {/* 6. Client context */}
+            {/* Client context */}
             {req && (
-              <div className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-card">
+              <div className="reveal-up rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-card" style={{ animationDelay: '0.4s' }}>
                 <div className="mb-5">
                   <h2 className="text-base font-bold text-slate-900">Dados do Cliente Avaliado</h2>
                   <p className="mt-0.5 text-xs text-slate-500">
-                    Perfil completo utilizado pelo motor para calcular a necessidade de proteção. Qualquer alteração nestes dados pode gerar um resultado diferente.
+                    Perfil completo utilizado pelo motor para calcular a necessidade de proteção.
                   </p>
                 </div>
 
-                {/* Primary data */}
-                <SectionLabel label="Perfil Pessoal" />
+                <SectionLabel icon={User} label="Perfil Pessoal" />
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-5">
                   <ContextCard icon={User} label="Idade" value={`${req.personalContext.age} anos`} />
                   <ContextCard icon={Baby} label="Dependentes" value={`${req.familyContext.dependentsCount}`} />
@@ -556,8 +577,7 @@ export default function EvaluationResult() {
                   <ContextCard icon={Cigarette} label="Fumante" value={req.personalContext.isSmoker ? 'Sim' : 'Não'} />
                 </div>
 
-                {/* Financial data */}
-                <SectionLabel label="Contexto Financeiro" />
+                <SectionLabel icon={DollarSign} label="Contexto Financeiro" />
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-5">
                   <ContextCard
                     icon={DollarSign}
@@ -613,8 +633,7 @@ export default function EvaluationResult() {
                   )}
                 </div>
 
-                {/* Operational */}
-                <SectionLabel label="Operacional" />
+                <SectionLabel icon={BarChart3} label="Operacional" />
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                   <ContextCard icon={BarChart3} label="Canal de origem" value={req.operationalData.originChannel} />
                   <ContextCard icon={Shield} label="Consentimento" value={req.operationalData.hasExplicitActiveConsent ? 'Ativo' : 'Pendente'} />
@@ -622,9 +641,9 @@ export default function EvaluationResult() {
               </div>
             )}
 
-            {/* 7. CTA — Trigger */}
+            {/* CTA — Trigger */}
             {record && (
-              <div className="rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-50 to-white p-5 sm:p-6 shadow-card">
+              <div className="reveal-up rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-50 to-white p-5 sm:p-6 shadow-card" style={{ animationDelay: '0.48s' }}>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                   <div className="flex items-start gap-3 flex-1">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100">
@@ -635,7 +654,6 @@ export default function EvaluationResult() {
                       <p className="mt-1 text-xs text-amber-700 leading-relaxed">
                         Casamento, nascimento de filho, compra de imóvel, promoção ou aposentadoria —
                         registre um gatilho de vida para recalcular a proteção com os dados já preenchidos.
-                        O motor compara automaticamente o antes e o depois.
                       </p>
                     </div>
                   </div>
@@ -652,11 +670,11 @@ export default function EvaluationResult() {
           </div>
         )}
 
-        {/* ── Tab: Insights ── */}
+        {/* ═══ TAB CONTENT: Insights ═══ */}
         {activeTab === 'insights' && (
           <div className="space-y-5">
             {insightCount > 0 ? (
-              <div className="rounded-2xl border border-brand-200 bg-gradient-to-b from-brand-50 to-white p-5 sm:p-6 shadow-card">
+              <div className="reveal-up rounded-2xl border border-brand-200 bg-gradient-to-b from-brand-50 to-white p-5 sm:p-6 shadow-card" style={{ animationDelay: '0.05s' }}>
                 <div className="mb-5 flex items-start gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-100">
                     <Lightbulb className="h-5 w-5 text-brand-600" />
@@ -671,12 +689,14 @@ export default function EvaluationResult() {
                 </div>
                 <div className="space-y-3">
                   {result.brokerInsights.map((insight, i) => (
-                    <InsightCard key={i} insight={insight} />
+                    <div key={i} className="reveal-up" style={{ animationDelay: `${0.1 + i * 0.06}s` }}>
+                      <InsightCard insight={insight} />
+                    </div>
                   ))}
                 </div>
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white py-16">
+              <div className="reveal-up flex flex-col items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white py-16">
                 <Lightbulb className="h-8 w-8 text-slate-300" />
                 <p className="text-sm font-semibold text-slate-500">Nenhum insight disponível</p>
                 <p className="text-xs text-slate-400">Esta avaliação não gerou insights de abordagem.</p>
@@ -685,65 +705,93 @@ export default function EvaluationResult() {
           </div>
         )}
 
-        {/* ── Tab: Auditoria ── */}
+        {/* ═══ TAB CONTENT: Auditoria ═══ */}
         {activeTab === 'auditoria' && (
           <div className="space-y-5">
             {result.audit && (
-              <div className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-card">
-                <div className="mb-5 flex items-start justify-between gap-3">
-                  <div>
-                    <h2 className="text-base font-bold text-slate-900">Metadados de Auditoria</h2>
-                    <p className="mt-0.5 text-xs text-slate-500">
-                      Rastreabilidade técnica desta avaliação — versão do motor e regras utilizadas.
-                    </p>
-                  </div>
-                  {id && (
-                    <button
-                      onClick={() => navigate('/audit')}
-                      className="flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors"
-                    >
-                      <ShieldCheck className="h-3.5 w-3.5 text-brand-500" />
-                      Verificar Integridade
-                    </button>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
-                  <AuditRow label="Versão do Motor"   value={result.audit.engineVersion} />
-                  <AuditRow label="Versão do Ruleset" value={result.audit.ruleSetVersion} />
-                  <AuditRow label="Consent ID"        value={result.audit.consentId} />
-                </div>
-
-                {record?.auditHash && (
-                  <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 mb-4">
-                    <div className="mb-1.5 flex items-center justify-between">
-                      <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">
-                        Audit Hash SHA-256
-                      </p>
-                      <button
-                        onClick={() => copyHash(record.auditHash!)}
-                        className="flex items-center gap-1 text-[11px] text-slate-400 hover:text-slate-600 transition-colors"
-                      >
-                        {copiedHash
-                          ? <><Check className="h-3 w-3 text-emerald-500" /> Copiado!</>
-                          : <><Copy className="h-3 w-3" /> Copiar</>
-                        }
-                      </button>
+              <>
+                {/* Metadata */}
+                <div className="reveal-up rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-card" style={{ animationDelay: '0.05s' }}>
+                  <div className="mb-5 flex items-start justify-between gap-3">
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100">
+                        <FileText className="h-5 w-5 text-slate-500" />
+                      </div>
+                      <div>
+                        <h2 className="text-base font-bold text-slate-900">Metadados de Auditoria</h2>
+                        <p className="mt-0.5 text-xs text-slate-500">
+                          Rastreabilidade técnica — versão do motor e regras utilizadas.
+                        </p>
+                      </div>
                     </div>
-                    <p className="break-all font-mono text-xs text-slate-700">{record.auditHash}</p>
+                    {id && (
+                      <button
+                        onClick={() => navigate('/audit')}
+                        className="flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+                      >
+                        <ShieldCheck className="h-3.5 w-3.5 text-brand-500" />
+                        Verificar Integridade
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <AuditRow icon={Activity} label="Versão do Motor" value={result.audit.engineVersion} />
+                    <AuditRow icon={FileText} label="Versão do Ruleset" value={result.audit.ruleSetVersion} />
+                    <AuditRow icon={User} label="Consent ID" value={result.audit.consentId} />
+                  </div>
+                </div>
+
+                {/* Hash */}
+                {record?.auditHash && (
+                  <div className="reveal-up rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-card" style={{ animationDelay: '0.13s' }}>
+                    <div className="flex items-start gap-3 mb-4">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100">
+                        <Hash className="h-5 w-5 text-slate-500" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-1">
+                          <h3 className="text-sm font-bold text-slate-900">Audit Hash SHA-256</h3>
+                          <button
+                            onClick={() => copyHash(record.auditHash!)}
+                            className="flex items-center gap-1 text-[11px] text-slate-400 hover:text-slate-600 transition-colors"
+                          >
+                            {copiedHash
+                              ? <><Check className="h-3 w-3 text-emerald-500" /> Copiado!</>
+                              : <><Copy className="h-3 w-3" /> Copiar</>
+                            }
+                          </button>
+                        </div>
+                        <p className="text-xs text-slate-500">
+                          Hash criptográfico que garante a integridade dos dados desta avaliação.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="rounded-xl border border-slate-100 bg-slate-50 p-4">
+                      <p className="break-all font-mono text-xs text-slate-700 leading-relaxed">{record.auditHash}</p>
+                    </div>
                   </div>
                 )}
 
+                {/* Applied Rules */}
                 {result.audit.appliedRules?.length > 0 && (
-                  <div>
-                    <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-slate-500">
-                      Regras Aplicadas
-                    </p>
-                    <div className="flex flex-wrap gap-1.5">
+                  <div className="reveal-up rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-card" style={{ animationDelay: '0.21s' }}>
+                    <div className="flex items-start gap-3 mb-4">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-50">
+                        <ShieldCheck className="h-5 w-5 text-brand-500" />
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-bold text-slate-900">Regras Aplicadas</h3>
+                        <p className="mt-0.5 text-xs text-slate-500">
+                          {result.audit.appliedRules.length} regra{result.audit.appliedRules.length > 1 ? 's' : ''} do motor utilizadas nesta avaliação.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
                       {result.audit.appliedRules.map((r) => (
                         <span
                           key={r}
-                          className="rounded-md bg-slate-100 px-2.5 py-1 font-mono text-[10px] text-slate-600"
+                          className="rounded-lg bg-brand-50 border border-brand-100 px-3 py-1.5 font-mono text-[11px] font-medium text-brand-700"
                         >
                           {r}
                         </span>
@@ -751,7 +799,7 @@ export default function EvaluationResult() {
                     </div>
                   </div>
                 )}
-              </div>
+              </>
             )}
           </div>
         )}
@@ -796,14 +844,13 @@ function TabButton({
         }
       `}
     >
-      {/* Active indicator bar */}
       {isActive && (
         <div className="absolute bottom-0 left-3 right-3 h-0.5 rounded-full bg-brand-600" />
       )}
 
       <div className={`flex h-9 w-9 items-center justify-center rounded-xl transition-colors
-        ${isActive ? 'bg-brand-100' : 'bg-slate-100 group-hover:bg-slate-200'}`}>
-        <Icon className={`h-4.5 w-4.5 ${isActive ? 'text-brand-600' : 'text-slate-400'}`} />
+        ${isActive ? 'bg-brand-100' : 'bg-slate-100'}`}>
+        <Icon className={`h-[18px] w-[18px] ${isActive ? 'text-brand-600' : 'text-slate-400'}`} />
       </div>
 
       <div className="flex items-center gap-1.5">
@@ -813,7 +860,7 @@ function TabButton({
         </span>
         {badge !== undefined && (
           <span className={`
-            flex h-4.5 min-w-[1.125rem] items-center justify-center rounded-full px-1.5 text-[10px] font-bold
+            flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1.5 text-[10px] font-bold
             ${isActive ? 'bg-brand-600 text-white' : 'bg-slate-200 text-slate-500'}
           `}>
             {badge}
@@ -828,8 +875,6 @@ function TabButton({
     </button>
   )
 }
-
-// ── Sub-components ────────────────────────────────────────────────
 
 // ── Coverage items config ─────────────────────────────────────────
 const COVERAGE_ITEMS = [
@@ -933,14 +978,13 @@ function ScoreRow({
           <p className="text-xs leading-relaxed text-slate-500">{meta.description}</p>
         </div>
         <div className="text-right shrink-0">
-          <p className={`text-2xl font-extrabold tabular-nums leading-none ${scoreColor}`}>
+          <p className={`text-2xl font-extrabold tabular-nums leading-none tracking-tight ${scoreColor}`}>
             {score}
           </p>
           <p className="text-[10px] text-slate-400 mt-0.5">de 100</p>
         </div>
       </div>
 
-      {/* Segmented progress bar */}
       <div className="relative">
         <div className="flex h-3 w-full overflow-hidden rounded-full bg-slate-200">
           <div
@@ -948,7 +992,6 @@ function ScoreRow({
             style={{ width: `${score}%` }}
           />
         </div>
-        {/* Scale markers */}
         <div className="absolute inset-0 flex h-3 items-center">
           <div className="absolute left-[30%] h-3 w-px bg-slate-300/60" />
           <div className="absolute left-[70%] h-3 w-px bg-slate-300/60" />
@@ -961,7 +1004,6 @@ function ScoreRow({
         <span>100</span>
       </div>
 
-      {/* Tip */}
       <div className="mt-3 flex items-start gap-2 rounded-lg bg-white border border-slate-100 px-3 py-2">
         <Info className="h-3.5 w-3.5 shrink-0 text-slate-400 mt-0.5" />
         <p className="text-[11px] text-slate-500 leading-relaxed">{meta.tip}</p>
@@ -1070,15 +1112,18 @@ function ScalePill({ range, hint, colorClass }: { range: string; hint: string; c
   )
 }
 
-function SectionLabel({ label }: { label: string }) {
+function SectionLabel({ icon: Icon, label }: { icon: React.ElementType; label: string }) {
   return (
-    <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-slate-400">{label}</p>
+    <div className="mb-2.5 flex items-center gap-2">
+      <Icon className="h-3.5 w-3.5 text-slate-400" />
+      <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400">{label}</p>
+    </div>
   )
 }
 
 function ContextCard({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-slate-100 bg-slate-50 p-3">
+    <div className="rounded-xl border border-slate-100 bg-gradient-to-b from-slate-50 to-white p-3">
       <div className="mb-1 flex items-center gap-1.5">
         <Icon className="h-3.5 w-3.5 text-slate-400" />
         <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{label}</p>
@@ -1088,11 +1133,14 @@ function ContextCard({ icon: Icon, label, value }: { icon: React.ElementType; la
   )
 }
 
-function AuditRow({ label, value }: { label: string; value: string }) {
+function AuditRow({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-slate-100 bg-slate-50 p-3">
-      <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">{label}</p>
-      <p className="mt-0.5 text-sm font-medium text-slate-700">{value}</p>
+    <div className="rounded-xl border border-slate-100 bg-gradient-to-b from-slate-50 to-white p-4">
+      <div className="mb-1.5 flex items-center gap-2">
+        <Icon className="h-3.5 w-3.5 text-slate-400" />
+        <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">{label}</p>
+      </div>
+      <p className="text-sm font-semibold text-slate-800 truncate">{value}</p>
     </div>
   )
 }
