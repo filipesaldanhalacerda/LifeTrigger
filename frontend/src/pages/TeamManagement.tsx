@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import {
   Users, UserPlus, KeyRound, Loader2, X,
-  AlertCircle, CheckCircle, Search, Filter,
-  RefreshCw, ChevronDown, Lock,
+  AlertCircle, CheckCircle, Search,
+  ChevronDown, Lock,
 } from 'lucide-react'
 import { TopBar } from '../components/layout/TopBar'
 import { useAuth, type UserRole } from '../contexts/AuthContext'
@@ -473,104 +473,110 @@ export default function TeamManagement() {
 
       <div className="p-4 sm:p-6 space-y-4 sm:space-y-5 animate-fadeIn">
 
-        {/* ── Stats strip ── */}
-        {!loading && users.length > 0 && (
-          <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-white px-5 py-3.5 shadow-card">
-            <div className="flex items-center gap-1.5 pr-4 border-r border-slate-100">
-              <Users className="h-4 w-4 text-slate-400" />
-              <span className="text-xs text-slate-500">
-                <span className="font-bold tabular-nums text-slate-800">{activeCount}</span> de{' '}
-                <span className="font-bold tabular-nums text-slate-800">{users.length}</span> ativos
-              </span>
+        {/* ── Filter section ── */}
+        <div className="space-y-3">
+
+          {/* Row 1: Search + Add button */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+            <div className="relative flex-1 min-w-0 sm:min-w-52">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Buscar por e-mail…"
+                className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-9 pr-8 text-sm shadow-card focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100"
+              />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
             </div>
+
+            {canAddUser && (
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="flex items-center gap-2 rounded-xl bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 transition-colors shadow-card"
+              >
+                <UserPlus className="h-4 w-4" />
+                Adicionar membro
+              </button>
+            )}
+          </div>
+
+          {/* Row 2: Status pills + Role pills + clear */}
+          <div className="flex items-center gap-2 flex-wrap">
+
+            {/* Status pills */}
+            {[
+              { key: 'active',   label: 'Ativo',   dot: 'bg-emerald-500', activeBg: 'bg-emerald-50 border-emerald-300 ring-2 ring-emerald-100', activeText: 'text-emerald-700', count: activeCount },
+              { key: 'inactive', label: 'Inativo',  dot: 'bg-slate-400',   activeBg: 'bg-slate-100 border-slate-300 ring-2 ring-slate-200',     activeText: 'text-slate-600',    count: users.length - activeCount },
+            ].map(opt => {
+              const isActive = filterStatus === opt.key
+              if (opt.count === 0 && !isActive) return null
+              return (
+                <button
+                  key={opt.key}
+                  onClick={() => setFilterStatus(isActive ? '' : opt.key)}
+                  className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-semibold transition-all ${
+                    isActive ? `${opt.activeBg} ${opt.activeText}` : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  <span className={`h-1.5 w-1.5 rounded-full ${opt.dot}`} />
+                  {opt.label}
+                  <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold tabular-nums ${
+                    isActive ? 'bg-white/60 text-inherit' : 'bg-slate-100 text-slate-500'
+                  }`}>
+                    {opt.count}
+                  </span>
+                </button>
+              )
+            })}
+
+            {/* Separator */}
+            {users.length > 0 && <div className="h-4 w-px bg-slate-200 mx-1" />}
+
+            {/* Role pills */}
             {(Object.keys(ROLE_META) as UserRole[]).map(role => {
               const count = roleCounts[role]
               if (!count) return null
+              const isActive = filterRole === role
               return (
                 <button
                   key={role}
-                  onClick={() => setFilterRole(filterRole === role ? '' : role)}
-                  className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-semibold transition-colors ${
-                    filterRole === role
-                      ? 'bg-brand-100 text-brand-700 ring-2 ring-brand-200'
-                      : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
+                  onClick={() => setFilterRole(isActive ? '' : role)}
+                  className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-semibold transition-all ${
+                    isActive
+                      ? 'bg-brand-50 border-brand-300 ring-2 ring-brand-100 text-brand-700'
+                      : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
                   }`}
-                  title="Clique para filtrar por este perfil"
                 >
                   {ROLE_META[role].label}
-                  <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold tabular-nums ${filterRole === role ? 'bg-brand-200 text-brand-800' : 'bg-white text-slate-600 shadow-card'}`}>
+                  <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold tabular-nums ${
+                    isActive ? 'bg-brand-200 text-brand-800' : 'bg-slate-100 text-slate-500'
+                  }`}>
                     {count}
                   </span>
                 </button>
               )
             })}
-          </div>
-        )}
 
-        {/* ── Actions bar ── */}
-        <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3">
-          {/* Search */}
-          <div className="relative flex-1 min-w-0 sm:min-w-52">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Buscar por e-mail…"
-              className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm shadow-card focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100"
-            />
-          </div>
-
-          {/* Filters */}
-          <div className="flex items-center gap-2">
-            <Filter className={`h-4 w-4 ${hasFilters ? 'text-brand-500' : 'text-slate-400'}`} />
-            <select
-              value={filterRole}
-              onChange={e => setFilterRole(e.target.value)}
-              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-card focus:border-brand-400 focus:outline-none"
-            >
-              <option value="">Todos os perfis</option>
-              {(Object.keys(ROLE_META) as UserRole[]).map(r => (
-                <option key={r} value={r}>{ROLE_META[r].label}</option>
-              ))}
-            </select>
-            <select
-              value={filterStatus}
-              onChange={e => setFilterStatus(e.target.value)}
-              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-card focus:border-brand-400 focus:outline-none"
-            >
-              <option value="">Todos os status</option>
-              <option value="active">Ativos</option>
-              <option value="inactive">Inativos</option>
-            </select>
+            {/* Clear filters */}
             {hasFilters && (
               <button
                 onClick={() => { setSearch(''); setFilterRole(''); setFilterStatus('') }}
-                className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-500 shadow-card hover:text-slate-700 hover:bg-slate-50 transition-colors"
+                className="flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-colors ml-auto"
               >
-                Limpar
+                <X className="h-3 w-3" />
+                Limpar filtros
               </button>
             )}
           </div>
-
-          <button
-            onClick={() => void load()}
-            disabled={loading}
-            className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600 shadow-card hover:bg-slate-50 transition-colors disabled:opacity-50"
-          >
-            <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
-            Atualizar
-          </button>
-
-          {canAddUser && (
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="sm:ml-auto flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 transition-colors"
-            >
-              <UserPlus className="h-4 w-4" />
-              Adicionar membro
-            </button>
-          )}
         </div>
 
         {/* ── Error ── */}
@@ -592,11 +598,20 @@ export default function TeamManagement() {
           </div>
         )}
 
-        {/* ── Loading ── */}
+        {/* ── Loading skeletons ── */}
         {loading && (
-          <div className="flex items-center justify-center gap-2 py-20 text-slate-400">
-            <Loader2 className="h-5 w-5 animate-spin text-brand-500" />
-            <span className="text-sm">Carregando equipe…</span>
+          <div className="rounded-2xl border border-slate-200 bg-white shadow-card overflow-hidden">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-3 px-4 py-3.5 border-b border-slate-100 last:border-0">
+                <div className="h-8 w-8 rounded-full skeleton shrink-0" />
+                <div className="flex-1 space-y-1.5">
+                  <div className="h-3.5 w-40 rounded skeleton" />
+                  <div className="h-2.5 w-20 rounded skeleton" />
+                </div>
+                <div className="h-5 w-16 rounded-full skeleton" />
+                <div className="h-3 w-24 rounded skeleton hidden sm:block" />
+              </div>
+            ))}
           </div>
         )}
 
