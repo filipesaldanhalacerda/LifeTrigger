@@ -203,7 +203,7 @@ export default function Dashboard() {
                       <circle cx="18" cy="18" r="15.5" fill="none" strokeWidth="3" className="text-slate-100" stroke="currentColor" />
                       <circle
                         cx="18" cy="18" r="15.5" fill="none" strokeWidth="3"
-                        strokeDasharray={`${healthScore * 0.975} 100`}
+                        strokeDasharray={`${(healthScore / 100) * (2 * Math.PI * 15.5)} ${2 * Math.PI * 15.5}`}
                         strokeLinecap="round"
                         stroke={health.ringStroke}
                         style={{ transition: 'stroke-dasharray 1s ease' }}
@@ -339,10 +339,10 @@ export default function Dashboard() {
                       const ActionIcon = ACTION_ICONS[ev.action]
                       const scoreColor =
                         ev.score >= 70 ? 'text-emerald-600' :
-                        ev.score >= 40 ? 'text-amber-600'   : 'text-red-600'
+                        ev.score >= 45 ? 'text-amber-600'   : 'text-red-600'
                       const barColor =
                         ev.score >= 70 ? 'bg-emerald-500' :
-                        ev.score >= 40 ? 'bg-amber-500'   : 'bg-red-500'
+                        ev.score >= 45 ? 'bg-amber-500'   : 'bg-red-500'
                       const statusCfg = STATUS_CONFIG[ev.status ?? 'ABERTO']
 
                       return (
