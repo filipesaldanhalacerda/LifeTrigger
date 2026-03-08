@@ -229,33 +229,61 @@ export default function Login() {
           </form>
 
 
-          {/* Demo credentials */}
+          {/* Demo quick-access */}
           <div className="mt-5 animate-fadeIn" style={{ animationDelay: '220ms' }}>
-            <div className="flex items-center gap-2 mb-3">
-              <div className="h-px flex-1 bg-slate-200" />
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Acesso rápido</span>
-              <div className="h-px flex-1 bg-slate-200" />
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              {[
-                { role: 'Proprietário', desc: 'Gestão completa',      email: 'owner@alpha.demo',   password: 'Alpha@123!', iconBg: 'bg-purple-100',  iconText: 'text-purple-600',  hoverBorder: 'hover:border-purple-300' },
-                { role: 'Gerente',      desc: 'Equipe e relatórios',  email: 'manager@alpha.demo', password: 'Alpha@123!', iconBg: 'bg-blue-100',    iconText: 'text-blue-600',    hoverBorder: 'hover:border-blue-300' },
-                { role: 'Corretor',     desc: 'Avaliações e clientes', email: 'broker@alpha.demo', password: 'Alpha@123!', iconBg: 'bg-emerald-100', iconText: 'text-emerald-600', hoverBorder: 'hover:border-emerald-300' },
-                { role: 'Observador',   desc: 'Apenas visualização',  email: 'viewer@alpha.demo',  password: 'Alpha@123!', iconBg: 'bg-slate-100',   iconText: 'text-slate-600',   hoverBorder: 'hover:border-slate-300' },
-              ].map(({ role, desc, email: demoEmail, password: demoPw, iconBg, iconText, hoverBorder }) => (
-                <button
-                  key={demoEmail}
-                  type="button"
-                  onClick={() => { setEmail(demoEmail); setPassword(demoPw) }}
-                  className={`group relative rounded-xl border border-slate-200 bg-white p-3 text-left ${hoverBorder} hover:shadow-md transition-all duration-200`}
-                >
-                  <div className={`mb-1.5 flex h-7 w-7 items-center justify-center rounded-lg ${iconBg}`}>
-                    <span className={`text-xs font-bold ${iconText}`}>{role[0]}</span>
-                  </div>
-                  <p className="text-xs font-semibold text-slate-800">{role}</p>
-                  <p className="text-[10px] text-slate-400 leading-snug">{desc}</p>
-                </button>
-              ))}
+            <div className="rounded-2xl border border-accent-200 bg-gradient-to-br from-accent-50 to-white p-4 shadow-sm">
+              <div className="flex items-center gap-2.5 mb-1.5">
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent-100">
+                  <Zap className="h-3.5 w-3.5 text-accent-600" />
+                </div>
+                <p className="text-xs font-bold text-accent-900 uppercase tracking-wide">Acesso rápido à demonstração</p>
+              </div>
+              <p className="text-[12px] text-accent-700 leading-relaxed mb-3">
+                Clique em um dos perfis abaixo para <strong>entrar automaticamente</strong> na plataforma e explorar todas as funcionalidades.
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { role: 'Proprietário', desc: 'Gestão completa da corretora', email: 'owner@alpha.demo',   password: 'Alpha@123!', iconBg: 'bg-purple-100',  iconText: 'text-purple-600',  hoverBorder: 'hover:border-purple-300', hoverBg: 'hover:bg-purple-50' },
+                  { role: 'Gerente',      desc: 'Equipe, relatórios e motor',   email: 'manager@alpha.demo', password: 'Alpha@123!', iconBg: 'bg-blue-100',    iconText: 'text-blue-600',    hoverBorder: 'hover:border-blue-300',   hoverBg: 'hover:bg-blue-50' },
+                  { role: 'Corretor',     desc: 'Avaliações, clientes e gatilhos', email: 'broker@alpha.demo', password: 'Alpha@123!', iconBg: 'bg-emerald-100', iconText: 'text-emerald-600', hoverBorder: 'hover:border-emerald-300', hoverBg: 'hover:bg-emerald-50' },
+                  { role: 'Observador',   desc: 'Apenas visualização (read-only)', email: 'viewer@alpha.demo', password: 'Alpha@123!', iconBg: 'bg-slate-100',   iconText: 'text-slate-600',   hoverBorder: 'hover:border-slate-300',  hoverBg: 'hover:bg-slate-50' },
+                ].map(({ role, desc, email: demoEmail, password: demoPw, iconBg, iconText, hoverBorder, hoverBg }) => (
+                  <button
+                    key={demoEmail}
+                    type="button"
+                    disabled={loading}
+                    onClick={async () => {
+                      setEmail(demoEmail)
+                      setPassword(demoPw)
+                      setError(null)
+                      setLoading(true)
+                      try {
+                        await login(demoEmail, demoPw)
+                        navigate('/', { replace: true })
+                      } catch {
+                        setError('Não foi possível conectar. Tente novamente.')
+                      } finally {
+                        setLoading(false)
+                      }
+                    }}
+                    className={`group relative rounded-xl border border-slate-200 bg-white p-3 text-left ${hoverBorder} ${hoverBg} hover:shadow-md transition-all duration-200 disabled:opacity-60 cursor-pointer`}
+                  >
+                    <div className="flex items-center gap-2.5 mb-1">
+                      <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${iconBg}`}>
+                        <span className={`text-xs font-bold ${iconText}`}>{role[0]}</span>
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-slate-800">{role}</p>
+                        <p className="text-[10px] text-slate-400 leading-snug">{desc}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1 mt-1.5 rounded-md bg-brand-50 px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Zap className="h-3 w-3 text-brand-500" />
+                      <span className="text-[10px] font-semibold text-brand-600">Clique para entrar como {role}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
