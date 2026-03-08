@@ -82,7 +82,10 @@ export default function EvaluationResult() {
         .finally(() => setLoading(false))
     } else {
       const stored = sessionStorage.getItem('lt_last_result')
-      if (stored) setResult(JSON.parse(stored) as LifeInsuranceAssessmentResult)
+      if (stored) {
+        try { setResult(JSON.parse(stored) as LifeInsuranceAssessmentResult) }
+        catch { /* corrupted sessionStorage — ignore */ }
+      }
       setLoading(false)
     }
   }, [id])
@@ -107,12 +110,15 @@ export default function EvaluationResult() {
       .catch(() => { /* best-effort */ })
   }, [record])
 
+  const copyHashTimer = React.useRef<ReturnType<typeof setTimeout>>()
   function copyHash(hash: string) {
     navigator.clipboard.writeText(hash).then(() => {
       setCopiedHash(true)
-      setTimeout(() => setCopiedHash(false), 1500)
+      if (copyHashTimer.current) clearTimeout(copyHashTimer.current)
+      copyHashTimer.current = setTimeout(() => setCopiedHash(false), 1500)
     })
   }
+  React.useEffect(() => () => { if (copyHashTimer.current) clearTimeout(copyHashTimer.current) }, [])
 
   function requestStatusChange(newStatus: EvaluationStatusType) {
     if (!record || !id || !result) return

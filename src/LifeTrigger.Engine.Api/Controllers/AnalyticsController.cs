@@ -41,71 +41,64 @@ public class AnalyticsController : ControllerBase
             until = DateTimeOffset.UtcNow;
         }
 
-        // All evaluations in the period — use raw SQL to extract TenantId and result fields
-        var evaluations = await _db.Evaluations
+        // Per-day counts — executed in DB (no JSONB needed)
+        var perDay = await _db.Evaluations
             .Where(e => e.Timestamp >= since && e.Timestamp <= until)
-            .OrderByDescending(e => e.Timestamp)
+            .GroupBy(e => e.Timestamp.Date)
+            .Select(g => new { date = g.Key, count = g.Count() })
+            .OrderBy(x => x.date)
             .ToListAsync(ct);
 
-        var total = evaluations.Count;
+        var total = perDay.Sum(x => x.count);
 
-        // Per day
-        var perDay = evaluations
-            .GroupBy(e => e.Timestamp.Date)
-            .Select(g => new { date = g.Key.ToString("yyyy-MM-dd"), count = g.Count() })
-            .OrderBy(x => x.date)
-            .ToList();
-
-        // Per tenant (using the denormalized TenantId via shadow property)
-        var perTenant = evaluations
-            .GroupBy(e => e.Request?.OperationalData?.TenantId)
-            .Where(g => g.Key.HasValue)
-            .Select(g => new
-            {
-                tenantId = g.Key!.Value,
-                count = g.Count(),
-                lastEvaluation = g.Max(e => e.Timestamp),
-            })
+        // Per tenant — executed in DB via denormalized shadow property
+        var perTenant = await _db.Evaluations
+            .Where(e => e.Timestamp >= since && e.Timestamp <= until && e.Request!.OperationalData!.TenantId.HasValue)
+            .GroupBy(e => e.Request!.OperationalData!.TenantId!.Value)
+            .Select(g => new { tenantId = g.Key, count = g.Count(), lastEvaluation = g.Max(e => e.Timestamp) })
             .OrderByDescending(x => x.count)
             .Take(20)
-            .ToList();
+            .ToListAsync(ct);
 
-        // Per user (CreatedByUserId)
-        var perUser = evaluations
-            .Where(e => e.CreatedByUserId.HasValue)
+        // Per user — executed in DB via indexed column
+        var perUser = await _db.Evaluations
+            .Where(e => e.Timestamp >= since && e.Timestamp <= until && e.CreatedByUserId.HasValue)
             .GroupBy(e => e.CreatedByUserId!.Value)
-            .Select(g => new
-            {
-                userId = g.Key,
-                count = g.Count(),
-                lastEvaluation = g.Max(e => e.Timestamp),
-            })
+            .Select(g => new { userId = g.Key, count = g.Count(), lastEvaluation = g.Max(e => e.Timestamp) })
             .OrderByDescending(x => x.count)
             .Take(20)
-            .ToList();
+            .ToListAsync(ct);
 
-        // Risk distribution
-        var riskDistribution = evaluations
-            .GroupBy(e => e.Result.RiskClassification.ToString())
+        // JSONB fields require in-memory grouping — project only what's needed
+        var projected = await _db.Evaluations
+            .Where(e => e.Timestamp >= since && e.Timestamp <= until)
+            .Select(e => new
+            {
+                risk = e.Result.RiskClassification,
+                action = e.Result.RecommendedAction,
+                score = e.Result.CoverageEfficiencyScore,
+                gap = e.Result.ProtectionGapPercentage,
+            })
+            .ToListAsync(ct);
+
+        var riskDistribution = projected
+            .GroupBy(e => e.risk.ToString())
             .Select(g => new { risk = g.Key, count = g.Count() })
             .OrderByDescending(x => x.count)
             .ToList();
 
-        // Action distribution
-        var actionDistribution = evaluations
-            .GroupBy(e => e.Result.RecommendedAction.ToString())
+        var actionDistribution = projected
+            .GroupBy(e => e.action.ToString())
             .Select(g => new { action = g.Key, count = g.Count() })
             .OrderByDescending(x => x.count)
             .ToList();
 
-        // Average score
         var avgScore = total > 0
-            ? Math.Round(evaluations.Average(e => (double)e.Result.CoverageEfficiencyScore), 1)
+            ? Math.Round(projected.Average(e => (double)e.score), 1)
             : 0;
 
-        // Avg gap
         var avgGap = total > 0
-            ? Math.Round(evaluations.Average(e => (double)e.Result.ProtectionGapPercentage), 1)
+            ? Math.Round(projected.Average(e => (double)e.gap), 1)
             : 0;
 
         return Ok(new
@@ -114,7 +107,7 @@ public class AnalyticsController : ControllerBase
             total,
             avgScore,
             avgGap,
-            perDay,
+            perDay = perDay.Select(x => new { date = x.date.ToString("yyyy-MM-dd"), x.count }),
             perTenant,
             perUser,
             riskDistribution,

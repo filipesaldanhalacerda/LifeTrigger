@@ -46,7 +46,7 @@ Este é o endpoint universal que suas aplicações devem chamar assim que o form
 ### `POST /api/v1/evaluations`
 
 **Cabeçalhos Exigidos (Headers):**
-*   `Auterization: Bearer <TOKEN>` (Fornecido no contrato B2B)
+*   `Authorization: Bearer <TOKEN>` (Fornecido no contrato B2B)
 *   `Idempotency-Key: <UUID>` **[OBRIGATÓRIO]** 
     *   *Propósito:* Previne ataques de duplo clique ou reenvios por falha de 3G/4G no mobile. Se o seu sistema enviar a mesma chave `Idempotency-Key` com o mesmo body em menos de 24 horas, o motor **não executará o cálculo novamente nem duplicará no banco**. Ele devolverá imediatamente a resposta `200 OK` gerada da primeira vez (alta performance e economia de custos).
 
@@ -241,7 +241,7 @@ Esta via gera métricas matematicamente puras das vulnerabilidades da base da co
     "riskDistribution": {
       "CRITICO": 98,
       "ADEQUADO": 12,
-      "ATENCAO": 24
+      "MODERADO": 24
     },
     "actionDistribution": {
       "AUMENTAR": 98,

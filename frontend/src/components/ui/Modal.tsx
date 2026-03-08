@@ -50,6 +50,7 @@ export function Modal({ open, onClose, title, children, maxWidth = 'max-w-lg' }:
             <h3 className="text-sm font-bold text-slate-900">{title}</h3>
             <button
               onClick={onClose}
+              aria-label="Fechar"
               className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
             >
               <X className="h-4 w-4" />

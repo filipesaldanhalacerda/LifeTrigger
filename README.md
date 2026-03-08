@@ -90,7 +90,7 @@ Tipos suportados: `Casamento`, `NovoFilho`, `Imovel`, `Aumento_Salario`, e qualq
 |--------|------|-----------|
 | `POST` | `/api/v1/evaluations` | Avaliação principal — retorna diagnóstico completo |
 | `GET` | `/api/v1/evaluations/{id}` | Recupera avaliação histórica |
-| `GET` | `/api/v1/evaluations/admin/audit/evaluations/{id}/verify` | Verifica integridade do AuditHash |
+| `GET` | `/api/v1/admin/audit/evaluations/{id}/verify` | Verifica integridade do AuditHash |
 | `GET` | `/api/v1/evaluations/admin/reports/pilot` | Relatório agregado sem PII |
 | `DELETE` | `/api/v1/evaluations/admin/demo-environments/tenants/{tenantId}` | Limpa dados de demo |
 | `POST` | `/api/v1/triggers` | Registra evento de vida e recalcula |

@@ -78,12 +78,12 @@ function CalendarMonth({
     <div className="select-none w-[252px]">
       <div className="flex items-center justify-between mb-3 px-1">
         {onPrev
-          ? <button type="button" onClick={onPrev} className="p-1 rounded-md hover:bg-slate-100 text-slate-500 transition-colors"><ChevronLeft className="h-4 w-4" /></button>
+          ? <button type="button" onClick={onPrev} aria-label="Mês anterior" className="p-1 rounded-md hover:bg-slate-100 text-slate-500 transition-colors"><ChevronLeft className="h-4 w-4" /></button>
           : <div className="w-6" />
         }
         <span className="text-sm font-semibold text-slate-800">{MONTHS[month]} {year}</span>
         {onNext
-          ? <button type="button" onClick={onNext} className="p-1 rounded-md hover:bg-slate-100 text-slate-500 transition-colors"><ChevronRight className="h-4 w-4" /></button>
+          ? <button type="button" onClick={onNext} aria-label="Próximo mês" className="p-1 rounded-md hover:bg-slate-100 text-slate-500 transition-colors"><ChevronRight className="h-4 w-4" /></button>
           : <div className="w-6" />
         }
       </div>

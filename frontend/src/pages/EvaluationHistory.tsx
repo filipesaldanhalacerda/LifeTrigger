@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import {
   Search, Filter, TrendingUp, TrendingDown, Minus, RotateCcw,
   AlertCircle, ChevronRight, RefreshCw, Users, Zap,
-  ShieldAlert, ShieldCheck, ShieldQuestion, Copy, Check,
+  ShieldAlert, ShieldCheck, ShieldQuestion, Copy, Check, CheckCircle,
   CircleDot, Archive, BadgeCheck, ChevronDown, PieChart,
 } from 'lucide-react'
 import { TopBar } from '../components/layout/TopBar'
@@ -109,7 +109,7 @@ export default function EvaluationHistory() {
   function load() {
     setLoading(true)
     setError(null)
-    getEvaluations(getActiveTenantId(), { limit: 200 })
+    getEvaluations(getActiveTenantId(), { limit: 200 } /* max fetch for client-side grouping */)
       .then((res) => setItems(res.items))
       .catch(() => setError('Não foi possível carregar o histórico. Verifique a conexão e tente novamente.'))
       .finally(() => setLoading(false))

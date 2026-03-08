@@ -10,7 +10,7 @@ import { TopBar } from '../components/layout/TopBar'
 import { Badge } from '../components/ui/Badge'
 import { getEvaluations, getActiveTenantId } from '../lib/api'
 import { actionColors, actionLabel, riskColors, riskLabel, formatDate } from '../lib/utils'
-import type { EvaluationSummary, RiskClassification } from '../types/api'
+import type { EvaluationSummary, RiskClassification, RecommendedAction } from '../types/api'
 
 const ACTION_ICONS: Record<string, React.ElementType> = {
   AUMENTAR: TrendingUp,
@@ -109,7 +109,7 @@ function ClientGroupRow({ group }: { group: ClientGroup }) {
 
         {/* Action badge */}
         <td className="px-4 py-3">
-          <Badge className={actionColors(group.latestAction as never)} size="sm">{actionLabel(group.latestAction as never)}</Badge>
+          <Badge className={actionColors(group.latestAction as RecommendedAction)} size="sm">{actionLabel(group.latestAction as RecommendedAction)}</Badge>
         </td>
 
         {/* Score */}
@@ -211,7 +211,7 @@ function MobileClientCard({ group }: { group: ClientGroup }) {
           </div>
           <div className="mt-1 flex flex-wrap items-center gap-1.5">
             <Badge className={riskColors(group.latestRisk)} size="sm">{riskLabel(group.latestRisk)}</Badge>
-            <Badge className={actionColors(group.latestAction as never)} size="sm">{actionLabel(group.latestAction as never)}</Badge>
+            <Badge className={actionColors(group.latestAction as RecommendedAction)} size="sm">{actionLabel(group.latestAction as RecommendedAction)}</Badge>
           </div>
           <div className="mt-1.5 flex items-center gap-3">
             <div className="flex items-center gap-2">

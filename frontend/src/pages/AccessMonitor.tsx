@@ -8,16 +8,7 @@ import { TopBar } from '../components/layout/TopBar'
 import { DateRangePicker } from '../components/ui/DateRangePicker'
 import { getLoginEvents } from '../lib/api'
 import type { LoginEventsResponse, LoginEventRecord } from '../lib/api'
-
-function today(): string {
-  return new Date().toISOString().slice(0, 10)
-}
-
-function daysAgo(n: number): string {
-  const d = new Date()
-  d.setDate(d.getDate() - n)
-  return d.toISOString().slice(0, 10)
-}
+import { today, daysAgo } from '../lib/dates'
 function parseUA(ua: string | null): { browser: string; os: string; isMobile: boolean } {
   if (!ua) return { browser: 'Desconhecido', os: 'Desconhecido', isMobile: false }
   const isMobile = /Mobile|Android|iPhone|iPad/i.test(ua)

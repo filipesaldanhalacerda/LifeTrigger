@@ -8,16 +8,7 @@ import { DateRangePicker } from '../components/ui/DateRangePicker'
 import { getEvaluationAnalytics, getTenants, getUsers } from '../lib/api'
 import type { EvaluationAnalytics } from '../lib/api'
 import type { Tenant, UserRecord } from '../types/api'
-
-function today(): string {
-  return new Date().toISOString().slice(0, 10)
-}
-
-function daysAgo(n: number): string {
-  const d = new Date()
-  d.setDate(d.getDate() - n)
-  return d.toISOString().slice(0, 10)
-}
+import { today, daysAgo } from '../lib/dates'
 
 function formatDateBR(iso: string) {
   const [, m, d] = iso.split('-')

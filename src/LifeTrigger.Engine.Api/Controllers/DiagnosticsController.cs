@@ -11,8 +11,13 @@ namespace LifeTrigger.Engine.Api.Controllers;
 public class DiagnosticsController : ControllerBase
 {
     private readonly AppDbContext _db;
+    private readonly ILogger<DiagnosticsController> _logger;
 
-    public DiagnosticsController(AppDbContext db) => _db = db;
+    public DiagnosticsController(AppDbContext db, ILogger<DiagnosticsController> logger)
+    {
+        _db = db;
+        _logger = logger;
+    }
 
     /// <summary>
     /// Returns engine-api health, DB stats, and table row counts.
@@ -41,7 +46,7 @@ public class DiagnosticsController : ControllerBase
             var conn = _db.Database.GetDbConnection();
             await conn.OpenAsync(ct);
             using var cmd = conn.CreateCommand();
-            cmd.CommandText = $"SELECT pg_database_size('{dbName}')";
+            cmd.CommandText = "SELECT pg_database_size(current_database())";
             var result = await cmd.ExecuteScalarAsync(ct);
             if (result is long size)
             {
@@ -50,7 +55,7 @@ public class DiagnosticsController : ControllerBase
             }
             await conn.CloseAsync();
         }
-        catch { /* not critical */ }
+        catch (Exception ex) { _logger.LogWarning(ex, "Diagnostics: failed to get DB size"); }
 
         // Table row counts
         var evaluationCount = await _db.Evaluations.CountAsync(ct);
@@ -75,7 +80,7 @@ public class DiagnosticsController : ControllerBase
             maxConnections = int.TryParse(result2?.ToString(), out var mc) ? mc : null;
             await conn.CloseAsync();
         }
-        catch { /* ignore */ }
+        catch (Exception ex) { _logger.LogWarning(ex, "Diagnostics: failed to get connection stats"); }
 
         return Ok(new
         {

@@ -82,9 +82,10 @@ builder.Services.AddRateLimiter(options =>
 });
 
 // Custom Application Services
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("ConnectionStrings:DefaultConnection is not configured.");
 builder.Services.AddApplication();
-builder.Services.AddInfrastructure(connectionString!);
+builder.Services.AddInfrastructure(connectionString);
 
 // JWT Authentication Setup
 var jwtSecret = builder.Configuration["JwtConfig:Secret"] ?? "SuperSecretKeyForLocalDevelopmentDoNotUseInProd1234!";
@@ -100,7 +101,7 @@ builder.Services.AddAuthentication(x =>
     // Disable default claim type remapping so "role" stays as "role" (not ClaimTypes.Role URL).
     // Required for RoleClaimType = "role" and policy RequireRole() to work correctly.
     x.MapInboundClaims = false;
-    x.RequireHttpsMetadata = false;
+    x.RequireHttpsMetadata = !builder.Environment.IsDevelopment();
     x.SaveToken = true;
     x.TokenValidationParameters = new TokenValidationParameters
     {
@@ -188,8 +189,9 @@ app.UseCustomExceptionHandler();
 app.UseCorrelationId();
 app.UseCors();
 
-// Apply EF Core Migrations automatically, but skip during Integration Tests
-if (app.Environment.EnvironmentName != "Testing")
+// Apply EF Core Migrations automatically in Development only (use a migration tool in production).
+// Skip during Integration Tests.
+if (app.Environment.IsDevelopment() && app.Environment.EnvironmentName != "Testing")
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;

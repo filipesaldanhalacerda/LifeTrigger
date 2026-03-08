@@ -15,22 +15,9 @@ function pct(value: number, total: number) {
   return total > 0 ? Math.round((value / total) * 100) : 0
 }
 
-function today() {
-  return new Date().toISOString().slice(0, 10)
-}
+import { today, daysAgo, nextDay } from '../lib/dates'
 
-function ninetyDaysAgo() {
-  const d = new Date()
-  d.setDate(d.getDate() - 90)
-  return d.toISOString().slice(0, 10)
-}
-
-// Return the next day so the backend filter (<= endDate) includes the full selected day
-function nextDay(date: string) {
-  const d = new Date(date)
-  d.setDate(d.getDate() + 1)
-  return d.toISOString().slice(0, 10)
-}
+function ninetyDaysAgo() { return daysAgo(90) }
 
 // ── Sub-components ─────────────────────────────────────────────────
 

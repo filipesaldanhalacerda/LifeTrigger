@@ -49,7 +49,7 @@ function CreateTenantModal({
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
           <h2 className="text-base font-bold text-slate-900">Nova Corretora</h2>
-          <button onClick={onClose} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors">
+          <button onClick={onClose} aria-label="Fechar" className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors">
             <X className="h-4 w-4" />
           </button>
         </div>

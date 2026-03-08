@@ -233,6 +233,24 @@ components:
             consentId:
               type: string
               example: "term-123"
+        brokerInsights:
+          type: array
+          description: "Insights acionáveis para o corretor apresentar ao cliente"
+          items:
+            type: object
+            properties:
+              icon:
+                type: string
+                example: "lightbulb"
+              title:
+                type: string
+                example: "Oportunidade de Proteção"
+              description:
+                type: string
+                example: "O cliente tem uma lacuna significativa na cobertura."
+              priority:
+                type: string
+                enum: [high, medium, low]
     TriggerEventRequest:
       type: object
       required:

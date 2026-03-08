@@ -1,6 +1,5 @@
 using System;
 using System.Linq;
-using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -12,6 +11,7 @@ using LifeTrigger.Engine.Application.Interfaces;
 using LifeTrigger.Engine.Domain.Entities;
 using LifeTrigger.Engine.Domain.Requests;
 using LifeTrigger.Engine.Api.Filters;
+using LifeTrigger.Engine.Api.Extensions;
 
 namespace LifeTrigger.Engine.Api.Controllers;
 
@@ -55,7 +55,7 @@ public class TriggersController : ControllerBase
     public async Task<IActionResult> RegisterLifeTrigger([FromBody] LifeTriggerEvent triggerEvent, CancellationToken cancellationToken)
     {
         // Enforce tenantId from JWT — prevents callers from spoofing a different tenant
-        var jwtTenantId = GetTenantIdFromJwt();
+        var jwtTenantId = User.GetTenantId();
 
         var revisedRequest = triggerEvent.BaseRequest with
         {
@@ -105,9 +105,4 @@ public class TriggersController : ControllerBase
         return Ok(result);
     }
 
-    private Guid? GetTenantIdFromJwt()
-    {
-        var value = User.FindFirstValue("tenantId");
-        return Guid.TryParse(value, out var id) ? id : null;
-    }
 }

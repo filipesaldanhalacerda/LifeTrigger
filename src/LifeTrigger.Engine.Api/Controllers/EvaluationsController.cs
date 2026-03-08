@@ -12,6 +12,7 @@ using LifeTrigger.Engine.Domain.Enums;
 using LifeTrigger.Engine.Domain.Requests;
 using EvalStatus = LifeTrigger.Engine.Domain.Enums.EvaluationStatus;
 using LifeTrigger.Engine.Api.Filters;
+using LifeTrigger.Engine.Api.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.RateLimiting;
 
@@ -91,7 +92,7 @@ public class EvaluationsController : ControllerBase
         }
 
         // Enforce tenantId from JWT — prevents callers from spoofing a different tenant
-        var jwtTenantId = GetTenantIdFromJwt();
+        var jwtTenantId = User.GetTenantId();
         if (jwtTenantId.HasValue)
         {
             request = request with
@@ -115,7 +116,7 @@ public class EvaluationsController : ControllerBase
         };
 
         // Capture the authenticated user's ID for ownership tracking
-        var callerUserId = GetUserIdFromJwt();
+        var callerUserId = User.GetUserId();
 
         var record = new EvaluationRecord(
             Id: Guid.NewGuid(),
@@ -155,15 +156,15 @@ public class EvaluationsController : ControllerBase
             return BadRequest(new { Message = "O parâmetro 'limit' deve estar entre 1 e 1000." });
 
         // JWT tenantId overrides query param for non-SuperAdmin
-        var jwtTenantId     = GetTenantIdFromJwt();
+        var jwtTenantId     = User.GetTenantId();
         var effectiveTenant = jwtTenantId ?? tenantId;
 
         if (effectiveTenant is null)
             return BadRequest(new { Message = "tenantId é obrigatório para SuperAdmin." });
 
         // Broker role: restrict list to their own evaluations only
-        var callerRole    = GetRoleFromJwt();
-        var ownershipFilter = callerRole == "Broker" ? GetUserIdFromJwt() : (Guid?)null;
+        var callerRole    = User.GetRole();
+        var ownershipFilter = callerRole == "Broker" ? User.GetUserId() : (Guid?)null;
 
         var evaluations = await _repository.GetByFilterAsync(
             effectiveTenant.Value, startDate, endDate, limit, offset,
@@ -389,20 +390,6 @@ public class EvaluationsController : ControllerBase
         });
     }
 
-    private Guid? GetTenantIdFromJwt()
-    {
-        var value = User.FindFirstValue("tenantId");
-        return Guid.TryParse(value, out var id) ? id : null;
-    }
-
-    private Guid? GetUserIdFromJwt()
-    {
-        var value = User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier)
-                 ?? User.FindFirstValue("sub");
-        return Guid.TryParse(value, out var id) ? id : null;
-    }
-
-    private string? GetRoleFromJwt() => User.FindFirstValue("role");
 
     private static int RecalculateEfficiencyScore(decimal currentCoverage, decimal recommendedCoverage)
     {
