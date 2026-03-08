@@ -73,16 +73,17 @@ export default function Dashboard() {
 
   useEffect(() => { void load() }, [load])
 
+  // Status funnel (compute first so totalAll can use it as fallback)
+  const st = report?.statusDistribution ?? { aberto: 0, convertido: 0, parcial: 0, arquivado: 0 }
+  const statusSum = st.aberto + st.convertido + st.parcial + st.arquivado
+
   // Pending = ABERTO only (risk/action distributions are based on this)
   const pending = report?.totalEvaluations ?? 0
-  const totalAll = report?.totalAll ?? pending
+  const totalAll = report?.totalAll ?? (statusSum > 0 ? statusSum : pending)
   const critico = report?.riskDistribution.critico ?? 0
   const adequado = report?.riskDistribution.adequado ?? 0
   const aumentar = report?.actionDistribution.aumentar ?? 0
   const triggerCount = report?.triggerCount ?? 0
-
-  // Status funnel
-  const st = report?.statusDistribution ?? { aberto: 0, convertido: 0, parcial: 0, arquivado: 0 }
   const converted = st.convertido + st.parcial
   const conversionRate = totalAll > 0 ? Math.round((converted / totalAll) * 100) : 0
   const noPending = totalAll > 0 && pending === 0
