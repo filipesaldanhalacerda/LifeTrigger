@@ -12,7 +12,7 @@ import { Badge } from '../components/ui/Badge'
 import { DateRangePicker } from '../components/ui/DateRangePicker'
 import { getEvaluations, getActiveTenantId } from '../lib/api'
 import { actionColors, actionLabel, riskColors, riskLabel, formatDate, evalStatusLabel, evalStatusColors } from '../lib/utils'
-import { daysAgo, today } from '../lib/dates'
+import { daysAgo, today, nextDay } from '../lib/dates'
 import type { EvaluationSummary, RiskClassification, RecommendedAction, EvaluationStatusType } from '../types/api'
 
 const ACTION_ICONS: Record<string, React.ElementType> = {
@@ -301,7 +301,7 @@ export default function ClientHistory() {
   function load() {
     setLoading(true)
     setError(null)
-    getEvaluations(getActiveTenantId(), { startDate, endDate, limit: 200 })
+    getEvaluations(getActiveTenantId(), { startDate, endDate: nextDay(endDate), limit: 200 })
       .then((res) => setItems(res.items))
       .catch(() => setError('Não foi possível carregar o histórico de clientes.'))
       .finally(() => setLoading(false))

@@ -15,7 +15,7 @@ import { actionColors, actionLabel, riskColors, riskLabel, formatDate, riskScore
 import { getEvaluations, getUsers, getActiveTenantId } from '../lib/api'
 import { useAuth } from '../contexts/AuthContext'
 import { useCopyToClipboard } from '../hooks/useCopyToClipboard'
-import { daysAgo, today } from '../lib/dates'
+import { daysAgo, today, nextDay } from '../lib/dates'
 import type { EvaluationSummary, RecommendedAction, EvaluationStatusType, UserRecord } from '../types/api'
 
 const ACTION_ICONS: Record<RecommendedAction, React.ElementType> = {
@@ -121,7 +121,7 @@ export default function EvaluationHistory() {
   function load() {
     setLoading(true)
     setError(null)
-    getEvaluations(getActiveTenantId(), { startDate, endDate, limit: 200 })
+    getEvaluations(getActiveTenantId(), { startDate, endDate: nextDay(endDate), limit: 200 })
       .then((res) => setItems(res.items))
       .catch(() => setError('Não foi possível carregar o histórico. Verifique a conexão e tente novamente.'))
       .finally(() => setLoading(false))
