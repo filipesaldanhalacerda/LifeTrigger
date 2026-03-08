@@ -285,9 +285,9 @@ SuperAdmin (5)     → Administração da plataforma inteira
 
 | | **Local (Development)** | **Produção** |
 |---|---|---|
-| **Banco de Dados** | Docker PostgreSQL 16 (`localhost:5432`) | Render PostgreSQL (Oregon) |
+| **Banco de Dados** | Docker PostgreSQL 16 (`localhost:5433`) | Render PostgreSQL (Oregon) |
 | **Database name** | `lifetrigger_dev` | `lifetrigger` |
-| **User / Password** | `postgres` / `postgres` | Credenciais no Render Dashboard |
+| **User / Password** | `postgres` / `loglab` | Credenciais no Render Dashboard |
 | **Auth API** | `http://localhost:5086` | `https://lifetrigger-auth.onrender.com` |
 | **Engine API** | `http://localhost:5001` | `https://lifetrigger-engine.onrender.com` |
 | **Frontend** | `http://localhost:5173` (Vite dev server) | Vercel (CDN global) |
@@ -329,9 +329,9 @@ docker compose up -d
 ```
 
 Isso cria um container PostgreSQL 16 Alpine com:
-- **Host**: `localhost:5432`
+- **Host**: `localhost:5433` (porta 5433 para não conflitar com PostgreSQL nativo)
 - **Database**: `lifetrigger_dev`
-- **User**: `postgres` / **Password**: `postgres`
+- **User**: `postgres` / **Password**: `loglab`
 - Volume persistente `pgdata` (dados sobrevivem restart do container)
 
 Comandos úteis:
@@ -349,7 +349,7 @@ Os arquivos `appsettings.Development.json` já apontam para o Docker local:
 ```json
 {
   "ConnectionStrings": {
-    "DefaultConnection": "Host=localhost;Port=5432;Database=lifetrigger_dev;Username=postgres;Password=postgres"
+    "DefaultConnection": "Host=localhost;Port=5433;Database=lifetrigger_dev;Username=postgres;Password=loglab"
   },
   "JwtConfig": {
     "Secret": "SuperSecretKeyForLocalDevelopmentDoNotUseInProd1234!"
@@ -362,7 +362,7 @@ Os arquivos `appsettings.Development.json` já apontam para o Docker local:
 {
   "Urls": "http://localhost:5086",
   "ConnectionStrings": {
-    "DefaultConnection": "Host=localhost;Port=5432;Database=lifetrigger_dev;Username=postgres;Password=postgres"
+    "DefaultConnection": "Host=localhost;Port=5433;Database=lifetrigger_dev;Username=postgres;Password=loglab"
   },
   "JwtConfig": {
     "Secret": "SuperSecretKeyForLocalDevelopmentDoNotUseInProd1234!"
