@@ -12,11 +12,10 @@ import {
 import { TopBar } from '../components/layout/TopBar'
 import { ScoreRing } from '../components/ui/ScoreRing'
 import { GapBar } from '../components/ui/GapBar'
-import { Badge } from '../components/ui/Badge'
 import { getEvaluation, getEvaluations, getActiveTenantId } from '../lib/api'
 import { StatusChangeModal } from '../components/evaluation/StatusChangeModal'
 import {
-  actionColors, actionLabel, riskColors, riskLabel,
+  actionLabel, riskLabel,
   formatCurrency, formatDate, riskScoreColor, evalStatusLabel, evalStatusColors,
 } from '../lib/utils'
 import type {
@@ -176,7 +175,6 @@ export default function EvaluationResult() {
   const req = record?.request
   const insightCount = result.brokerInsights?.length ?? 0
   const scoreStatus = (s: number) => s < 30 ? 'Crítico' : s < 70 ? 'Moderado' : 'Adequado'
-  const scoreStatusColor = (s: number) => s < 30 ? 'text-red-600' : s < 70 ? 'text-amber-600' : 'text-emerald-600'
   const scoreStatusBadge = (s: number) => s < 30 ? 'bg-red-100 text-red-700' : s < 70 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'
 
   return (
