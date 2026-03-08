@@ -279,13 +279,38 @@ SuperAdmin (5)     → Administração da plataforma inteira
 
 ---
 
+## Ambientes: Local vs Produção
+
+> **Regra fundamental**: o banco local (Docker) e o banco de produção (Render) **nunca se misturam**. Cada ambiente é completamente isolado.
+
+| | **Local (Development)** | **Produção** |
+|---|---|---|
+| **Banco de Dados** | Docker PostgreSQL 16 (`localhost:5432`) | Render PostgreSQL (Oregon) |
+| **Database name** | `lifetrigger_dev` | `lifetrigger` |
+| **User / Password** | `postgres` / `postgres` | Credenciais no Render Dashboard |
+| **Auth API** | `http://localhost:5086` | `https://lifetrigger-auth.onrender.com` |
+| **Engine API** | `http://localhost:5001` | `https://lifetrigger-engine.onrender.com` |
+| **Frontend** | `http://localhost:5173` (Vite dev server) | Vercel (CDN global) |
+| **Config file** | `appsettings.Development.json` | Variáveis de ambiente no Render/Vercel |
+| **Dados iniciais** | `DemoDataSeeder` cria tenants e usuários no 1º boot | Dados reais de produção |
+| **Migrations** | Aplicadas automaticamente no startup | Aplicadas automaticamente no startup |
+| **SSL** | Não necessário | `SSL Mode=Require;Trust Server Certificate=true` |
+
+### Como o .NET escolhe o ambiente
+
+- `dotnet run` usa `ASPNETCORE_ENVIRONMENT=Development` por padrão → carrega `appsettings.Development.json` → **banco local**
+- No Render, a variável `ConnectionStrings__DefaultConnection` é injetada como env var → **banco de produção**
+- Nunca há risco de cruzamento: o código local não conhece as credenciais de produção
+
+---
+
 ## Desenvolvimento Local
 
 ### Pré-requisitos
 
 - [.NET 9.0 SDK](https://dotnet.microsoft.com/download/dotnet/9.0)
 - [Node.js 18+](https://nodejs.org/)
-- PostgreSQL local ou connection string do Render
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (para o PostgreSQL local)
 - `dotnet-ef` global: `dotnet tool install --global dotnet-ef`
 
 ### 1. Clone e instale dependências
@@ -297,15 +322,34 @@ npm install            # concurrently (orquestração)
 cd frontend && npm install && cd ..
 ```
 
-### 2. Configure as connection strings
+### 2. Suba o banco local via Docker
 
-Edite os arquivos `appsettings.Development.json`:
+```bash
+docker compose up -d
+```
+
+Isso cria um container PostgreSQL 16 Alpine com:
+- **Host**: `localhost:5432`
+- **Database**: `lifetrigger_dev`
+- **User**: `postgres` / **Password**: `postgres`
+- Volume persistente `pgdata` (dados sobrevivem restart do container)
+
+Comandos úteis:
+```bash
+docker compose down        # para o container (dados persistem)
+docker compose down -v     # para e apaga os dados (reset total)
+docker compose logs -f db  # ver logs do PostgreSQL
+```
+
+### 3. Connection strings (já configuradas)
+
+Os arquivos `appsettings.Development.json` já apontam para o Docker local:
 
 **Engine API** (`src/LifeTrigger.Engine.Api/appsettings.Development.json`):
 ```json
 {
   "ConnectionStrings": {
-    "DefaultConnection": "Host=localhost;Database=LifeTriggerDb;Username=postgres;Password=sua_senha"
+    "DefaultConnection": "Host=localhost;Port=5432;Database=lifetrigger_dev;Username=postgres;Password=postgres"
   },
   "JwtConfig": {
     "Secret": "SuperSecretKeyForLocalDevelopmentDoNotUseInProd1234!"
@@ -318,7 +362,7 @@ Edite os arquivos `appsettings.Development.json`:
 {
   "Urls": "http://localhost:5086",
   "ConnectionStrings": {
-    "DefaultConnection": "Host=localhost;Database=LifeTriggerAuthDb;Username=postgres;Password=sua_senha"
+    "DefaultConnection": "Host=localhost;Port=5432;Database=lifetrigger_dev;Username=postgres;Password=postgres"
   },
   "JwtConfig": {
     "Secret": "SuperSecretKeyForLocalDevelopmentDoNotUseInProd1234!"
@@ -326,9 +370,9 @@ Edite os arquivos `appsettings.Development.json`:
 }
 ```
 
-> As duas APIs **devem** usar o mesmo `JwtConfig:Secret`.
+> As duas APIs **devem** usar o mesmo `JwtConfig:Secret` e apontar para o **mesmo banco**.
 
-### 3. Inicie tudo com um comando
+### 4. Inicie tudo com um comando
 
 ```bash
 npm run dev
@@ -339,9 +383,13 @@ Isso inicia em paralelo (via `concurrently`):
 - **ENGINE** — Engine API em `http://localhost:5001`
 - **FRONT** — Frontend em `http://localhost:5173`
 
+No primeiro boot, a Auth API:
+1. Aplica todas as migrations automaticamente
+2. Roda o `DemoDataSeeder` criando tenants e usuários demo
+
 O Vite faz proxy automático das chamadas — o frontend acessa tudo em `localhost:5173`.
 
-### 4. Verificar inicialização
+### 5. Verificar inicialização
 
 | Serviço | URL | Esperado |
 |---------|-----|----------|
@@ -357,6 +405,15 @@ O Vite faz proxy automático das chamadas — o frontend acessa tudo em `localho
 | `superadmin@lifetrigger.io` | `Super@123!` | SuperAdmin |
 | `admin@alpha.demo` | `Alpha@123!` | TenantOwner |
 | `broker@alpha.demo` | `Alpha@123!` | Broker |
+
+### Resetar o banco local
+
+Para começar do zero (recria o banco e reaplica migrations + seeder):
+```bash
+docker compose down -v     # apaga o volume com os dados
+docker compose up -d       # recria o container limpo
+npm run dev                # APIs aplicam migrations e seeder automaticamente
+```
 
 ---
 
