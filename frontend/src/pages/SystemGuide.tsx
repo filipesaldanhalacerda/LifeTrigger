@@ -3,11 +3,11 @@ import {
   BookOpen, Target, Shield, TrendingUp, Users, Zap, BarChart3,
   Cpu, CheckCircle, ChevronDown, ChevronUp,
   Lightbulb, DollarSign, ClipboardCheck, Activity, Eye,
-  UserCheck, Settings, CreditCard, Building2, Globe,
+  UserCheck, Settings, CreditCard,
   Lock, Hash, Layers, GitBranch, ShieldCheck, Database,
   Phone, Filter, Send, CalendarClock, Rocket,
   Plug, MessageSquare, Bot, Webhook, Code2, RefreshCcw, FileJson,
-  ArrowRight, Repeat, FileCheck, HeartPulse, Gauge,
+  ArrowRight, Repeat, FileCheck,
 } from 'lucide-react'
 import { TopBar } from '../components/layout/TopBar'
 
@@ -382,7 +382,7 @@ export default function SystemGuide() {
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <HighlightBox icon={ShieldCheck} variant="emerald">
                   <strong>JWT com refresh automatico:</strong> tokens de curta duracao com renovacao transparente.
-                  5 niveis de role cumulativo. Sem token valido, a API recusa 100% das chamadas.
+                  4 niveis de role cumulativo. Sem token valido, a API recusa 100% das chamadas.
                 </HighlightBox>
                 <HighlightBox icon={Shield} variant="emerald">
                   <strong>Zero dados pessoais na API:</strong> sem nome, CPF ou email. Apenas dados demograficos anonimizados.
@@ -439,16 +439,6 @@ export default function SystemGuide() {
               </div>
             </div>
 
-            <div>
-              <SectionLabel>Plataforma (SuperAdmin)</SectionLabel>
-              <div className="space-y-2">
-                <ScreenRef icon={Building2}  name="Corretoras"           path="/admin/tenants"    desc="Gestao de todas as corretoras. Criar, ativar ou desativar tenants." />
-                <ScreenRef icon={Users}      name="Usuarios Globais"    path="/admin/users"      desc="Gestao de todos os usuarios de todas as corretoras." />
-                <ScreenRef icon={Activity}   name="Monitor de Acessos"  path="/admin/access"     desc="Grafico de logins por dia, ultimos acessos e detalhes de sessao por usuario." />
-                <ScreenRef icon={Gauge}      name="Analise do Motor"    path="/admin/analytics"  desc="Metricas de uso do motor: avaliacoes por dia, distribuicao de risco/acao, tempos de resposta." />
-                <ScreenRef icon={HeartPulse} name="Saude da Plataforma" path="/admin/health"     desc="Status dos servicos (API, Auth, DB), uptime, versao do motor e indicadores operacionais." />
-              </div>
-            </div>
           </div>
         </Accordion>
 
@@ -456,14 +446,13 @@ export default function SystemGuide() {
         <Accordion id="roles" title="Perfis de acesso (Roles)" icon={Users} openId={openId} onToggle={toggle}>
           <div className="space-y-4">
             <p className="text-sm text-slate-600 leading-relaxed">
-              5 perfis <strong>cumulativos</strong> — cada perfil inclui todas as permissoes dos perfis abaixo dele:
+              4 perfis <strong>cumulativos</strong> — cada perfil inclui todas as permissoes dos perfis abaixo dele:
             </p>
 
             <div className="space-y-2">
               {[
-                { role: 'Super Admin', level: 5, color: 'bg-red-600',     desc: 'Administrador da plataforma. Gerencia todas as corretoras, todos os usuarios e visao global.' },
-                { role: 'Proprietario', level: 4, color: 'bg-purple-600', desc: 'Dono da corretora. Configuracoes do motor (formulas) e plano/faturamento. Controle total.' },
-                { role: 'Gerente',      level: 3, color: 'bg-blue-600',   desc: 'Gestor de equipe. Relatorios agregados, auditoria e acesso ao motor. Ve todas as avaliacoes.' },
+                { role: 'Proprietario', level: 4, color: 'bg-purple-600', desc: 'Dono da corretora. Configuracoes do motor (formulas) e plano/faturamento. Controle total da operacao.' },
+                { role: 'Gerente',      level: 3, color: 'bg-blue-600',   desc: 'Gestor de equipe. Relatorios agregados, auditoria e acesso ao motor. Ve todas as avaliacoes da corretora.' },
                 { role: 'Corretor',     level: 2, color: 'bg-emerald-600',desc: 'Operacional. Cria avaliacoes, registra gatilhos, consulta clientes. Ve apenas suas avaliacoes.' },
                 { role: 'Observador',   level: 1, color: 'bg-slate-500',  desc: 'Visualizacao apenas. Dashboard (sem acoes), historico e perfil. Ideal para auditores.' },
               ].map(({ role, level, color, desc }) => (
@@ -479,7 +468,7 @@ export default function SystemGuide() {
 
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
               <p className="text-xs text-slate-600 leading-relaxed">
-                <strong>Hierarquia cumulativa:</strong> SuperAdmin (5) {'>'} TenantOwner (4) {'>'} Manager (3) {'>'} Broker (2) {'>'} Viewer (1).
+                <strong>Hierarquia cumulativa:</strong> Proprietario (4) {'>'} Gerente (3) {'>'} Corretor (2) {'>'} Observador (1).
                 Nao e preciso atribuir multiplos roles — um nivel inclui todos os anteriores.
               </p>
             </div>
