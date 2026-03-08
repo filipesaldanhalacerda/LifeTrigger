@@ -152,30 +152,18 @@ export default function Login() {
             </div>
           </div>
 
-          {/* Demo banner */}
-          <div className="mb-6 animate-fadeIn rounded-2xl border border-brand-200 bg-gradient-to-br from-brand-50 to-white px-5 py-4 shadow-sm">
-            <div className="flex items-center gap-2.5 mb-3">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-100">
-                <FlaskConical className="h-3.5 w-3.5 text-brand-600" />
-              </div>
-              <div>
-                <p className="text-xs font-bold text-brand-900 uppercase tracking-wide">Ambiente de Demonstração</p>
-                <p className="text-[10px] text-brand-500">Dados fictícios · Redefinidos periodicamente</p>
-              </div>
-            </div>
-            <p className="text-[12px] text-brand-700 leading-relaxed">
-              Explore todas as funcionalidades do <strong>LifeTrigger Engine</strong> livremente.
-              Este ambiente é para demonstração — navegue sem compromisso.
+          {/* Demo banner — compact */}
+          <div className="mb-6 animate-fadeIn flex items-center gap-3 rounded-xl border border-brand-200 bg-brand-50 px-4 py-3">
+            <FlaskConical className="h-4 w-4 shrink-0 text-brand-500" />
+            <p className="text-[11px] text-brand-700 leading-snug flex-1">
+              <strong>Demonstração</strong> — dados fictícios, explore livremente.
             </p>
-            <div className="mt-3 flex items-center gap-2 rounded-xl bg-brand-100/60 px-3 py-2.5">
-              <span className="text-[11px] text-brand-700">Quer contratar?</span>
-              <a
-                href="mailto:alltasksolucoesintegradas@gmail.com"
-                className="inline-flex items-center gap-1 rounded-lg bg-brand-600 px-3 py-1 text-[11px] font-semibold text-white hover:bg-brand-700 transition-colors shadow-sm"
-              >
-                Fale conosco
-              </a>
-            </div>
+            <a
+              href="mailto:alltasksolucoesintegradas@gmail.com"
+              className="shrink-0 rounded-lg bg-brand-600 px-3 py-1 text-[10px] font-semibold text-white hover:bg-brand-700 transition-colors"
+            >
+              Contratar
+            </a>
           </div>
 
           <div className="hidden lg:block mb-6">
