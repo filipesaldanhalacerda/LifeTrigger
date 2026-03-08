@@ -129,7 +129,7 @@ export default function Login() {
 
         <div className="relative z-10 px-12 xl:px-16 2xl:px-20 py-6 border-t border-white/5">
           <div className="flex items-center justify-between">
-            <p className="text-xs text-brand-400/50">LifeTrigger Engine v1.0.0 · <span className="text-amber-400/70 font-semibold">Versao Demonstracao</span></p>
+            <p className="text-xs text-brand-400/50">LifeTrigger Engine v1.0.0 · <span className="text-amber-400/70 font-semibold">Versão Demonstração</span></p>
             <p className="text-xs text-brand-300/60">
               Desenvolvido por <span className="font-semibold text-brand-300/80">AllTask Soluções Integradas</span>
             </p>
@@ -147,7 +147,7 @@ export default function Login() {
             </div>
             <div className="text-center">
               <h1 className="text-xl font-bold text-slate-900">LifeTrigger</h1>
-              <p className="mt-0.5 text-sm text-slate-500">Motor de Inteligencia de Protecao de Vida</p>
+              <p className="mt-0.5 text-sm text-slate-500">Motor de Inteligência de Proteção de Vida</p>
               <span className="mt-1 inline-block rounded-full bg-amber-100 px-2.5 py-0.5 text-[10px] font-bold text-amber-700 uppercase tracking-wider">Demo</span>
             </div>
           </div>
@@ -180,7 +180,7 @@ export default function Login() {
 
           <div className="hidden lg:block mb-6">
             <h2 className="text-2xl font-bold text-slate-900">Explore a plataforma</h2>
-            <p className="mt-1 text-sm text-slate-500">Escolha um perfil abaixo e veja o motor em acao — sem compromisso.</p>
+            <p className="mt-1 text-sm text-slate-500">Escolha um perfil abaixo e veja o motor em ação — sem compromisso.</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">

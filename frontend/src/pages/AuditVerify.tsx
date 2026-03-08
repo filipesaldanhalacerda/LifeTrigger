@@ -13,7 +13,7 @@ function isValidUUID(value: string): boolean {
 
 /** Parses raw API error body (may be JSON) into a human-readable message. */
 function parseApiError(raw: string, status?: number): string {
-  if (status === 404) return 'Avaliacao nao encontrada. Verifique se o ID esta correto e pertence a este tenant.'
+  if (status === 404) return 'Avaliação não encontrada. Verifique se o ID está correto e pertence a este tenant.'
   try {
     const json = JSON.parse(raw) as {
       error_code?: string
@@ -23,7 +23,7 @@ function parseApiError(raw: string, status?: number): string {
     if (json.error_code === 'VALIDATION_ERROR') {
       const detail = json.details?.[0]?.message
       if (detail?.toLowerCase().includes('not valid')) {
-        return 'ID com formato invalido. Certifique-se de copiar o UUID completo (36 caracteres) do historico.'
+        return 'ID com formato inválido. Certifique-se de copiar o UUID completo (36 caracteres) do histórico.'
       }
       return `Dados invalidos: ${detail ?? json.message ?? 'verifique o campo preenchido.'}`
     }

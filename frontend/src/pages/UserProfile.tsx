@@ -20,13 +20,13 @@ function ChangePasswordSection() {
         </div>
         <div>
           <h2 className="text-base font-semibold text-amber-900">Alterar senha</h2>
-          <p className="text-xs text-amber-700">Indisponivel na versao de demonstracao</p>
+          <p className="text-xs text-amber-700">Indisponível na versão de demonstração</p>
         </div>
       </div>
       <p className="mt-3 text-xs text-amber-700 leading-relaxed">
-        A alteracao de senha esta desabilitada nesta versao demo do LifeTrigger Engine.
-        As credenciais dos usuarios de demonstracao sao compartilhadas e nao podem ser modificadas.
-        Na versao de producao, cada usuario pode alterar sua senha livremente.
+        A alteração de senha está desabilitada nesta versão demo do LifeTrigger Engine.
+        As credenciais dos usuários de demonstração são compartilhadas e não podem ser modificadas.
+        Na versão de produção, cada usuário pode alterar sua senha livremente.
       </p>
     </div>
   )

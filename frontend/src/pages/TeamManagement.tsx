@@ -781,7 +781,7 @@ export default function TeamManagement() {
                             <div className="flex items-center justify-end gap-2">
                               <button
                                 disabled
-                                title="Indisponivel na versao demo"
+                                title="Indisponível na versão demo"
                                 className="flex items-center gap-1.5 rounded-lg border border-slate-100 bg-slate-50 px-2.5 py-1.5 text-xs text-slate-400 cursor-not-allowed"
                               >
                                 <Lock className="h-3 w-3" />
@@ -789,7 +789,7 @@ export default function TeamManagement() {
                               </button>
                               <button
                                 disabled
-                                title="Indisponivel na versao demo"
+                                title="Indisponível na versão demo"
                                 className="flex items-center gap-1.5 rounded-lg border border-slate-100 bg-slate-50 px-2.5 py-1.5 text-xs text-slate-400 cursor-not-allowed"
                               >
                                 <Lock className="h-3 w-3" />
@@ -816,12 +816,12 @@ export default function TeamManagement() {
           <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
             <div className="flex items-center gap-2 mb-1">
               <Lock className="h-3.5 w-3.5 text-amber-600" />
-              <p className="text-[11px] font-semibold text-amber-800 uppercase tracking-wide">Versao de Demonstracao</p>
+              <p className="text-[11px] font-semibold text-amber-800 uppercase tracking-wide">Versão de Demonstração</p>
             </div>
             <p className="text-[11px] text-amber-700 leading-relaxed">
-              Na versao demo, a redefinicao de senha e a ativacao/desativacao de usuarios estao desabilitadas
-              para preservar as credenciais compartilhadas. A alteracao de perfil (role) esta liberada para que voce
-              explore as diferentes permissoes. Na versao de producao, todas as funcionalidades estarao disponiveis.
+              Na versão demo, a redefinição de senha e a ativação/desativação de usuários estão desabilitadas
+              para preservar as credenciais compartilhadas. A alteração de perfil (role) está liberada para que você
+              explore as diferentes permissões. Na versão de produção, todas as funcionalidades estarão disponíveis.
             </p>
           </div>
         )}
