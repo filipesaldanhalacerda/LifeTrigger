@@ -5,14 +5,16 @@ import {
   AlertCircle, ChevronRight, RefreshCw, Users, Zap,
   ShieldAlert, ShieldCheck, ShieldQuestion, Copy, Check, CheckCircle,
   CircleDot, Archive, BadgeCheck, ChevronDown, PieChart,
+  Calendar, ArrowUpDown, X, SlidersHorizontal,
 } from 'lucide-react'
 import { TopBar } from '../components/layout/TopBar'
 import { Badge } from '../components/ui/Badge'
 import { StatusChangeModal } from '../components/evaluation/StatusChangeModal'
-import { actionColors, actionLabel, riskColors, riskLabel, formatDate, formatCurrency, riskScoreColor, evalStatusLabel, evalStatusColors } from '../lib/utils'
+import { actionColors, actionLabel, riskColors, riskLabel, formatDate, riskScoreColor, evalStatusLabel, evalStatusColors } from '../lib/utils'
 import { getEvaluations, getUsers, getActiveTenantId } from '../lib/api'
 import { useAuth } from '../contexts/AuthContext'
 import { useCopyToClipboard } from '../hooks/useCopyToClipboard'
+import { daysAgo, today } from '../lib/dates'
 import type { EvaluationSummary, RecommendedAction, EvaluationStatusType, UserRecord } from '../types/api'
 
 const ACTION_ICONS: Record<RecommendedAction, React.ElementType> = {
@@ -21,6 +23,23 @@ const ACTION_ICONS: Record<RecommendedAction, React.ElementType> = {
   REDUZIR: TrendingDown,
   REVISAR: RotateCcw,
 }
+
+type SortField = 'date' | 'score' | 'gap'
+type SortDir = 'asc' | 'desc'
+
+const DATE_PRESETS = [
+  { label: '7 dias', value: 7 },
+  { label: '30 dias', value: 30 },
+  { label: '90 dias', value: 90 },
+  { label: 'Todos', value: 0 },
+] as const
+
+const STATUS_OPTIONS: { key: EvaluationStatusType; icon: React.ElementType; color: string; activeBg: string; activeText: string }[] = [
+  { key: 'ABERTO', icon: CircleDot, color: 'text-blue-500', activeBg: 'bg-blue-50 border-blue-300 ring-2 ring-blue-100', activeText: 'text-blue-700' },
+  { key: 'CONVERTIDO', icon: BadgeCheck, color: 'text-emerald-500', activeBg: 'bg-emerald-50 border-emerald-300 ring-2 ring-emerald-100', activeText: 'text-emerald-700' },
+  { key: 'CONVERTIDO_PARCIAL', icon: PieChart, color: 'text-amber-500', activeBg: 'bg-amber-50 border-amber-300 ring-2 ring-amber-100', activeText: 'text-amber-700' },
+  { key: 'ARQUIVADO', icon: Archive, color: 'text-slate-400', activeBg: 'bg-slate-100 border-slate-300 ring-2 ring-slate-200', activeText: 'text-slate-600' },
+]
 
 // ── Mini score bar ────────────────────────────────────────────────
 function ScoreBar({ score }: { score: number }) {
@@ -91,6 +110,10 @@ export default function EvaluationHistory() {
   const [filterUser, setFilterUser]     = useState<string>('')
   const [filterType, setFilterType]     = useState<string>('')
   const [filterStatus, setFilterStatus] = useState<string>('')
+  const [datePreset, setDatePreset]     = useState<number>(0)
+  const [sortField, setSortField]       = useState<SortField>('date')
+  const [sortDir, setSortDir]           = useState<SortDir>('desc')
+  const [showFilters, setShowFilters]   = useState(false)
   const [copiedId, copyId]              = useCopyToClipboard()
   const [statusMenuId, setStatusMenuId] = useState<string | null>(null)
   const [statusMenuPos, setStatusMenuPos] = useState<{ top: number; left: number } | null>(null)
@@ -109,13 +132,18 @@ export default function EvaluationHistory() {
   function load() {
     setLoading(true)
     setError(null)
-    getEvaluations(getActiveTenantId(), { limit: 200 } /* max fetch for client-side grouping */)
+    const params: { startDate?: string; endDate?: string; limit: number } = { limit: 200 }
+    if (datePreset > 0) {
+      params.startDate = daysAgo(datePreset)
+      params.endDate = today()
+    }
+    getEvaluations(getActiveTenantId(), params)
       .then((res) => setItems(res.items))
       .catch(() => setError('Não foi possível carregar o histórico. Verifique a conexão e tente novamente.'))
       .finally(() => setLoading(false))
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => { load() }, [datePreset])
 
   useEffect(() => {
     if (isManagerPlus) {
@@ -132,6 +160,11 @@ export default function EvaluationHistory() {
     setFilterStatus('')
   }
 
+  function toggleSort(field: SortField) {
+    if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+    else { setSortField(field); setSortDir('desc') }
+  }
+
   function requestStatusChange(e: React.MouseEvent, id: string, newStatus: EvaluationStatusType) {
     e.stopPropagation()
     setStatusMenuId(null)
@@ -142,6 +175,14 @@ export default function EvaluationHistory() {
     if (!confirmAction) return
     setItems((prev) => prev.map((ev) => ev.id === confirmAction.id ? { ...ev, status: finalStatus, statusNotes } : ev))
     setConfirmAction(null)
+  }
+
+  // Count items per status (before text/action/risk filters)
+  const statusCounts = {
+    ABERTO:             items.filter((e) => (e.status || 'ABERTO') === 'ABERTO').length,
+    CONVERTIDO:         items.filter((e) => e.status === 'CONVERTIDO').length,
+    CONVERTIDO_PARCIAL: items.filter((e) => e.status === 'CONVERTIDO_PARCIAL').length,
+    ARQUIVADO:          items.filter((e) => e.status === 'ARQUIVADO').length,
   }
 
   const filtered = items.filter((ev) => {
@@ -156,13 +197,15 @@ export default function EvaluationHistory() {
     return true
   })
 
+  // Sort
+  const sorted = [...filtered].sort((a, b) => {
+    const dir = sortDir === 'asc' ? 1 : -1
+    if (sortField === 'date') return dir * (new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+    if (sortField === 'score') return dir * (a.score - b.score)
+    return dir * (a.gapPct - b.gapPct)
+  })
+
   const pendingItems = items.filter((e) => (e.status || 'ABERTO') === 'ABERTO')
-  const statusCounts = {
-    aberto:     items.filter((e) => (e.status || 'ABERTO') === 'ABERTO').length,
-    convertido: items.filter((e) => e.status === 'CONVERTIDO').length,
-    parcial:    items.filter((e) => e.status === 'CONVERTIDO_PARCIAL').length,
-    arquivado:  items.filter((e) => e.status === 'ARQUIVADO').length,
-  }
   const riskCounts = {
     critico:  pendingItems.filter((e) => e.risk === 'CRITICO').length,
     moderado: pendingItems.filter((e) => e.risk === 'MODERADO').length,
@@ -170,26 +213,41 @@ export default function EvaluationHistory() {
   }
 
   const hasActiveFilters = !!(search || filterAction || filterRisk || filterUser || filterType || filterStatus)
+  const activeFilterCount = [search, filterAction, filterRisk, filterUser, filterType, filterStatus].filter(Boolean).length
 
-  // Group filtered items by consentId for visual threading
+  // Build active filter chips for display
+  const filterChips: { label: string; onRemove: () => void }[] = []
+  if (filterStatus) filterChips.push({ label: `Status: ${evalStatusLabel(filterStatus as EvaluationStatusType)}`, onRemove: () => setFilterStatus('') })
+  if (filterRisk) filterChips.push({ label: `Risco: ${riskLabel(filterRisk as any)}`, onRemove: () => setFilterRisk('') })
+  if (filterAction) filterChips.push({ label: `Ação: ${actionLabel(filterAction as any)}`, onRemove: () => setFilterAction('') })
+  if (filterType) filterChips.push({ label: filterType === 'trigger' ? 'Apenas Gatilhos' : 'Apenas Avaliações', onRemove: () => setFilterType('') })
+  if (filterUser) {
+    const u = users.find((u) => u.id === filterUser)
+    filterChips.push({ label: `Corretor: ${u ? u.email.split('@')[0] : filterUser.slice(0, 8)}`, onRemove: () => setFilterUser('') })
+  }
+  if (search) filterChips.push({ label: `Busca: "${search}"`, onRemove: () => setSearch('') })
+
+  // Group sorted items by consentId for visual threading
   const grouped = (() => {
-    const map = new Map<string, typeof filtered>()
-    for (const ev of filtered) {
-      const key = ev.consentId || ev.id // fallback to own id if no consentId
+    const map = new Map<string, typeof sorted>()
+    for (const ev of sorted) {
+      const key = ev.consentId || ev.id
       if (!map.has(key)) map.set(key, [])
       map.get(key)!.push(ev)
     }
-    // Sort each group: non-triggers first, then by timestamp desc
     for (const [, group] of map) {
       group.sort((a, b) => {
         if (a.isTrigger !== b.isTrigger) return a.isTrigger ? 1 : -1
         return new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
       })
     }
-    // Return groups ordered by earliest timestamp
-    return [...map.values()].sort((a, b) =>
-      new Date(b[0].timestamp).getTime() - new Date(a[0].timestamp).getTime()
-    )
+    // Groups ordered by sort preference (use first item of each group)
+    return [...map.values()].sort((a, b) => {
+      const dir = sortDir === 'asc' ? 1 : -1
+      if (sortField === 'date') return dir * (new Date(a[0].timestamp).getTime() - new Date(b[0].timestamp).getTime())
+      if (sortField === 'score') return dir * (a[0].score - b[0].score)
+      return dir * (a[0].gapPct - b[0].gapPct)
+    })
   })()
 
   // Helper: email curto do corretor por userId
@@ -198,6 +256,8 @@ export default function EvaluationHistory() {
     const u = users.find((u) => u.id === userId)
     return u ? u.email.split('@')[0] : userId.slice(0, 8) + '…'
   }
+
+  const sortLabel: Record<SortField, string> = { date: 'Data', score: 'Score', gap: 'Gap' }
 
   return (
     <div>
@@ -213,11 +273,13 @@ export default function EvaluationHistory() {
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <SummaryCard
               label="Pendentes"
-              value={statusCounts.aberto}
+              value={statusCounts.ABERTO}
               icon={Users}
-              iconBg="bg-slate-100"
-              iconColor="text-slate-600"
-              hint={`${statusCounts.convertido + statusCounts.parcial} convertida${(statusCounts.convertido + statusCounts.parcial) !== 1 ? 's' : ''} · ${statusCounts.arquivado} arquivada${statusCounts.arquivado !== 1 ? 's' : ''}`}
+              iconBg="bg-blue-50"
+              iconColor="text-blue-600"
+              hint={`${statusCounts.CONVERTIDO + statusCounts.CONVERTIDO_PARCIAL} convertida${(statusCounts.CONVERTIDO + statusCounts.CONVERTIDO_PARCIAL) !== 1 ? 's' : ''} · ${statusCounts.ARQUIVADO} arquivada${statusCounts.ARQUIVADO !== 1 ? 's' : ''}`}
+              active={filterStatus === 'ABERTO'}
+              onClick={() => setFilterStatus(filterStatus === 'ABERTO' ? '' : 'ABERTO')}
             />
             <SummaryCard
               label="Risco Crítico"
@@ -252,24 +314,124 @@ export default function EvaluationHistory() {
           </div>
         )}
 
-        {/* Filter bar */}
-        <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3">
-          <div className="relative flex-1 min-w-0 sm:min-w-52">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Buscar por ID ou canal…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm shadow-card focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100"
-            />
+        {/* ── Filter section ─────────────────────────────────────── */}
+        <div className="space-y-3">
+
+          {/* Row 1: Search + date presets + sort + toggle (mobile) + refresh */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+            {/* Search */}
+            <div className="relative flex-1 min-w-0 sm:min-w-52">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Buscar por ID ou canal…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm shadow-card focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100"
+              />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+
+            {/* Date presets */}
+            <div className="flex items-center gap-1 rounded-xl border border-slate-200 bg-white p-1 shadow-card">
+              <Calendar className="ml-1.5 h-3.5 w-3.5 text-slate-400 shrink-0" />
+              {DATE_PRESETS.map((p) => (
+                <button
+                  key={p.value}
+                  type="button"
+                  onClick={() => setDatePreset(p.value)}
+                  className={`rounded-lg px-2.5 py-1.5 text-xs font-medium transition-all ${
+                    datePreset === p.value
+                      ? 'bg-brand-600 text-white shadow-sm'
+                      : 'text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Sort control */}
+            <button
+              type="button"
+              onClick={() => toggleSort(sortField === 'date' ? 'score' : sortField === 'score' ? 'gap' : 'date')}
+              className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 shadow-card hover:bg-slate-50 transition-colors"
+            >
+              <ArrowUpDown className="h-3.5 w-3.5 text-slate-400" />
+              <span>{sortLabel[sortField]}</span>
+              <span className="text-[10px] text-slate-400">{sortDir === 'desc' ? '↓' : '↑'}</span>
+            </button>
+
+            {/* Mobile filter toggle */}
+            <button
+              type="button"
+              onClick={() => setShowFilters(!showFilters)}
+              className="sm:hidden flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 shadow-card hover:bg-slate-50 transition-colors"
+            >
+              <SlidersHorizontal className="h-3.5 w-3.5" />
+              Filtros
+              {activeFilterCount > 0 && (
+                <span className="flex h-4.5 min-w-[18px] items-center justify-center rounded-full bg-brand-600 px-1 text-[10px] font-bold text-white">
+                  {activeFilterCount}
+                </span>
+              )}
+            </button>
+
+            {/* Refresh */}
+            <button
+              onClick={load}
+              disabled={loading}
+              className="sm:ml-auto flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600 shadow-card hover:bg-slate-50 transition-colors disabled:opacity-50"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
+              Atualizar
+            </button>
           </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <Filter className={`h-4 w-4 ${hasActiveFilters ? 'text-brand-500' : 'text-slate-400'}`} />
+
+          {/* Row 2: Status pills (always visible) */}
+          {!loading && !error && items.length > 0 && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider mr-1">Status</span>
+              {STATUS_OPTIONS.map(({ key, icon: SIcon, color, activeBg, activeText }) => {
+                const isActive = filterStatus === key
+                const count = statusCounts[key]
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setFilterStatus(isActive ? '' : key)}
+                    className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-all ${
+                      isActive
+                        ? activeBg + ' ' + activeText
+                        : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'
+                    }`}
+                  >
+                    <SIcon className={`h-3.5 w-3.5 ${isActive ? activeText : color}`} />
+                    {evalStatusLabel(key)}
+                    <span className={`ml-0.5 tabular-nums ${isActive ? 'opacity-80' : 'text-slate-400'}`}>
+                      {count}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          )}
+
+          {/* Row 3: Advanced filters (always on desktop, collapsible on mobile) */}
+          <div className={`${showFilters ? 'flex' : 'hidden sm:flex'} items-center gap-2 flex-wrap`}>
+            <Filter className={`h-4 w-4 shrink-0 ${hasActiveFilters ? 'text-brand-500' : 'text-slate-400'}`} />
             <select
               value={filterAction}
               onChange={(e) => setFilterAction(e.target.value)}
-              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-card focus:border-brand-400 focus:outline-none"
+              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs shadow-card focus:border-brand-400 focus:outline-none"
             >
               <option value="">Todas as ações</option>
               <option value="AUMENTAR">Aumentar cobertura</option>
@@ -280,7 +442,7 @@ export default function EvaluationHistory() {
             <select
               value={filterRisk}
               onChange={(e) => setFilterRisk(e.target.value)}
-              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-card focus:border-brand-400 focus:outline-none"
+              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs shadow-card focus:border-brand-400 focus:outline-none"
             >
               <option value="">Todos os riscos</option>
               <option value="CRITICO">Risco Crítico</option>
@@ -290,28 +452,17 @@ export default function EvaluationHistory() {
             <select
               value={filterType}
               onChange={(e) => setFilterType(e.target.value)}
-              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-card focus:border-brand-400 focus:outline-none"
+              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs shadow-card focus:border-brand-400 focus:outline-none"
             >
               <option value="">Avaliações e Gatilhos</option>
               <option value="evaluation">Apenas Avaliações</option>
               <option value="trigger">Apenas Gatilhos</option>
             </select>
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-card focus:border-brand-400 focus:outline-none"
-            >
-              <option value="">Todos os status</option>
-              <option value="ABERTO">Abertos</option>
-              <option value="CONVERTIDO">Convertidos</option>
-              <option value="CONVERTIDO_PARCIAL">Parciais</option>
-              <option value="ARQUIVADO">Arquivados</option>
-            </select>
             {isManagerPlus && users.length > 0 && (
               <select
                 value={filterUser}
                 onChange={(e) => setFilterUser(e.target.value)}
-                className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-card focus:border-brand-400 focus:outline-none"
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs shadow-card focus:border-brand-400 focus:outline-none"
               >
                 <option value="">Todos os corretores</option>
                 {users.filter((u) => u.role === 'Broker').map((u) => (
@@ -322,20 +473,40 @@ export default function EvaluationHistory() {
             {hasActiveFilters && (
               <button
                 onClick={clearFilters}
-                className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-500 shadow-card hover:text-slate-700 hover:bg-slate-50 transition-colors"
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-500 shadow-card hover:text-slate-700 hover:bg-slate-50 transition-colors"
               >
                 Limpar filtros
               </button>
             )}
           </div>
-          <button
-            onClick={load}
-            disabled={loading}
-            className="sm:ml-auto flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600 shadow-card hover:bg-slate-50 transition-colors disabled:opacity-50"
-          >
-            <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
-            Atualizar
-          </button>
+
+          {/* Active filter chips */}
+          {filterChips.length > 0 && (
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {filterChips.map((chip) => (
+                <span
+                  key={chip.label}
+                  className="inline-flex items-center gap-1 rounded-full bg-brand-50 border border-brand-200 px-2.5 py-1 text-[11px] font-medium text-brand-700"
+                >
+                  {chip.label}
+                  <button
+                    type="button"
+                    onClick={chip.onRemove}
+                    className="rounded-full p-0.5 hover:bg-brand-100 transition-colors"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              ))}
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="text-[11px] font-medium text-slate-400 hover:text-slate-600 ml-1 transition-colors"
+              >
+                Limpar tudo
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Loading — skeleton rows */}
@@ -378,6 +549,7 @@ export default function EvaluationHistory() {
                     return ` (${evals} ${evals === 1 ? 'avaliação' : 'avaliações'})`
                   })()}
                   {' '}— clique em uma linha para ver o resultado completo.
+                  {datePreset > 0 && ` Período: últimos ${datePreset} dias.`}
                 </p>
               </div>
             )}
@@ -474,13 +646,25 @@ export default function EvaluationHistory() {
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                     Ação
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    Protection Score
-                    <span className="ml-1 font-normal normal-case text-slate-400">0–100</span>
+                  <th
+                    className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 cursor-pointer hover:text-slate-700 select-none"
+                    onClick={() => toggleSort('score')}
+                  >
+                    <span className="inline-flex items-center gap-1">
+                      Protection Score
+                      <span className="font-normal normal-case text-slate-400">0–100</span>
+                      {sortField === 'score' && <span className="text-brand-500">{sortDir === 'desc' ? '↓' : '↑'}</span>}
+                    </span>
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    Gap de Cobertura
-                    <span className="ml-1 font-normal normal-case text-slate-400">déficit/excedente</span>
+                  <th
+                    className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 cursor-pointer hover:text-slate-700 select-none"
+                    onClick={() => toggleSort('gap')}
+                  >
+                    <span className="inline-flex items-center gap-1">
+                      Gap
+                      <span className="font-normal normal-case text-slate-400">déficit/excedente</span>
+                      {sortField === 'gap' && <span className="text-brand-500">{sortDir === 'desc' ? '↓' : '↑'}</span>}
+                    </span>
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                     Canal
@@ -674,14 +858,25 @@ export default function EvaluationHistory() {
                   <>
                     <p className="text-sm font-semibold text-slate-700">Nenhuma avaliação encontrada</p>
                     <p className="mt-1 text-xs text-slate-400">
-                      Realize a primeira avaliação usando Nova Avaliação. Após o resultado, você poderá registrar gatilhos de vida.
+                      {datePreset > 0
+                        ? `Nenhuma avaliação nos últimos ${datePreset} dias. Tente ampliar o período.`
+                        : 'Realize a primeira avaliação usando Nova Avaliação. Após o resultado, você poderá registrar gatilhos de vida.'}
                     </p>
-                    <button
-                      onClick={() => navigate('/evaluations/new')}
-                      className="mt-4 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 transition-colors"
-                    >
-                      Nova Avaliação
-                    </button>
+                    {datePreset > 0 ? (
+                      <button
+                        onClick={() => setDatePreset(0)}
+                        className="mt-4 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 transition-colors"
+                      >
+                        Ver todos os períodos
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => navigate('/evaluations/new')}
+                        className="mt-4 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 transition-colors"
+                      >
+                        Nova Avaliação
+                      </button>
+                    )}
                   </>
                 ) : (
                   <>
