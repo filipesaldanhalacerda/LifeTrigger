@@ -145,9 +145,10 @@ interface DateRangePickerProps {
   endDate: string     // 'YYYY-MM-DD'
   onChange: (start: string, end: string) => void
   maxDate?: string
+  align?: 'left' | 'right'
 }
 
-export function DateRangePicker({ startDate, endDate, onChange, maxDate }: DateRangePickerProps) {
+export function DateRangePicker({ startDate, endDate, onChange, maxDate, align = 'left' }: DateRangePickerProps) {
   const [open, setOpen] = useState(false)
   const [selecting, setSelecting] = useState<'start' | 'end' | null>(null)
   const [tempStart, setTempStart] = useState<Date | null>(null)
@@ -261,7 +262,7 @@ export function DateRangePicker({ startDate, endDate, onChange, maxDate }: DateR
 
       {/* Dropdown */}
       {open && (
-        <div className="absolute left-0 top-full z-50 mt-2 flex flex-col sm:flex-row rounded-2xl border border-slate-200 bg-white shadow-elevated animate-scaleIn origin-top-left max-w-[calc(100vw-2rem)]">
+        <div className={`absolute top-full z-50 mt-2 flex flex-col sm:flex-row rounded-2xl border border-slate-200 bg-white shadow-elevated animate-scaleIn max-w-[calc(100vw-2rem)] ${align === 'right' ? 'right-0 origin-top-right' : 'left-0 origin-top-left'}`}>
           {/* Presets — horizontal on mobile, sidebar on desktop */}
           <div className="border-b sm:border-b-0 sm:border-r border-slate-100 py-2 sm:py-3 px-2 sm:min-w-[140px]">
             <p className="px-2 pb-1.5 sm:pb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Período</p>

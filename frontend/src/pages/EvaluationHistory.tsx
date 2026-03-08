@@ -1,11 +1,11 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  Search, Filter, TrendingUp, TrendingDown, Minus, RotateCcw,
+  Search, TrendingUp, TrendingDown, Minus, RotateCcw,
   AlertCircle, ChevronRight, Users, Zap,
   ShieldAlert, ShieldCheck, ShieldQuestion, Copy, Check, CheckCircle,
   CircleDot, Archive, BadgeCheck, ChevronDown, PieChart,
-  X, SlidersHorizontal,
+  X,
 } from 'lucide-react'
 import { TopBar } from '../components/layout/TopBar'
 import { Badge } from '../components/ui/Badge'
@@ -103,7 +103,6 @@ export default function EvaluationHistory() {
   const [filterStatus, setFilterStatus] = useState<string>('')
   const [startDate, setStartDate]       = useState(() => daysAgo(30))
   const [endDate, setEndDate]           = useState(() => today())
-  const [showFilters, setShowFilters]   = useState(false)
   const [copiedId, copyId]              = useCopyToClipboard()
   const [statusMenuId, setStatusMenuId] = useState<string | null>(null)
   const [statusMenuPos, setStatusMenuPos] = useState<{ top: number; left: number } | null>(null)
@@ -185,19 +184,6 @@ export default function EvaluationHistory() {
   }
 
   const hasActiveFilters = !!(search || filterAction || filterRisk || filterUser || filterType || filterStatus)
-  const activeFilterCount = [search, filterAction, filterRisk, filterUser, filterType, filterStatus].filter(Boolean).length
-
-  // Build active filter chips for display
-  const filterChips: { label: string; onRemove: () => void }[] = []
-  if (filterStatus) filterChips.push({ label: `Status: ${evalStatusLabel(filterStatus as EvaluationStatusType)}`, onRemove: () => setFilterStatus('') })
-  if (filterRisk) filterChips.push({ label: `Risco: ${riskLabel(filterRisk as any)}`, onRemove: () => setFilterRisk('') })
-  if (filterAction) filterChips.push({ label: `Ação: ${actionLabel(filterAction as any)}`, onRemove: () => setFilterAction('') })
-  if (filterType) filterChips.push({ label: filterType === 'trigger' ? 'Apenas Gatilhos' : 'Apenas Avaliações', onRemove: () => setFilterType('') })
-  if (filterUser) {
-    const u = users.find((u) => u.id === filterUser)
-    filterChips.push({ label: `Corretor: ${u ? u.email.split('@')[0] : filterUser.slice(0, 8)}`, onRemove: () => setFilterUser('') })
-  }
-  if (search) filterChips.push({ label: `Busca: "${search}"`, onRemove: () => setSearch('') })
 
   // Group filtered items by consentId for visual threading
   const grouped = (() => {
@@ -283,9 +269,8 @@ export default function EvaluationHistory() {
         {/* ── Filter section ─────────────────────────────────────── */}
         <div className="space-y-3">
 
-          {/* Row 1: Search + DateRangePicker + mobile filter toggle */}
+          {/* Row 1: Search + DateRangePicker */}
           <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-            {/* Search */}
             <div className="relative flex-1 min-w-0 sm:min-w-52">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <input
@@ -305,100 +290,84 @@ export default function EvaluationHistory() {
                 </button>
               )}
             </div>
-
-            {/* Date range picker */}
             <DateRangePicker
               startDate={startDate}
               endDate={endDate}
               maxDate={today()}
               onChange={(s, e) => { setStartDate(s); setEndDate(e) }}
+              align="right"
             />
-
-            {/* Mobile filter toggle */}
-            <button
-              type="button"
-              onClick={() => setShowFilters(!showFilters)}
-              className="sm:hidden flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 shadow-card hover:bg-slate-50 transition-colors"
-            >
-              <SlidersHorizontal className="h-3.5 w-3.5" />
-              Filtros
-              {activeFilterCount > 0 && (
-                <span className="flex h-4.5 min-w-[18px] items-center justify-center rounded-full bg-brand-600 px-1 text-[10px] font-bold text-white">
-                  {activeFilterCount}
-                </span>
-              )}
-            </button>
           </div>
 
-          {/* Row 2: Status pills (always visible) */}
-          {!loading && !error && items.length > 0 && (
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider mr-1">Status</span>
-              {STATUS_OPTIONS.map(({ key, icon: SIcon, color, activeBg, activeText }) => {
-                const isActive = filterStatus === key
-                const count = statusCounts[key]
-                return (
-                  <button
-                    key={key}
-                    type="button"
-                    onClick={() => setFilterStatus(isActive ? '' : key)}
-                    className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-all ${
-                      isActive
-                        ? activeBg + ' ' + activeText
-                        : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'
-                    }`}
-                  >
-                    <SIcon className={`h-3.5 w-3.5 ${isActive ? activeText : color}`} />
-                    {evalStatusLabel(key)}
-                    <span className={`ml-0.5 tabular-nums ${isActive ? 'opacity-80' : 'text-slate-400'}`}>
-                      {count}
-                    </span>
-                  </button>
-                )
-              })}
-            </div>
-          )}
+          {/* Row 2: Status pills + dropdowns (all inline) */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Status pills */}
+            {!loading && !error && items.length > 0 && STATUS_OPTIONS.map(({ key, icon: SIcon, color, activeBg, activeText }) => {
+              const isActive = filterStatus === key
+              const count = statusCounts[key]
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setFilterStatus(isActive ? '' : key)}
+                  className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-all ${
+                    isActive
+                      ? activeBg + ' ' + activeText
+                      : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'
+                  }`}
+                >
+                  <SIcon className={`h-3.5 w-3.5 ${isActive ? activeText : color}`} />
+                  {evalStatusLabel(key)}
+                  <span className={`ml-0.5 tabular-nums ${isActive ? 'opacity-80' : 'text-slate-400'}`}>
+                    {count}
+                  </span>
+                </button>
+              )
+            })}
 
-          {/* Row 3: Advanced filters (always on desktop, collapsible on mobile) */}
-          <div className={`${showFilters ? 'flex' : 'hidden sm:flex'} items-center gap-2 flex-wrap`}>
-            <Filter className={`h-4 w-4 shrink-0 ${hasActiveFilters ? 'text-brand-500' : 'text-slate-400'}`} />
+            {/* Separator */}
+            {!loading && !error && items.length > 0 && (
+              <div className="hidden sm:block h-5 w-px bg-slate-200" />
+            )}
+
+            {/* Dropdown filters */}
             <select
               value={filterAction}
               onChange={(e) => setFilterAction(e.target.value)}
-              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs shadow-card focus:border-brand-400 focus:outline-none"
+              className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs shadow-card focus:border-brand-400 focus:outline-none"
             >
-              <option value="">Todas as ações</option>
-              <option value="AUMENTAR">Aumentar cobertura</option>
-              <option value="MANTER">Manter cobertura</option>
-              <option value="REDUZIR">Reduzir cobertura</option>
-              <option value="REVISAR">Revisar situação</option>
+              <option value="">Ação</option>
+              <option value="AUMENTAR">Aumentar</option>
+              <option value="MANTER">Manter</option>
+              <option value="REDUZIR">Reduzir</option>
+              <option value="REVISAR">Revisar</option>
             </select>
             <select
               value={filterRisk}
               onChange={(e) => setFilterRisk(e.target.value)}
-              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs shadow-card focus:border-brand-400 focus:outline-none"
+              className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs shadow-card focus:border-brand-400 focus:outline-none"
             >
-              <option value="">Todos os riscos</option>
-              <option value="CRITICO">Risco Crítico</option>
-              <option value="MODERADO">Risco Moderado</option>
-              <option value="ADEQUADO">Risco Adequado</option>
+              <option value="">Risco</option>
+              <option value="CRITICO">Crítico</option>
+              <option value="MODERADO">Moderado</option>
+              <option value="ADEQUADO">Adequado</option>
             </select>
             <select
               value={filterType}
               onChange={(e) => setFilterType(e.target.value)}
-              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs shadow-card focus:border-brand-400 focus:outline-none"
+              className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs shadow-card focus:border-brand-400 focus:outline-none"
             >
-              <option value="">Avaliações e Gatilhos</option>
-              <option value="evaluation">Apenas Avaliações</option>
-              <option value="trigger">Apenas Gatilhos</option>
+              <option value="">Tipo</option>
+              <option value="evaluation">Avaliações</option>
+              <option value="trigger">Gatilhos</option>
             </select>
             {isManagerPlus && users.length > 0 && (
               <select
                 value={filterUser}
                 onChange={(e) => setFilterUser(e.target.value)}
-                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs shadow-card focus:border-brand-400 focus:outline-none"
+                className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs shadow-card focus:border-brand-400 focus:outline-none"
               >
-                <option value="">Todos os corretores</option>
+                <option value="">Corretor</option>
                 {users.filter((u) => u.role === 'Broker').map((u) => (
                   <option key={u.id} value={u.id}>{u.email.split('@')[0]}</option>
                 ))}
@@ -407,40 +376,12 @@ export default function EvaluationHistory() {
             {hasActiveFilters && (
               <button
                 onClick={clearFilters}
-                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-500 shadow-card hover:text-slate-700 hover:bg-slate-50 transition-colors"
+                className="rounded-full border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] text-slate-500 shadow-card hover:text-slate-700 hover:bg-slate-50 transition-colors"
               >
                 Limpar filtros
               </button>
             )}
           </div>
-
-          {/* Active filter chips */}
-          {filterChips.length > 0 && (
-            <div className="flex items-center gap-1.5 flex-wrap">
-              {filterChips.map((chip) => (
-                <span
-                  key={chip.label}
-                  className="inline-flex items-center gap-1 rounded-full bg-brand-50 border border-brand-200 px-2.5 py-1 text-[11px] font-medium text-brand-700"
-                >
-                  {chip.label}
-                  <button
-                    type="button"
-                    onClick={chip.onRemove}
-                    className="rounded-full p-0.5 hover:bg-brand-100 transition-colors"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </span>
-              ))}
-              <button
-                type="button"
-                onClick={clearFilters}
-                className="text-[11px] font-medium text-slate-400 hover:text-slate-600 ml-1 transition-colors"
-              >
-                Limpar tudo
-              </button>
-            </div>
-          )}
         </div>
 
         {/* Loading — skeleton rows */}
