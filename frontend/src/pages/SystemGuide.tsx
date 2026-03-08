@@ -7,7 +7,7 @@ import {
   Lock, Hash, Layers, GitBranch, ShieldCheck, Database,
   Phone, Filter, Send, CalendarClock, Rocket,
   Plug, MessageSquare, Bot, Webhook, Code2, RefreshCcw, FileJson,
-  ArrowRight,
+  ArrowRight, Repeat, FileCheck, HeartPulse, Gauge,
 } from 'lucide-react'
 import { TopBar } from '../components/layout/TopBar'
 
@@ -304,7 +304,7 @@ export default function SystemGuide() {
                 <PipelinePhase n={1} title="Substituicao de Renda" desc="Calcula quantos anos de renda a familia precisa (2-10 anos), com bonificacao por dependente (ate +3), limitada por teto configuravel." />
                 <PipelinePhase n={2} title="Quitacao de Dividas" desc="Soma o saldo total de dividas para garantir que a cobertura cubra 100% dos debitos pendentes." />
                 <PipelinePhase n={3} title="Reserva de Transicao" desc="Adiciona colchao de seguranca (3-9 meses de renda), descontando reserva existente. Clampeado por limites rigidos." />
-                <PipelinePhase n={4} title="Guardrails (Teto e Piso)" desc="Cobertura recomendada nunca fica abaixo de 2x nem acima de 20x a renda anual (configuravel). Evita recomendacoes absurdas." />
+                <PipelinePhase n={4} title="Guardrails (Teto e Piso)" desc="Cobertura recomendada nunca fica abaixo de 3x nem acima de 20x a renda anual (configuravel por tenant). Evita recomendacoes absurdas." />
                 <PipelinePhase n={5} title="Score + Penalidades" desc="Protection Score (razao cobertura/necessidade) com 3 penalidades independentes: dependentes subprotegidos (-10), divida alta (-10), sem reserva (-10)." />
                 <PipelinePhase n={6} title="Overrides de Acao + Insights" desc={`Verifica condicoes especiais (revisao > 12 meses, dados nao confirmados, gatilho recente) que forcam REVISAR. Gera 5 insights personalizados.`} />
               </div>
@@ -313,6 +313,55 @@ export default function SystemGuide() {
                   <strong>20 regras catalogadas</strong> em enum fortemente tipado (<code className="text-brand-600 bg-white px-1 rounded">EngineRuleId</code>),
                   cada uma com template de justificativa e rastreabilidade completa. Nenhuma "string magica" — tudo validado em compilacao.
                 </p>
+              </div>
+            </div>
+
+            {/* Tipos de Apolice */}
+            <div>
+              <SectionLabel>Tipos de Apolice e Cobertura Efetiva</SectionLabel>
+              <p className="text-xs text-slate-500 mb-2 leading-relaxed">
+                O motor reconhece diferentes tipos de apolice e aplica percentuais de cobertura efetiva:
+              </p>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                <div className="rounded-lg border border-slate-100 bg-slate-50 p-3">
+                  <p className="text-xs font-semibold text-slate-800">Individual / Familiar</p>
+                  <p className="text-[11px] text-slate-500">100% da cobertura contabilizada</p>
+                </div>
+                <div className="rounded-lg border border-slate-100 bg-slate-50 p-3">
+                  <p className="text-xs font-semibold text-slate-800">Grupo Empresarial</p>
+                  <p className="text-[11px] text-slate-500">100% contabilizado, mas sinaliza risco de portabilidade (vinculado ao emprego)</p>
+                </div>
+                <div className="rounded-lg border border-slate-100 bg-slate-50 p-3">
+                  <p className="text-xs font-semibold text-slate-800">Acidentes Pessoais (AP)</p>
+                  <p className="text-[11px] text-slate-500">Apenas 25% contabilizado — nao cobre morte natural</p>
+                </div>
+              </div>
+              <div className="mt-2 rounded-lg border border-slate-100 bg-slate-50 p-3">
+                <p className="text-xs font-semibold text-slate-800">Prestamista</p>
+                <p className="text-[11px] text-slate-500">0% contabilizado — cobertura vinculada ao financiamento, nao protege a familia</p>
+              </div>
+            </div>
+
+            {/* Composicao da Cobertura Recomendada */}
+            <div>
+              <SectionLabel>Composicao da Cobertura Recomendada (6 Componentes)</SectionLabel>
+              <p className="text-xs text-slate-500 mb-2 leading-relaxed">
+                O valor final de cobertura recomendada e composto por ate 6 parcelas independentes:
+              </p>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                {[
+                  { title: 'Substituicao de Renda',  desc: 'Anos de renda necessarios para a familia manter o padrao de vida.' },
+                  { title: 'Quitacao de Dividas',     desc: 'Saldo total de dividas para garantir quitacao integral.' },
+                  { title: 'Reserva de Transicao',    desc: 'Colchao de meses de renda para adaptacao, menos reserva existente.' },
+                  { title: 'Educacao dos Filhos',      desc: 'Custo estimado de educacao por dependente menor de idade.' },
+                  { title: 'ITCMD / Inventario',       desc: 'Custos estimados de inventario e impostos sobre heranca.' },
+                  { title: 'Custos de Inventario',     desc: 'Percentual configuravel sobre patrimonio para custos legais.' },
+                ].map(({ title, desc }) => (
+                  <div key={title} className="rounded-lg border border-slate-100 bg-slate-50 p-3">
+                    <p className="text-xs font-semibold text-slate-800">{title}</p>
+                    <p className="mt-0.5 text-[11px] text-slate-500 leading-relaxed">{desc}</p>
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -370,10 +419,10 @@ export default function SystemGuide() {
             <div>
               <SectionLabel>Area Principal</SectionLabel>
               <div className="space-y-2">
-                <ScreenRef icon={BarChart3}      name="Dashboard"              path="/"                 desc="Visao consolidada da carteira: saude geral, distribuicao de risco e acoes, barra de protecao, ultimas avaliacoes e acoes rapidas." />
+                <ScreenRef icon={BarChart3}      name="Dashboard"              path="/"                 desc="Visao consolidada: anel de saude da carteira, barra de portfolio por status (aberta/convertida/parcial/arquivada), 4 indicadores-chave, atividades recentes com progress bar de score e status." />
                 <ScreenRef icon={ClipboardCheck}  name="Nova Avaliacao"         path="/evaluations/new"  desc="Formulario guiado em 4 etapas com validacao em tempo real, formatacao BRL e indicador de progresso." />
                 <ScreenRef icon={Zap}             name="Gatilhos de Vida"       path="/triggers/new"     desc="Registro de eventos de vida vinculados a uma avaliacao base. Motor recalcula considerando o impacto." />
-                <ScreenRef icon={BookOpen}         name="Historico de Avaliacoes" path="/evaluations"     desc="Lista paginada com filtros por data. Cada linha mostra acao, risco, score e gap." />
+                <ScreenRef icon={BookOpen}         name="Historico de Avaliacoes" path="/evaluations"     desc="Lista paginada com filtros avancados: periodo por data, pills de status (Aberto/Convertido/Parcial/Arquivado), dropdowns de acao, risco e tipo. Cada linha mostra acao, risco, score, gap e status." />
                 <ScreenRef icon={UserCheck}        name="Meus Clientes"          path="/clients"         desc="Visao agrupada por consentId, mostrando o historico de avaliacoes de cada cliente." />
               </div>
             </div>
@@ -381,7 +430,7 @@ export default function SystemGuide() {
             <div>
               <SectionLabel>Administracao</SectionLabel>
               <div className="space-y-2">
-                <ScreenRef icon={Users}      name="Gestao de Equipe"   path="/team"      desc="Criar, ativar/desativar usuarios e alterar perfis de acesso." />
+                <ScreenRef icon={Users}      name="Gestao de Equipe"   path="/team"      desc="Criar, ativar/desativar usuarios e alterar perfis. Filtros por status (ativo/inativo), role com contadores e busca por nome/email." />
                 <ScreenRef icon={BarChart3}  name="Relatorios"         path="/reports"   desc="Relatorio agregado: total de avaliacoes, distribuicao por risco e acao, gatilhos disparados." />
                 <ScreenRef icon={Shield}     name="Auditoria"          path="/audit"     desc="Verificacao de integridade: compara hash armazenado com hash recalculado." />
                 <ScreenRef icon={Cpu}        name="Motor"              path="/engine"    desc="Status do motor: saude, versao, ruleset e endpoints disponiveis." />
@@ -393,9 +442,11 @@ export default function SystemGuide() {
             <div>
               <SectionLabel>Plataforma (SuperAdmin)</SectionLabel>
               <div className="space-y-2">
-                <ScreenRef icon={Building2} name="Corretoras"        path="/admin/tenants"   desc="Gestao de todas as corretoras. Criar, ativar ou desativar tenants." />
-                <ScreenRef icon={Globe}     name="Plataforma"        path="/admin/platform"  desc="Metricas globais, status dos servicos e monitoramento." />
-                <ScreenRef icon={Users}     name="Usuarios Globais"  path="/admin/users"     desc="Gestao de todos os usuarios de todas as corretoras." />
+                <ScreenRef icon={Building2}  name="Corretoras"           path="/admin/tenants"    desc="Gestao de todas as corretoras. Criar, ativar ou desativar tenants." />
+                <ScreenRef icon={Users}      name="Usuarios Globais"    path="/admin/users"      desc="Gestao de todos os usuarios de todas as corretoras." />
+                <ScreenRef icon={Activity}   name="Monitor de Acessos"  path="/admin/access"     desc="Grafico de logins por dia, ultimos acessos e detalhes de sessao por usuario." />
+                <ScreenRef icon={Gauge}      name="Analise do Motor"    path="/admin/analytics"  desc="Metricas de uso do motor: avaliacoes por dia, distribuicao de risco/acao, tempos de resposta." />
+                <ScreenRef icon={HeartPulse} name="Saude da Plataforma" path="/admin/health"     desc="Status dos servicos (API, Auth, DB), uptime, versao do motor e indicadores operacionais." />
               </div>
             </div>
           </div>
@@ -505,7 +556,71 @@ export default function SystemGuide() {
           </div>
         </Accordion>
 
-        {/* ━━ 7. CONFIGURACOES ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+        {/* ━━ 7. STATUS E ACOMPANHAMENTO ━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+        <Accordion id="status" title="Status de avaliacao e acompanhamento" icon={Repeat} openId={openId} onToggle={toggle}>
+          <div className="space-y-4">
+            <p className="text-sm text-slate-600 leading-relaxed">
+              Cada avaliacao possui um <strong>status de acompanhamento</strong> que permite ao corretor controlar
+              o progresso comercial apos o diagnostico tecnico. O status e independente da acao recomendada pelo motor.
+            </p>
+
+            <div>
+              <SectionLabel>4 Status Disponiveis</SectionLabel>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <div className="rounded-lg border border-slate-100 bg-slate-50 p-3 flex items-start gap-2">
+                  <span className="mt-1 h-2.5 w-2.5 rounded-full bg-blue-500 shrink-0" />
+                  <div>
+                    <p className="text-xs font-semibold text-slate-800">Aberto</p>
+                    <p className="text-[11px] text-slate-500">Status inicial. Avaliacao realizada, aguardando acao do corretor.</p>
+                  </div>
+                </div>
+                <div className="rounded-lg border border-slate-100 bg-slate-50 p-3 flex items-start gap-2">
+                  <span className="mt-1 h-2.5 w-2.5 rounded-full bg-emerald-500 shrink-0" />
+                  <div>
+                    <p className="text-xs font-semibold text-slate-800">Convertido</p>
+                    <p className="text-[11px] text-slate-500">Cliente contratou a cobertura recomendada. Venda concluida com sucesso.</p>
+                  </div>
+                </div>
+                <div className="rounded-lg border border-slate-100 bg-slate-50 p-3 flex items-start gap-2">
+                  <span className="mt-1 h-2.5 w-2.5 rounded-full bg-amber-500 shrink-0" />
+                  <div>
+                    <p className="text-xs font-semibold text-slate-800">Convertido Parcial</p>
+                    <p className="text-[11px] text-slate-500">Cliente contratou cobertura, mas abaixo do recomendado. Oportunidade de upsell futura.</p>
+                  </div>
+                </div>
+                <div className="rounded-lg border border-slate-100 bg-slate-50 p-3 flex items-start gap-2">
+                  <span className="mt-1 h-2.5 w-2.5 rounded-full bg-slate-400 shrink-0" />
+                  <div>
+                    <p className="text-xs font-semibold text-slate-800">Arquivado</p>
+                    <p className="text-[11px] text-slate-500">Avaliacao descartada ou cliente desistiu. Pode ser reaberta se necessario.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <SectionLabel>Como Usar</SectionLabel>
+              <div className="space-y-2">
+                <HighlightBox icon={FileCheck} title="Atualize na tela de detalhe">
+                  Abra qualquer avaliacao e altere o status no topo da pagina. Adicione notas opcionais para registrar contexto.
+                </HighlightBox>
+                <HighlightBox icon={BarChart3} title="Acompanhe pelo Dashboard">
+                  A barra de portfolio mostra a distribuicao por status em tempo real. A taxa de conversao e calculada automaticamente.
+                  Filtre o historico por status para focar nas avaliacoes que precisam de atencao.
+                </HighlightBox>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-brand-200 bg-brand-50 p-3">
+              <p className="text-xs text-brand-800 leading-relaxed">
+                <strong>Importante:</strong> o status e comercial, nao tecnico. A acao recomendada (AUMENTAR, MANTER, REDUZIR, REVISAR)
+                e o que o motor sugere. O status e o que o corretor registra como resultado da abordagem comercial.
+              </p>
+            </div>
+          </div>
+        </Accordion>
+
+        {/* ━━ 8. CONFIGURACOES ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
         <Accordion id="settings" title="Configuracoes personalizaveis" icon={Settings} openId={openId} onToggle={toggle}>
           <div className="space-y-4">
             <p className="text-sm text-slate-600 leading-relaxed">
@@ -514,10 +629,13 @@ export default function SystemGuide() {
 
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               {[
-                { title: 'Multiplicador de Renda (Solteiro)',        desc: 'Anos de renda para pessoa sem dependentes. Padrao: 5.' },
-                { title: 'Multiplicador de Renda (Com Dependentes)', desc: 'Anos de renda com dependentes. Padrao: 10. Mais alto = mais conservador.' },
-                { title: 'Buffer de Reserva de Emergencia',         desc: 'Meses de renda como colchao de seguranca. Padrao: 6.' },
-                { title: 'Limite Maximo de Cobertura',               desc: 'Teto em multiplos de renda anual. Evita recomendacoes irreais. Padrao: 25x.' },
+                { title: 'Substituicao de Renda (Solteiro)',         desc: 'Anos de renda para pessoa sem dependentes. Padrao: 3 anos.' },
+                { title: 'Substituicao de Renda (Com Dependentes)',  desc: 'Anos de renda com dependentes. Padrao: 5 anos. Mais alto = mais conservador.' },
+                { title: 'Buffer de Reserva de Emergencia',          desc: 'Meses de renda como colchao de seguranca. Padrao: 6 meses.' },
+                { title: 'Limite Maximo de Cobertura',                desc: 'Teto em multiplos de renda anual. Evita recomendacoes irreais. Padrao: 20x.' },
+                { title: 'Minimo de Cobertura (Renda Anual)',         desc: 'Piso minimo em multiplos de renda anual. Padrao: 3x.' },
+                { title: 'Maximo de Anos de Substituicao',            desc: 'Limite superior de anos para calculo de substituicao de renda. Padrao: 10 anos.' },
+                { title: 'Taxa de Inventario (ITCMD)',                desc: 'Percentual usado para estimar custos de inventario e ITCMD. Padrao: 8%.' },
               ].map(({ title, desc }) => (
                 <div key={title} className="rounded-lg border border-slate-100 bg-slate-50 p-3">
                   <p className="text-xs font-semibold text-slate-800">{title}</p>
@@ -658,6 +776,7 @@ export default function SystemGuide() {
                 <EndpointRow method="POST" path="/api/v1/triggers"                          desc="Registra gatilho de vida e recebe avaliacao recalculada." />
                 <EndpointRow method="GET"  path="/api/v1/evaluations"                       desc="Lista avaliacoes com paginacao e filtros por data." />
                 <EndpointRow method="GET"  path={'/api/v1/evaluations/{id}'}                desc="Registro completo: request, resultado, justificativas e auditoria." />
+                <EndpointRow method="PATCH" path={'/api/v1/evaluations/{id}/status'}        desc="Atualiza status comercial (Aberto, Convertido, Parcial, Arquivado) com notas opcionais." />
                 <EndpointRow method="GET"  path={'/api/v1/admin/audit/evaluations/{id}/verify'} desc="Verifica integridade criptografica (SHA-256). PASS ou FAIL." />
                 <EndpointRow method="GET"  path="/api/v1/admin/reports/pilot"                desc="Relatorio agregado: distribuicao por risco, acao e gatilhos." />
                 <EndpointRow method="GET/PUT" path={'/api/v1/admin/tenants/{id}/settings'}  desc="Consulta e atualiza parametros do motor via API." />
