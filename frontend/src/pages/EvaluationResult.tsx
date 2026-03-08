@@ -274,16 +274,34 @@ export default function EvaluationResult() {
         </div>
 
         {/* ── Tab bar ── */}
-        <div className="flex items-center gap-1 rounded-2xl border border-slate-200 bg-slate-100 p-1">
-          <TabButton id="resultado" active={activeTab} label="Resultado" onClick={setActiveTab} />
-          <TabButton
-            id="insights"
-            active={activeTab}
-            label="Insights"
-            badge={insightCount > 0 ? insightCount : undefined}
-            onClick={setActiveTab}
-          />
-          <TabButton id="auditoria" active={activeTab} label="Auditoria" onClick={setActiveTab} />
+        <div className="rounded-2xl border border-slate-200 bg-white shadow-card overflow-hidden">
+          <div className="grid grid-cols-3">
+            <TabButton
+              id="resultado"
+              active={activeTab}
+              label="Resultado"
+              subtitle="Scores e cobertura"
+              icon={BarChart3}
+              onClick={setActiveTab}
+            />
+            <TabButton
+              id="insights"
+              active={activeTab}
+              label="Insights"
+              subtitle="Dicas de abordagem"
+              icon={Lightbulb}
+              badge={insightCount > 0 ? insightCount : undefined}
+              onClick={setActiveTab}
+            />
+            <TabButton
+              id="auditoria"
+              active={activeTab}
+              label="Auditoria"
+              subtitle="Rastreabilidade"
+              icon={ShieldCheck}
+              onClick={setActiveTab}
+            />
+          </div>
         </div>
 
         {/* ── Tab: Resultado ── */}
@@ -755,11 +773,13 @@ export default function EvaluationResult() {
 
 // ── TabButton ─────────────────────────────────────────────────────
 function TabButton({
-  id, active, label, badge, onClick,
+  id, active, label, subtitle, icon: Icon, badge, onClick,
 }: {
   id: TabId
   active: TabId
   label: string
+  subtitle: string
+  icon: React.ElementType
   badge?: number
   onClick: (id: TabId) => void
 }) {
@@ -769,22 +789,42 @@ function TabButton({
       type="button"
       onClick={() => onClick(id)}
       className={`
-        flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all
+        relative flex flex-col items-center gap-1 px-3 py-4 transition-all cursor-pointer
         ${isActive
-          ? 'bg-white text-slate-900 shadow-sm'
-          : 'text-slate-500 hover:text-slate-700'
+          ? 'bg-brand-50/60'
+          : 'hover:bg-slate-50'
         }
       `}
     >
-      {label}
-      {badge !== undefined && (
-        <span className={`
-          flex h-4 min-w-[1rem] items-center justify-center rounded-full px-1 text-[10px] font-bold
-          ${isActive ? 'bg-brand-600 text-white' : 'bg-slate-300 text-slate-600'}
-        `}>
-          {badge}
-        </span>
+      {/* Active indicator bar */}
+      {isActive && (
+        <div className="absolute bottom-0 left-3 right-3 h-0.5 rounded-full bg-brand-600" />
       )}
+
+      <div className={`flex h-9 w-9 items-center justify-center rounded-xl transition-colors
+        ${isActive ? 'bg-brand-100' : 'bg-slate-100 group-hover:bg-slate-200'}`}>
+        <Icon className={`h-4.5 w-4.5 ${isActive ? 'text-brand-600' : 'text-slate-400'}`} />
+      </div>
+
+      <div className="flex items-center gap-1.5">
+        <span className={`text-sm font-bold transition-colors
+          ${isActive ? 'text-brand-700' : 'text-slate-600'}`}>
+          {label}
+        </span>
+        {badge !== undefined && (
+          <span className={`
+            flex h-4.5 min-w-[1.125rem] items-center justify-center rounded-full px-1.5 text-[10px] font-bold
+            ${isActive ? 'bg-brand-600 text-white' : 'bg-slate-200 text-slate-500'}
+          `}>
+            {badge}
+          </span>
+        )}
+      </div>
+
+      <span className={`text-[11px] transition-colors
+        ${isActive ? 'text-brand-500' : 'text-slate-400'}`}>
+        {subtitle}
+      </span>
     </button>
   )
 }
