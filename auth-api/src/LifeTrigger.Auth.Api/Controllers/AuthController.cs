@@ -41,7 +41,7 @@ public class AuthController : ControllerBase
         [FromBody] LoginRequest request,
         CancellationToken cancellationToken)
     {
-        var ip        = HttpContext.Connection.RemoteIpAddress?.ToString();
+        var ip        = GetClientIp();
         var userAgent = HttpContext.Request.Headers.UserAgent.ToString();
         if (userAgent?.Length > 512) userAgent = userAgent[..512];
 
@@ -168,7 +168,7 @@ public class AuthController : ControllerBase
             UserId    = user.Id,
             TokenHash = newRefreshHash,
             ExpiresAt = DateTimeOffset.UtcNow.AddDays(30),
-            IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
+            IpAddress = GetClientIp(),
         };
         await _refreshTokens.AddAsync(newRefreshToken, cancellationToken);
 
@@ -240,6 +240,26 @@ public class AuthController : ControllerBase
     {
         var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(input));
         return Convert.ToHexString(bytes).ToLowerInvariant();
+    }
+
+    /// <summary>
+    /// Resolve real client IP: CF-Connecting-IP (Cloudflare) → X-Forwarded-For → RemoteIpAddress.
+    /// </summary>
+    private string? GetClientIp()
+    {
+        // Cloudflare sets this to the real visitor IP
+        var cf = HttpContext.Request.Headers["CF-Connecting-IP"].FirstOrDefault();
+        if (!string.IsNullOrWhiteSpace(cf)) return cf.Trim();
+
+        // Standard proxy header (first entry = original client)
+        var xff = HttpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault();
+        if (!string.IsNullOrWhiteSpace(xff))
+        {
+            var first = xff.Split(',')[0].Trim();
+            if (!string.IsNullOrWhiteSpace(first)) return first;
+        }
+
+        return HttpContext.Connection.RemoteIpAddress?.ToString();
     }
 
     public record LoginRequest(string Email, string Password);
