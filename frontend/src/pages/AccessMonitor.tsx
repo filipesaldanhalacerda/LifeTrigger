@@ -235,6 +235,11 @@ export default function AccessMonitor() {
               </div>
             )}
 
+            {/* ── Grouped by IP ── */}
+            {data.events.length > 0 && (
+              <IpGroupedSection events={data.events} geoMap={geoMap} />
+            )}
+
             {/* ── Recent events ── */}
             <div className="rounded-sm border border-slate-200 bg-white shadow-card overflow-hidden">
               <div className="flex items-center gap-2 border-b border-slate-100 px-4 sm:px-5 py-4">
@@ -442,6 +447,101 @@ function SummaryCard({
             {typeof value === 'number' ? value.toLocaleString('pt-BR') : value}
           </p>
         </div>
+      </div>
+    </div>
+  )
+}
+
+function IpGroupedSection({ events, geoMap }: { events: LoginEventRecord[]; geoMap: Map<string, IpGeo> }) {
+  const groups = new Map<string, { count: number; lastAccess: string; emails: Set<string>; browsers: Set<string>; devices: Set<string> }>()
+
+  for (const ev of events) {
+    if (!ev.ipAddress || !ev.success) continue
+    const ip = ev.ipAddress
+    const ua = parseUA(ev.userAgent)
+    const existing = groups.get(ip)
+    if (existing) {
+      existing.count++
+      if (ev.timestamp > existing.lastAccess) existing.lastAccess = ev.timestamp
+      existing.emails.add(ev.email)
+      existing.browsers.add(ua.browser)
+      existing.devices.add(ua.isMobile ? 'Mobile' : 'Desktop')
+    } else {
+      groups.set(ip, {
+        count: 1,
+        lastAccess: ev.timestamp,
+        emails: new Set([ev.email]),
+        browsers: new Set([ua.browser]),
+        devices: new Set([ua.isMobile ? 'Mobile' : 'Desktop']),
+      })
+    }
+  }
+
+  const sorted = Array.from(groups.entries())
+    .map(([ip, d]) => ({ ip, ...d, emails: Array.from(d.emails), browsers: Array.from(d.browsers), devices: Array.from(d.devices), geo: geoMap.get(ip) }))
+    .sort((a, b) => b.count - a.count)
+
+  if (sorted.length === 0) return null
+  const maxCount = sorted[0].count
+
+  return (
+    <div className="rounded-sm border border-slate-200 bg-white shadow-card overflow-hidden">
+      <div className="flex items-center gap-2 border-b border-slate-100 px-4 sm:px-5 py-4">
+        <Globe className="h-4 w-4 text-slate-400" />
+        <h2 className="text-sm font-bold text-slate-900">Acessos por IP</h2>
+        <span className="ml-auto text-xs text-slate-400">{sorted.length} IPs únicos</span>
+      </div>
+      <div className="divide-y divide-slate-100">
+        {sorted.map((g, i) => (
+          <div key={g.ip} className="px-4 sm:px-5 py-3">
+            <div className="flex items-start justify-between gap-3 mb-1">
+              <div className="flex items-start gap-2 min-w-0">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-slate-100 text-[10px] font-bold text-slate-500 mt-0.5">
+                  {i + 1}
+                </span>
+                <div className="min-w-0">
+                  <code className="text-sm font-semibold text-slate-800 font-mono">{g.ip}</code>
+                  {g.geo && (
+                    <div className="flex items-center gap-1 mt-0.5">
+                      <MapPin className="h-3 w-3 text-rose-400 shrink-0" />
+                      <span className="text-[11px] text-slate-500 truncate">
+                        {g.geo.city}, {g.geo.region} — {g.geo.country}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                    {g.emails.map(email => (
+                      <span key={email} className="text-[10px] text-slate-400 bg-slate-50 border border-slate-100 rounded-sm px-1.5 py-0.5">{email}</span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <div className="text-right shrink-0">
+                <span className="text-sm font-bold tabular-nums text-slate-800">{g.count}</span>
+                <span className="text-[11px] text-slate-400 ml-1">{g.count === 1 ? 'login' : 'logins'}</span>
+                <p className="text-[11px] text-slate-400 mt-0.5">{timeAgo(g.lastAccess)}</p>
+                {g.geo && <p className="text-[10px] text-slate-400">{g.geo.isp}</p>}
+              </div>
+            </div>
+            <div className="flex items-center gap-2 ml-7 mb-1">
+              {g.devices.map(d => (
+                <span key={d} className="inline-flex items-center gap-0.5 text-[11px] text-slate-500 bg-slate-50 border border-slate-100 rounded-sm px-1.5 py-0.5">
+                  {d === 'Mobile' ? <Smartphone className="h-3 w-3" /> : <Monitor className="h-3 w-3" />}
+                  {d}
+                </span>
+              ))}
+              {g.browsers.map(b => (
+                <span key={b} className="text-[11px] text-slate-500 bg-slate-50 border border-slate-100 rounded-sm px-1.5 py-0.5">{b}</span>
+              ))}
+            </div>
+            <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden ml-7">
+              <div
+                className="h-full rounded-full bg-brand-400 transition-all"
+                style={{ width: `${(g.count / maxCount) * 100}%`, minWidth: '4px' }}
+              />
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   )
