@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import {
   Activity, Users, Globe, Shield, AlertTriangle,
   CheckCircle, XCircle, Loader2, Monitor,
-  Smartphone, Clock,
+  Smartphone, Clock, MapPin,
 } from 'lucide-react'
 import { TopBar } from '../components/layout/TopBar'
 import { DateRangePicker } from '../components/ui/DateRangePicker'
@@ -48,18 +48,46 @@ const ROLE_COLORS: Record<string, string> = {
   Viewer: 'bg-slate-100 text-slate-600',
 }
 
+interface IpGeo { city: string; region: string; country: string; isp: string }
+
+async function fetchGeoForIps(ips: string[]): Promise<Map<string, IpGeo>> {
+  const map = new Map<string, IpGeo>()
+  const publicIps = [...new Set(ips)].filter(ip => ip && !ip.startsWith('10.') && !ip.startsWith('192.168.') && !ip.startsWith('172.') && !ip.startsWith('::ffff:10.') && !ip.startsWith('127.'))
+  if (publicIps.length === 0) return map
+  try {
+    const results = await Promise.allSettled(
+      publicIps.slice(0, 30).map(async (ip) => {
+        const res = await fetch(`https://free.freeipapi.com/api/json/${ip}`)
+        if (!res.ok) return null
+        const d = await res.json()
+        return { ip, city: d.cityName as string, region: d.regionName as string, country: d.countryName as string, isp: (d.asnOrganization || d.asn || '') as string }
+      })
+    )
+    for (const r of results) {
+      if (r.status === 'fulfilled' && r.value) {
+        map.set(r.value.ip, { city: r.value.city, region: r.value.region, country: r.value.country, isp: r.value.isp })
+      }
+    }
+  } catch { /* best-effort */ }
+  return map
+}
+
 // ── Main ──────────────────────────────────────────────────────────
 export default function AccessMonitor() {
   const [data, setData] = useState<LoginEventsResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [startDate, setStartDate] = useState(daysAgo(7))
   const [endDate, setEndDate] = useState(today())
+  const [geoMap, setGeoMap] = useState<Map<string, IpGeo>>(new Map())
 
   async function load(s: string, e: string) {
     setLoading(true)
     try {
       const res = await getLoginEvents(s, e)
       setData(res)
+      // Fetch geolocation for unique IPs
+      const ips = res.events.map(ev => ev.ipAddress).filter(Boolean) as string[]
+      fetchGeoForIps(ips).then(setGeoMap).catch(() => {})
     } catch {
       setData(null)
     } finally {
@@ -226,7 +254,7 @@ export default function AccessMonitor() {
                   {/* Mobile cards */}
                   <div className="divide-y divide-slate-100 sm:hidden">
                     {data.events.slice(0, 50).map((ev) => (
-                      <EventCard key={ev.id} event={ev} />
+                      <EventCard key={ev.id} event={ev} geo={ev.ipAddress ? geoMap.get(ev.ipAddress) : undefined} />
                     ))}
                   </div>
 
@@ -267,7 +295,17 @@ export default function AccessMonitor() {
                                   {ev.role}
                                 </span>
                               </td>
-                              <td className="px-4 py-3 font-mono text-xs text-slate-500">{ev.ipAddress ?? '—'}</td>
+                              <td className="px-4 py-3">
+                                <span className="font-mono text-xs text-slate-500">{ev.ipAddress ?? '—'}</span>
+                                {ev.ipAddress && geoMap.get(ev.ipAddress) && (
+                                  <div className="flex items-center gap-1 mt-0.5">
+                                    <MapPin className="h-3 w-3 text-rose-400 shrink-0" />
+                                    <span className="text-[10px] text-slate-400 truncate">
+                                      {geoMap.get(ev.ipAddress)!.city}, {geoMap.get(ev.ipAddress)!.region}
+                                    </span>
+                                  </div>
+                                )}
+                              </td>
                               <td className="px-4 py-3">
                                 <div className="flex items-center gap-1.5 text-xs text-slate-500">
                                   {ua.isMobile ? <Smartphone className="h-3 w-3" /> : <Monitor className="h-3 w-3" />}
@@ -409,7 +447,7 @@ function SummaryCard({
   )
 }
 
-function EventCard({ event: ev }: { event: LoginEventRecord }) {
+function EventCard({ event: ev, geo }: { event: LoginEventRecord; geo?: IpGeo }) {
   const ua = parseUA(ev.userAgent)
   return (
     <div className="p-4 space-y-2">
@@ -433,6 +471,12 @@ function EventCard({ event: ev }: { event: LoginEventRecord }) {
         </span>
         {ev.ipAddress && (
           <span className="font-mono">{ev.ipAddress}</span>
+        )}
+        {geo && (
+          <span className="flex items-center gap-1">
+            <MapPin className="h-3 w-3 text-rose-400" />
+            {geo.city}, {geo.region}
+          </span>
         )}
         <span>{timeAgo(ev.timestamp)}</span>
         {!ev.success && ev.failReason && (
