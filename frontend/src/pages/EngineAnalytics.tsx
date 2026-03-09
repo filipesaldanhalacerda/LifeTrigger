@@ -400,17 +400,18 @@ async function fetchIpGeolocations(ips: string[]): Promise<Map<string, IpGeo>> {
   const publicIps = ips.filter(ip => !ip.startsWith('10.') && !ip.startsWith('192.168.') && !ip.startsWith('172.') && !ip.startsWith('::ffff:10.') && !ip.startsWith('127.'))
   if (publicIps.length === 0) return map
   try {
-    const body = publicIps.slice(0, 100).map(ip => ({ query: ip, fields: 'query,city,regionName,country,isp,status' }))
-    const res = await fetch('http://ip-api.com/batch', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    })
-    if (!res.ok) return map
-    const data: { query: string; city: string; regionName: string; country: string; isp: string; status: string }[] = await res.json()
-    for (const entry of data) {
-      if (entry.status === 'success') {
-        map.set(entry.query, { city: entry.city, region: entry.regionName, country: entry.country, isp: entry.isp })
+    // Use freeipapi.com (HTTPS, no key, no mixed-content issues)
+    const results = await Promise.allSettled(
+      publicIps.slice(0, 30).map(async (ip) => {
+        const res = await fetch(`https://freeipapi.com/api/json/${ip}`)
+        if (!res.ok) return null
+        const d = await res.json()
+        return { ip, city: d.cityName as string, region: d.regionName as string, country: d.countryName as string, isp: (d.connection?.isp || d.asn || '') as string }
+      })
+    )
+    for (const r of results) {
+      if (r.status === 'fulfilled' && r.value) {
+        map.set(r.value.ip, { city: r.value.city, region: r.value.region, country: r.value.country, isp: r.value.isp })
       }
     }
   } catch { /* geolocation is best-effort */ }
