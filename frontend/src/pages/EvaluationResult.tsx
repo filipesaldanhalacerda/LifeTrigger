@@ -191,7 +191,7 @@ export default function EvaluationResult() {
                   <ChevronDown className="h-3 w-3" />
                 </button>
                 {showStatusMenu && (
-                  <div className="absolute right-0 top-full mt-1 z-20 w-44 rounded-sm border border-slate-200 bg-white shadow-xl py-1.5">
+                  <div className="absolute right-0 top-full mt-1 z-[9999] w-44 rounded-sm border border-slate-200 bg-white shadow-xl py-1.5">
                     {(['ABERTO', 'CONVERTIDO', 'CONVERTIDO_PARCIAL', 'ARQUIVADO'] as EvaluationStatusType[])
                       .filter((s) => s !== (record.status || 'ABERTO'))
                       .map((s) => (
