@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -142,6 +143,13 @@ if (!app.Environment.IsEnvironment("Testing"))
 }
 
 // ─── Middleware pipeline ──────────────────────────────────────────────────────
+var forwardedOpts = new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto,
+};
+forwardedOpts.KnownNetworks.Clear();
+forwardedOpts.KnownProxies.Clear();
+app.UseForwardedHeaders(forwardedOpts);
 app.UseMiddleware<ExceptionHandlerMiddleware>();
 app.UseCorrelationId();
 app.UseCors();
