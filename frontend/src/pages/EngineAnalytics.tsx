@@ -36,19 +36,30 @@ export default function EngineAnalytics() {
   const [startDate, setStartDate] = useState(daysAgo(30))
   const [endDate, setEndDate] = useState(today())
 
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
+
   async function load(s: string, e: string) {
     setLoading(true)
+    setErrorMsg(null)
     try {
-      const [analytics, t, u] = await Promise.all([
+      const [analyticsRes, tenantsRes, usersRes] = await Promise.allSettled([
         getEvaluationAnalytics(s, e),
         getTenants(),
         getUsers(),
       ])
-      setData(analytics)
-      setTenants(t)
-      setUsers(u)
-    } catch {
+      if (analyticsRes.status === 'fulfilled') {
+        setData(analyticsRes.value)
+      } else {
+        console.error('Analytics fetch failed:', analyticsRes.reason)
+        setData(null)
+        setErrorMsg(String(analyticsRes.reason?.message ?? analyticsRes.reason ?? 'Erro desconhecido'))
+      }
+      if (tenantsRes.status === 'fulfilled') setTenants(tenantsRes.value)
+      if (usersRes.status === 'fulfilled') setUsers(usersRes.value)
+    } catch (err) {
+      console.error('Unexpected error:', err)
       setData(null)
+      setErrorMsg(String((err as Error)?.message ?? err))
     } finally {
       setLoading(false)
     }
@@ -167,7 +178,13 @@ export default function EngineAnalytics() {
           <div className="flex flex-col items-center justify-center gap-3 py-20">
             <AlertTriangle className="h-10 w-10 text-slate-300" />
             <p className="text-sm font-semibold text-slate-600">Erro ao carregar dados</p>
-            <p className="text-xs text-slate-400">Verifique se o engine-api está acessível.</p>
+            <p className="text-xs text-slate-400">{errorMsg || 'Verifique se o engine-api está acessível.'}</p>
+            <button
+              onClick={() => load(startDate, endDate)}
+              className="mt-2 rounded-sm border border-slate-200 bg-white px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 transition-colors"
+            >
+              Tentar novamente
+            </button>
           </div>
         )}
       </div>
