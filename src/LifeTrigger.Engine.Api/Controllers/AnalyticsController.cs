@@ -51,10 +51,11 @@ public class AnalyticsController : ControllerBase
 
         var total = perDay.Sum(x => x.count);
 
-        // Per tenant — executed in DB via denormalized shadow property
+        // Per tenant — use denormalized shadow property TenantId (not JSONB navigation)
         var perTenant = await _db.Evaluations
-            .Where(e => e.Timestamp >= since && e.Timestamp <= until && e.Request!.OperationalData!.TenantId.HasValue)
-            .GroupBy(e => e.Request!.OperationalData!.TenantId!.Value)
+            .Where(e => e.Timestamp >= since && e.Timestamp <= until
+                        && EF.Property<Guid?>(e, "TenantId") != null)
+            .GroupBy(e => EF.Property<Guid?>(e, "TenantId")!.Value)
             .Select(g => new { tenantId = g.Key, count = g.Count(), lastEvaluation = g.Max(e => e.Timestamp) })
             .OrderByDescending(x => x.count)
             .Take(20)
@@ -69,9 +70,15 @@ public class AnalyticsController : ControllerBase
             .Take(20)
             .ToListAsync(ct);
 
-        // JSONB fields require in-memory grouping — project only what's needed
-        var projected = await _db.Evaluations
+        // JSONB fields — load entities in memory then project
+        // (HasConversion columns can't be navigated in LINQ-to-SQL)
+        var evaluations = await _db.Evaluations
             .Where(e => e.Timestamp >= since && e.Timestamp <= until)
+            .Select(e => new { e.Result })
+            .ToListAsync(ct);
+
+        var projected = evaluations
+            .Where(e => e.Result != null)
             .Select(e => new
             {
                 risk = e.Result.RiskClassification,
@@ -79,7 +86,7 @@ public class AnalyticsController : ControllerBase
                 score = e.Result.CoverageEfficiencyScore,
                 gap = e.Result.ProtectionGapPercentage,
             })
-            .ToListAsync(ct);
+            .ToList();
 
         var riskDistribution = projected
             .GroupBy(e => e.risk.ToString())
@@ -93,11 +100,11 @@ public class AnalyticsController : ControllerBase
             .OrderByDescending(x => x.count)
             .ToList();
 
-        var avgScore = total > 0
+        var avgScore = projected.Count > 0
             ? Math.Round(projected.Average(e => (double)e.score), 1)
             : 0;
 
-        var avgGap = total > 0
+        var avgGap = projected.Count > 0
             ? Math.Round(projected.Average(e => (double)e.gap), 1)
             : 0;
 
