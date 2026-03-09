@@ -403,10 +403,10 @@ async function fetchIpGeolocations(ips: string[]): Promise<Map<string, IpGeo>> {
     // Use freeipapi.com (HTTPS, no key, no mixed-content issues)
     const results = await Promise.allSettled(
       publicIps.slice(0, 30).map(async (ip) => {
-        const res = await fetch(`https://freeipapi.com/api/json/${ip}`)
+        const res = await fetch(`https://free.freeipapi.com/api/json/${ip}`)
         if (!res.ok) return null
         const d = await res.json()
-        return { ip, city: d.cityName as string, region: d.regionName as string, country: d.countryName as string, isp: (d.connection?.isp || d.asn || '') as string }
+        return { ip, city: d.cityName as string, region: d.regionName as string, country: d.countryName as string, isp: (d.asnOrganization || d.asn || '') as string }
       })
     )
     for (const r of results) {
