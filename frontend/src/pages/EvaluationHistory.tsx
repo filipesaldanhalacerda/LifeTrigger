@@ -69,17 +69,19 @@ function SummaryCard({ label, value, icon: Icon, iconBg, iconColor, hint, active
             : 'cursor-default'
       }`}
     >
-      <div className="flex items-center justify-between mb-1.5">
-        <Icon className={`h-4 w-4 ${iconColor}`} />
-        {active && (
-          <span className="rounded-full bg-brand-100 px-2 py-0.5 text-[10px] font-semibold text-brand-600">
-            Filtrado
-          </span>
-        )}
+      <div className="flex items-start justify-between gap-1 mb-1">
+        <p className="text-[12px] font-medium text-slate-500 leading-tight">{label}</p>
+        <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${iconBg}`}>
+          <Icon className={`h-4 w-4 ${iconColor}`} />
+        </div>
       </div>
-      <p className="text-xl font-bold tabular-nums text-slate-900">{value}</p>
-      <p className="text-xs font-semibold text-slate-700">{label}</p>
-      <p className="mt-0.5 text-[11px] text-slate-400">{hint}</p>
+      <p className="text-[1.5rem] font-extrabold tabular-nums text-slate-900 leading-none">{value}</p>
+      <p className="mt-1 text-[10px] text-slate-400 leading-tight">{hint}</p>
+      {active && (
+        <span className="mt-1.5 inline-block rounded-full bg-brand-100 px-2 py-0.5 text-[10px] font-semibold text-brand-600">
+          Filtrado
+        </span>
+      )}
     </button>
   )
 }
@@ -225,8 +227,8 @@ export default function EvaluationHistory() {
               label="Pendentes"
               value={statusCounts.ABERTO}
               icon={Users}
-              iconBg="bg-blue-50"
-              iconColor="text-blue-600"
+              iconBg="bg-blue-100/80"
+              iconColor="text-blue-500"
               hint={`${statusCounts.CONVERTIDO + statusCounts.CONVERTIDO_PARCIAL} convertida${(statusCounts.CONVERTIDO + statusCounts.CONVERTIDO_PARCIAL) !== 1 ? 's' : ''} · ${statusCounts.ARQUIVADO} arquivada${statusCounts.ARQUIVADO !== 1 ? 's' : ''}`}
               active={filterStatus === 'ABERTO'}
               onClick={() => setFilterStatus(filterStatus === 'ABERTO' ? '' : 'ABERTO')}
@@ -235,8 +237,8 @@ export default function EvaluationHistory() {
               label="Risco Crítico"
               value={riskCounts.critico}
               icon={ShieldAlert}
-              iconBg="bg-red-50"
-              iconColor="text-red-600"
+              iconBg="bg-red-100/80"
+              iconColor="text-red-500"
               hint="exigem atenção imediata"
               active={filterRisk === 'CRITICO'}
               onClick={() => setFilterRisk(filterRisk === 'CRITICO' ? '' : 'CRITICO')}
@@ -245,8 +247,8 @@ export default function EvaluationHistory() {
               label="Risco Moderado"
               value={riskCounts.moderado}
               icon={ShieldQuestion}
-              iconBg="bg-amber-50"
-              iconColor="text-amber-600"
+              iconBg="bg-amber-100/80"
+              iconColor="text-amber-500"
               hint="monitorar regularmente"
               active={filterRisk === 'MODERADO'}
               onClick={() => setFilterRisk(filterRisk === 'MODERADO' ? '' : 'MODERADO')}
@@ -255,8 +257,8 @@ export default function EvaluationHistory() {
               label="Risco Adequado"
               value={riskCounts.adequado}
               icon={ShieldCheck}
-              iconBg="bg-emerald-50"
-              iconColor="text-emerald-600"
+              iconBg="bg-emerald-100/80"
+              iconColor="text-emerald-500"
               hint="cobertura satisfatória"
               active={filterRisk === 'ADEQUADO'}
               onClick={() => setFilterRisk(filterRisk === 'ADEQUADO' ? '' : 'ADEQUADO')}
