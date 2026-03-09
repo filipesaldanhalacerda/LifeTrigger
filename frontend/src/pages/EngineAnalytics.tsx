@@ -2,11 +2,12 @@ import { useEffect, useState } from 'react'
 import {
   Activity, Loader2, BarChart2, Users, Building2,
   TrendingUp, AlertTriangle, Target, Clock,
+  Globe, Monitor, Smartphone, Tablet,
 } from 'lucide-react'
 import { TopBar } from '../components/layout/TopBar'
 import { DateRangePicker } from '../components/ui/DateRangePicker'
-import { getEvaluationAnalytics, getTenants, getUsers } from '../lib/api'
-import type { EvaluationAnalytics } from '../lib/api'
+import { getEvaluationAnalytics, getTenants, getUsers, getLoginEvents } from '../lib/api'
+import type { EvaluationAnalytics, LoginEventsResponse, LoginEventRecord } from '../lib/api'
 import type { Tenant, UserRecord } from '../types/api'
 import { today, daysAgo } from '../lib/dates'
 
@@ -32,6 +33,7 @@ export default function EngineAnalytics() {
   const [data, setData] = useState<EvaluationAnalytics | null>(null)
   const [tenants, setTenants] = useState<Tenant[]>([])
   const [users, setUsers] = useState<UserRecord[]>([])
+  const [loginData, setLoginData] = useState<LoginEventsResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [startDate, setStartDate] = useState(daysAgo(30))
   const [endDate, setEndDate] = useState(today())
@@ -42,10 +44,11 @@ export default function EngineAnalytics() {
     setLoading(true)
     setErrorMsg(null)
     try {
-      const [analyticsRes, tenantsRes, usersRes] = await Promise.allSettled([
+      const [analyticsRes, tenantsRes, usersRes, loginRes] = await Promise.allSettled([
         getEvaluationAnalytics(s, e),
         getTenants(),
         getUsers(),
+        getLoginEvents(s, e),
       ])
       if (analyticsRes.status === 'fulfilled') {
         setData(analyticsRes.value)
@@ -56,6 +59,7 @@ export default function EngineAnalytics() {
       }
       if (tenantsRes.status === 'fulfilled') setTenants(tenantsRes.value)
       if (usersRes.status === 'fulfilled') setUsers(usersRes.value)
+      if (loginRes.status === 'fulfilled') setLoginData(loginRes.value)
     } catch (err) {
       console.error('Unexpected error:', err)
       setData(null)
@@ -162,6 +166,11 @@ export default function EngineAnalytics() {
                 />
               )}
             </div>
+
+            {/* IP-based access analytics */}
+            {loginData && loginData.events.length > 0 && (
+              <IpAccessSection events={loginData.events} />
+            )}
 
             {/* Empty state */}
             {data.total === 0 && (
@@ -363,4 +372,147 @@ function timeAgo(iso: string): string {
   if (hours < 24) return `${hours}h`
   const days = Math.floor(hours / 24)
   return `${days}d`
+}
+
+// ── IP Access Analytics ──────────────────────────────────────────
+
+interface IpGroup {
+  ip: string
+  count: number
+  lastAccess: string
+  browsers: string[]
+  devices: string[]
+  emails: string[]
+}
+
+function parseUserAgent(ua: string | null): { browser: string; device: string } {
+  if (!ua) return { browser: 'Desconhecido', device: 'Desconhecido' }
+  let browser = 'Outro'
+  if (ua.includes('Edg/')) browser = 'Edge'
+  else if (ua.includes('Chrome/') && !ua.includes('Edg/')) browser = 'Chrome'
+  else if (ua.includes('Firefox/')) browser = 'Firefox'
+  else if (ua.includes('Safari/') && !ua.includes('Chrome/')) browser = 'Safari'
+  else if (ua.includes('Opera') || ua.includes('OPR/')) browser = 'Opera'
+
+  let device = 'Desktop'
+  if (/mobile|android/i.test(ua) && !/tablet|ipad/i.test(ua)) device = 'Mobile'
+  else if (/tablet|ipad/i.test(ua)) device = 'Tablet'
+
+  return { browser, device }
+}
+
+function groupByIp(events: LoginEventRecord[]): IpGroup[] {
+  const map = new Map<string, { count: number; lastAccess: string; browsers: Set<string>; devices: Set<string>; emails: Set<string> }>()
+
+  for (const ev of events) {
+    if (!ev.ipAddress || !ev.success) continue
+    const ip = ev.ipAddress
+    const existing = map.get(ip)
+    const { browser, device } = parseUserAgent(ev.userAgent)
+
+    if (existing) {
+      existing.count++
+      if (ev.timestamp > existing.lastAccess) existing.lastAccess = ev.timestamp
+      existing.browsers.add(browser)
+      existing.devices.add(device)
+      existing.emails.add(ev.email)
+    } else {
+      map.set(ip, {
+        count: 1,
+        lastAccess: ev.timestamp,
+        browsers: new Set([browser]),
+        devices: new Set([device]),
+        emails: new Set([ev.email]),
+      })
+    }
+  }
+
+  return Array.from(map.entries())
+    .map(([ip, data]) => ({
+      ip,
+      count: data.count,
+      lastAccess: data.lastAccess,
+      browsers: Array.from(data.browsers),
+      devices: Array.from(data.devices),
+      emails: Array.from(data.emails),
+    }))
+    .sort((a, b) => b.count - a.count)
+}
+
+const DeviceIcon = ({ device }: { device: string }) => {
+  if (device === 'Mobile') return <Smartphone className="h-3.5 w-3.5" />
+  if (device === 'Tablet') return <Tablet className="h-3.5 w-3.5" />
+  return <Monitor className="h-3.5 w-3.5" />
+}
+
+function IpAccessSection({ events }: { events: LoginEventRecord[] }) {
+  const groups = groupByIp(events)
+  const uniqueIps = groups.length
+  const totalLogins = groups.reduce((s, g) => s + g.count, 0)
+  const maxCount = groups[0]?.count ?? 1
+
+  return (
+    <div className="space-y-3 sm:space-y-4">
+      {/* IP summary cards */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <SummaryCard label="IPs Únicos" value={uniqueIps} icon={Globe} iconBg="bg-violet-50" iconColor="text-violet-600" />
+        <SummaryCard label="Logins no Período" value={totalLogins} icon={Users} iconBg="bg-sky-50" iconColor="text-sky-600" />
+        <SummaryCard label="Média por IP" value={uniqueIps > 0 ? (totalLogins / uniqueIps).toFixed(1) : '0'} icon={Activity} iconBg="bg-brand-50" iconColor="text-brand-600" />
+      </div>
+
+      {/* IP table */}
+      <div className="rounded-sm border border-slate-200 bg-white shadow-card overflow-hidden">
+        <div className="flex items-center gap-2 border-b border-slate-100 px-4 sm:px-5 py-4">
+          <Globe className="h-4 w-4 text-slate-400" />
+          <h2 className="text-sm font-bold text-slate-900">Acessos por IP</h2>
+          <span className="ml-auto text-xs text-slate-400">{uniqueIps} IPs únicos</span>
+        </div>
+        <div className="divide-y divide-slate-100">
+          {groups.map((g, i) => (
+            <div key={g.ip} className="px-4 sm:px-5 py-3">
+              <div className="flex items-start justify-between gap-3 mb-1.5">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-slate-100 text-[10px] font-bold text-slate-500">
+                    {i + 1}
+                  </span>
+                  <code className="text-sm font-semibold text-slate-800 font-mono">{g.ip}</code>
+                </div>
+                <div className="text-right shrink-0">
+                  <span className="text-sm font-bold tabular-nums text-slate-800">{g.count}</span>
+                  <span className="text-[11px] text-slate-400 ml-1">{g.count === 1 ? 'login' : 'logins'}</span>
+                  <span className="text-[11px] text-slate-400 ml-1.5">· {timeAgo(g.lastAccess)}</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 ml-7 mb-1.5">
+                <div className="flex items-center gap-1 text-[11px] text-slate-500">
+                  {g.devices.map(d => (
+                    <span key={d} className="inline-flex items-center gap-0.5 rounded-sm bg-slate-50 border border-slate-100 px-1.5 py-0.5">
+                      <DeviceIcon device={d} />
+                      {d}
+                    </span>
+                  ))}
+                </div>
+                <div className="flex items-center gap-1 text-[11px] text-slate-500">
+                  {g.browsers.map(b => (
+                    <span key={b} className="rounded-sm bg-slate-50 border border-slate-100 px-1.5 py-0.5">{b}</span>
+                  ))}
+                </div>
+              </div>
+              <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden ml-7">
+                <div
+                  className="h-full rounded-full bg-violet-400 transition-all"
+                  style={{ width: `${(g.count / maxCount) * 100}%`, minWidth: '4px' }}
+                />
+              </div>
+            </div>
+          ))}
+          {groups.length === 0 && (
+            <div className="px-5 py-8 text-center">
+              <p className="text-xs text-slate-400">Nenhum acesso registrado no período</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
 }
