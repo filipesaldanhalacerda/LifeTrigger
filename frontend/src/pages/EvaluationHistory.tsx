@@ -733,7 +733,7 @@ export default function EvaluationHistory() {
         if (!ev) return null
         return (
           <div
-            className="fixed z-50 w-44 rounded-sm border border-slate-200 bg-white shadow-xl py-1.5"
+            className="fixed z-[9999] w-44 rounded-sm border border-slate-200 bg-white shadow-xl py-1.5"
             style={{ top: statusMenuPos.top, left: statusMenuPos.left }}
             onClick={(e) => e.stopPropagation()}
           >
