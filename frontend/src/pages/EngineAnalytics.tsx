@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import {
   Activity, Loader2, BarChart2, Users, Building2,
   TrendingUp, AlertTriangle, Target, Clock,
-  Globe, Monitor, Smartphone, Tablet,
+  Globe, Monitor, Smartphone, Tablet, MapPin,
 } from 'lucide-react'
 import { TopBar } from '../components/layout/TopBar'
 import { DateRangePicker } from '../components/ui/DateRangePicker'
@@ -376,6 +376,13 @@ function timeAgo(iso: string): string {
 
 // ── IP Access Analytics ──────────────────────────────────────────
 
+interface IpGeo {
+  city: string
+  region: string
+  country: string
+  isp: string
+}
+
 interface IpGroup {
   ip: string
   count: number
@@ -383,6 +390,31 @@ interface IpGroup {
   browsers: string[]
   devices: string[]
   emails: string[]
+  geo?: IpGeo
+}
+
+async function fetchIpGeolocations(ips: string[]): Promise<Map<string, IpGeo>> {
+  const map = new Map<string, IpGeo>()
+  if (ips.length === 0) return map
+  // Filter out private/internal IPs
+  const publicIps = ips.filter(ip => !ip.startsWith('10.') && !ip.startsWith('192.168.') && !ip.startsWith('172.') && !ip.startsWith('::ffff:10.') && !ip.startsWith('127.'))
+  if (publicIps.length === 0) return map
+  try {
+    const body = publicIps.slice(0, 100).map(ip => ({ query: ip, fields: 'query,city,regionName,country,isp,status' }))
+    const res = await fetch('http://ip-api.com/batch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+    if (!res.ok) return map
+    const data: { query: string; city: string; regionName: string; country: string; isp: string; status: string }[] = await res.json()
+    for (const entry of data) {
+      if (entry.status === 'success') {
+        map.set(entry.query, { city: entry.city, region: entry.regionName, country: entry.country, isp: entry.isp })
+      }
+    }
+  } catch { /* geolocation is best-effort */ }
+  return map
 }
 
 function parseUserAgent(ua: string | null): { browser: string; device: string } {
@@ -446,17 +478,33 @@ const DeviceIcon = ({ device }: { device: string }) => {
 }
 
 function IpAccessSection({ events }: { events: LoginEventRecord[] }) {
-  const groups = groupByIp(events)
+  const rawGroups = groupByIp(events)
+  const [geoMap, setGeoMap] = useState<Map<string, IpGeo>>(new Map())
+  const [geoLoading, setGeoLoading] = useState(false)
+
+  useEffect(() => {
+    const ips = rawGroups.map(g => g.ip)
+    if (ips.length === 0) return
+    setGeoLoading(true)
+    fetchIpGeolocations(ips).then(map => { setGeoMap(map); setGeoLoading(false) }).catch(() => setGeoLoading(false))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [events])
+
+  const groups = rawGroups.map(g => ({ ...g, geo: geoMap.get(g.ip) }))
   const uniqueIps = groups.length
   const totalLogins = groups.reduce((s, g) => s + g.count, 0)
   const maxCount = groups[0]?.count ?? 1
 
+  // Count unique locations
+  const locations = new Set(groups.filter(g => g.geo).map(g => `${g.geo!.city}, ${g.geo!.region}`))
+
   return (
     <div className="space-y-3 sm:space-y-4">
       {/* IP summary cards */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <SummaryCard label="IPs Únicos" value={uniqueIps} icon={Globe} iconBg="bg-violet-50" iconColor="text-violet-600" />
         <SummaryCard label="Logins no Período" value={totalLogins} icon={Users} iconBg="bg-sky-50" iconColor="text-sky-600" />
+        <SummaryCard label="Localizações" value={geoLoading ? '…' : locations.size} icon={MapPin} iconBg="bg-rose-50" iconColor="text-rose-600" />
         <SummaryCard label="Média por IP" value={uniqueIps > 0 ? (totalLogins / uniqueIps).toFixed(1) : '0'} icon={Activity} iconBg="bg-brand-50" iconColor="text-brand-600" />
       </div>
 
@@ -475,12 +523,28 @@ function IpAccessSection({ events }: { events: LoginEventRecord[] }) {
                   <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-slate-100 text-[10px] font-bold text-slate-500">
                     {i + 1}
                   </span>
-                  <code className="text-sm font-semibold text-slate-800 font-mono">{g.ip}</code>
+                  <div className="min-w-0">
+                    <code className="text-sm font-semibold text-slate-800 font-mono">{g.ip}</code>
+                    {g.geo && (
+                      <div className="flex items-center gap-1 mt-0.5">
+                        <MapPin className="h-3 w-3 text-rose-400 shrink-0" />
+                        <span className="text-[11px] text-slate-500 truncate">
+                          {g.geo.city}, {g.geo.region} — {g.geo.country}
+                        </span>
+                      </div>
+                    )}
+                    {!g.geo && !geoLoading && g.ip.startsWith('::ffff:10.') && (
+                      <span className="text-[10px] text-slate-400 mt-0.5 block">IP interno (proxy)</span>
+                    )}
+                  </div>
                 </div>
                 <div className="text-right shrink-0">
                   <span className="text-sm font-bold tabular-nums text-slate-800">{g.count}</span>
                   <span className="text-[11px] text-slate-400 ml-1">{g.count === 1 ? 'login' : 'logins'}</span>
                   <span className="text-[11px] text-slate-400 ml-1.5">· {timeAgo(g.lastAccess)}</span>
+                  {g.geo && (
+                    <p className="text-[10px] text-slate-400 mt-0.5">{g.geo.isp}</p>
+                  )}
                 </div>
               </div>
               <div className="flex items-center gap-3 ml-7 mb-1.5">
