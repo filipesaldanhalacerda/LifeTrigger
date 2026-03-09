@@ -6,7 +6,7 @@ import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import NewEvaluation from './pages/NewEvaluation'
 import EvaluationResult from './pages/EvaluationResult'
-import EvaluationHistory from './pages/EvaluationHistory'
+
 import NewTrigger from './pages/NewTrigger'
 import TenantSettings from './pages/TenantSettings'
 import AuditVerify from './pages/AuditVerify'
@@ -43,7 +43,7 @@ export default function App() {
 
                 {/* Evaluations */}
                 <Route path="evaluations">
-                  <Route index element={<EvaluationHistory />} />
+                  <Route index element={<Navigate to="/clients" replace />} />
                   <Route element={<ProtectedRoute minRole="Broker" />}>
                     <Route path="new" element={<NewEvaluation />} />
                   </Route>
@@ -51,10 +51,12 @@ export default function App() {
                   <Route path=":id" element={<EvaluationResult />} />
                 </Route>
 
+                {/* Clients — all tenant users */}
+                <Route path="clients" element={<ClientHistory />} />
+
                 {/* Broker+ */}
                 <Route element={<ProtectedRoute minRole="Broker" />}>
                   <Route path="triggers/new" element={<NewTrigger />} />
-                  <Route path="clients" element={<ClientHistory />} />
                 </Route>
 
                 {/* Manager+ */}

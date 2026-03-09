@@ -87,7 +87,7 @@ export default function TenantSettings() {
         <TopBar title="Configurações" subtitle="Parâmetros do motor de cálculo" />
         <div className="flex items-center justify-center py-24">
           <div className="text-center">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-amber-100">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-sm bg-amber-100">
               <AlertTriangle className="h-6 w-6 text-amber-600" />
             </div>
             <p className="text-sm font-medium text-slate-700">Nenhuma corretora selecionada</p>
@@ -117,12 +117,12 @@ export default function TenantSettings() {
         subtitle="Parâmetros do motor de cálculo para este tenant"
       />
 
-      <div className="p-4 sm:p-6 animate-fadeIn">
+      <div className="p-3 sm:p-4 lg:p-5 animate-fadeIn">
         <div className="mx-auto max-w-2xl space-y-4 sm:space-y-5">
 
           {/* ── Header context banner ── */}
-          <div className="flex items-start gap-3 rounded-2xl border border-brand-100 bg-gradient-to-r from-brand-50 to-white p-4 sm:p-5">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-600 shadow-sm">
+          <div className="flex items-start gap-3 rounded-sm border border-brand-100 bg-gradient-to-r from-brand-50 to-white p-4 sm:p-5">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-brand-600 shadow-sm">
               <Settings2 className="h-5 w-5 text-white" />
             </div>
             <div>
@@ -138,7 +138,7 @@ export default function TenantSettings() {
 
           {/* ── Saved success banner ── */}
           {saved && (
-            <div className="flex items-center gap-2.5 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+            <div className="flex items-center gap-2.5 rounded-sm border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
               <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
               <span className="font-medium">Configurações salvas com sucesso.</span>
               <span className="text-emerald-600">Todas as novas avaliações já usam os novos parâmetros.</span>
@@ -304,7 +304,7 @@ export default function TenantSettings() {
           </SettingsCard>
 
           {/* ── Dynamic summary ── */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-card">
+          <div className="rounded-sm border border-slate-200 bg-white p-4 sm:p-5 shadow-card">
             <div className="mb-4 flex items-center justify-between">
               <div>
                 <h2 className="text-sm font-semibold text-slate-900">Simulação ao Vivo</h2>
@@ -366,7 +366,7 @@ export default function TenantSettings() {
 
             {/* Guardrail consistency warning */}
             {settings.minCoverageAnnualIncomeMultiplier >= settings.maxTotalCoverageMultiplier && (
-              <div className="mt-4 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-xs text-red-700">
+              <div className="mt-4 flex items-center gap-2 rounded-sm border border-red-200 bg-red-50 px-3 py-2.5 text-xs text-red-700">
                 <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
                 <span>
                   <strong>Atenção:</strong> O piso mínimo está maior ou igual ao teto máximo. O motor não conseguirá gerar diagnósticos válidos. Corrija antes de salvar.
@@ -377,17 +377,17 @@ export default function TenantSettings() {
 
           {/* ── Save error ── */}
           {error && (
-            <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <div className="flex items-center gap-2 rounded-sm border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
               <AlertTriangle className="h-4 w-4 shrink-0" />
               {error}
             </div>
           )}
 
           {/* ── Actions ── */}
-          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between rounded-2xl border border-slate-200 bg-white px-4 sm:px-5 py-4 shadow-card">
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between rounded-sm border border-slate-200 bg-white px-4 sm:px-5 py-4 shadow-card">
             <button
               onClick={handleReset}
-              className="flex items-center justify-center gap-2 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors sm:py-2"
+              className="flex items-center justify-center gap-2 rounded-sm border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors sm:py-2"
             >
               <RotateCcw className="h-4 w-4" />
               Restaurar padrões
@@ -395,7 +395,7 @@ export default function TenantSettings() {
             <button
               onClick={handleSave}
               disabled={saving || settings.minCoverageAnnualIncomeMultiplier >= settings.maxTotalCoverageMultiplier}
-              className="flex items-center justify-center gap-2 rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50 transition-colors sm:py-2"
+              className="flex items-center justify-center gap-2 rounded-sm bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50 transition-colors sm:py-2"
             >
               <Save className="h-4 w-4" />
               {saving ? 'Salvando…' : 'Salvar Configurações'}
@@ -421,10 +421,10 @@ function SettingsCard({
   children: React.ReactNode
 }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white shadow-card overflow-hidden">
+    <div className="rounded-sm border border-slate-200 bg-white shadow-card overflow-hidden">
       {/* Card header */}
       <div className="flex items-start gap-3 border-b border-slate-100 p-4 sm:p-5">
-        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${iconBg}`}>
+        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-sm ${iconBg}`}>
           <Icon className={`h-4.5 w-4.5 ${iconColor}`} />
         </div>
         <div>
@@ -470,14 +470,14 @@ function SliderField({
               Modificado
             </span>
           )}
-          <span className="rounded-lg bg-brand-50 px-2.5 py-1 text-sm font-bold text-brand-700 min-w-[72px] text-center tabular-nums">
+          <span className="rounded-sm bg-brand-50 px-2.5 py-1 text-sm font-bold text-brand-700 min-w-[72px] text-center tabular-nums">
             {value} {unit}
           </span>
         </div>
       </div>
 
       {/* Formula + effects box */}
-      <div className="rounded-lg border border-slate-100 bg-slate-50 p-3 space-y-2">
+      <div className="rounded-sm border border-slate-100 bg-slate-50 p-3 space-y-2">
         <div className="flex items-center gap-1.5">
           <span className="rounded bg-brand-100 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-brand-700">
             fórmula
@@ -534,7 +534,7 @@ function SimRow({
   }
   const c = colors[color]
   return (
-    <div className={`rounded-lg ${c.bg} p-3`}>
+    <div className={`rounded-sm ${c.bg} p-3`}>
       <p className={`text-[11px] font-medium ${c.label}`}>{label}</p>
       <p className={`mt-1 text-base font-bold tabular-nums ${c.text}`}>{value}</p>
       <p className="mt-0.5 font-mono text-[10px] text-slate-400">{formula}</p>

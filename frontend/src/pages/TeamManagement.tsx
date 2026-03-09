@@ -114,7 +114,7 @@ function AddUserModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-md rounded-2xl bg-white shadow-xl animate-scaleIn">
+      <div className="w-full max-w-md rounded-sm bg-white shadow-xl animate-scaleIn">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
           <div>
@@ -123,7 +123,7 @@ function AddUserModal({
           </div>
           <button
             onClick={onClose}
-            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+            className="rounded-sm p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
           >
             <X className="h-4 w-4" />
           </button>
@@ -142,7 +142,7 @@ function AddUserModal({
               value={email}
               onChange={e => setEmail(e.target.value)}
               placeholder="corretor@corretora.com"
-              className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100 transition-colors"
+              className="w-full rounded-sm border border-slate-200 px-3 py-2.5 text-sm focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100 transition-colors"
             />
           </div>
 
@@ -158,7 +158,7 @@ function AddUserModal({
               value={password}
               onChange={e => setPassword(e.target.value)}
               placeholder="Mínimo 8 caracteres"
-              className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100 transition-colors"
+              className="w-full rounded-sm border border-slate-200 px-3 py-2.5 text-sm focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100 transition-colors"
             />
             <p className="mt-1 text-[11px] text-slate-400">O usuário pode alterar a senha após o primeiro acesso</p>
           </div>
@@ -171,7 +171,7 @@ function AddUserModal({
             <select
               value={role}
               onChange={e => setRole(e.target.value as UserRole)}
-              className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100 transition-colors"
+              className="w-full rounded-sm border border-slate-200 px-3 py-2.5 text-sm focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100 transition-colors"
             >
               {roles.map(r => (
                 <option key={r} value={r}>{ROLE_META[r]?.label ?? r}</option>
@@ -179,7 +179,7 @@ function AddUserModal({
             </select>
             {/* Role description */}
             {selectedMeta && (
-              <div className="mt-2 flex items-start gap-2 rounded-lg bg-slate-50 px-3 py-2">
+              <div className="mt-2 flex items-start gap-2 rounded-sm bg-slate-50 px-3 py-2">
                 <RoleBadge role={role} />
                 <p className="text-[11px] text-slate-500 leading-relaxed">{selectedMeta.desc}</p>
               </div>
@@ -187,7 +187,7 @@ function AddUserModal({
           </div>
 
           {error && (
-            <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-xs text-red-700">
+            <div className="flex items-start gap-2 rounded-sm border border-red-200 bg-red-50 px-3 py-2.5 text-xs text-red-700">
               <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
               {error}
             </div>
@@ -197,14 +197,14 @@ function AddUserModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 rounded-lg border border-slate-200 bg-white py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+              className="flex-1 rounded-sm border border-slate-200 bg-white py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={loading || roles.length === 0}
-              className="flex-1 flex items-center justify-center gap-2 rounded-lg bg-brand-600 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50 transition-colors"
+              className="flex-1 flex items-center justify-center gap-2 rounded-sm bg-brand-600 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50 transition-colors"
             >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
               {loading ? 'Criando…' : 'Adicionar membro'}
@@ -247,7 +247,7 @@ function ResetPasswordModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-md rounded-2xl bg-white shadow-xl animate-scaleIn">
+      <div className="w-full max-w-md rounded-sm bg-white shadow-xl animate-scaleIn">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
           <div>
@@ -256,7 +256,7 @@ function ResetPasswordModal({
           </div>
           <button
             onClick={onClose}
-            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+            className="rounded-sm p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
           >
             <X className="h-4 w-4" />
           </button>
@@ -265,7 +265,7 @@ function ResetPasswordModal({
         <div className="p-6">
           {success ? (
             <div className="space-y-4">
-              <div className="flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+              <div className="flex items-center gap-3 rounded-sm border border-emerald-200 bg-emerald-50 p-4">
                 <CheckCircle className="h-5 w-5 shrink-0 text-emerald-600" />
                 <div>
                   <p className="text-sm font-semibold text-emerald-800">Senha redefinida com sucesso</p>
@@ -276,14 +276,14 @@ function ResetPasswordModal({
               </div>
               <button
                 onClick={onClose}
-                className="w-full rounded-lg border border-slate-200 bg-white py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                className="w-full rounded-sm border border-slate-200 bg-white py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
               >
                 Fechar
               </button>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2.5 text-xs text-amber-700">
+              <div className="rounded-sm bg-amber-50 border border-amber-200 px-3 py-2.5 text-xs text-amber-700">
                 Ao redefinir a senha, todas as sessões ativas do usuário serão encerradas.
               </div>
               <div>
@@ -296,7 +296,7 @@ function ResetPasswordModal({
                   value={newPassword}
                   onChange={e => setNewPassword(e.target.value)}
                   placeholder="Mínimo 8 caracteres"
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100 transition-colors"
+                  className="w-full rounded-sm border border-slate-200 px-3 py-2.5 text-sm focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100 transition-colors"
                 />
               </div>
               <div>
@@ -307,11 +307,11 @@ function ResetPasswordModal({
                   value={confirm}
                   onChange={e => setConfirm(e.target.value)}
                   placeholder="Repita a nova senha"
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100 transition-colors"
+                  className="w-full rounded-sm border border-slate-200 px-3 py-2.5 text-sm focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100 transition-colors"
                 />
               </div>
               {error && (
-                <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-xs text-red-700">
+                <div className="flex items-start gap-2 rounded-sm border border-red-200 bg-red-50 px-3 py-2.5 text-xs text-red-700">
                   <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                   {error}
                 </div>
@@ -320,14 +320,14 @@ function ResetPasswordModal({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="flex-1 rounded-lg border border-slate-200 bg-white py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+                  className="flex-1 rounded-sm border border-slate-200 bg-white py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex-1 flex items-center justify-center gap-2 rounded-lg bg-brand-600 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50 transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 rounded-sm bg-brand-600 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50 transition-colors"
                 >
                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
                   {loading ? 'Salvando…' : 'Redefinir senha'}
@@ -369,7 +369,7 @@ function RoleDropdown({
       {open && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute left-0 top-8 z-20 w-52 rounded-xl border border-slate-200 bg-white py-1.5 shadow-lg">
+          <div className="absolute left-0 top-8 z-20 w-52 rounded-sm border border-slate-200 bg-white py-1.5 shadow-lg">
             <p className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
               Alterar perfil para
             </p>
@@ -471,7 +471,7 @@ export default function TeamManagement() {
         }
       />
 
-      <div className="p-4 sm:p-6 space-y-4 sm:space-y-5 animate-fadeIn">
+      <div className="p-3 sm:p-4 lg:p-5 space-y-3 sm:space-y-4 animate-fadeIn">
 
         {/* ── Filter section ── */}
         <div className="space-y-3">
@@ -485,7 +485,7 @@ export default function TeamManagement() {
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Buscar por e-mail…"
-                className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-9 pr-8 text-sm shadow-card focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100"
+                className="w-full rounded-sm border border-slate-200 bg-white py-2 pl-9 pr-8 text-sm shadow-card focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100"
               />
               {search && (
                 <button
@@ -501,7 +501,7 @@ export default function TeamManagement() {
             {canAddUser && (
               <button
                 onClick={() => setShowAddModal(true)}
-                className="flex items-center gap-2 rounded-xl bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 transition-colors shadow-card"
+                className="flex items-center gap-2 rounded-sm bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 transition-colors shadow-card"
               >
                 <UserPlus className="h-4 w-4" />
                 Adicionar membro
@@ -510,7 +510,7 @@ export default function TeamManagement() {
           </div>
 
           {/* Row 2: Status pills + Role pills + clear */}
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
 
             {/* Status pills */}
             {[
@@ -581,7 +581,7 @@ export default function TeamManagement() {
 
         {/* ── Error ── */}
         {error && (
-          <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          <div className="flex items-start gap-3 rounded-sm border border-red-200 bg-red-50 p-4 text-sm text-red-700">
             <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
             <div className="flex-1">
               <p className="font-semibold">Não foi possível carregar a equipe</p>
@@ -600,7 +600,7 @@ export default function TeamManagement() {
 
         {/* ── Loading skeletons ── */}
         {loading && (
-          <div className="rounded-2xl border border-slate-200 bg-white shadow-card overflow-hidden">
+          <div className="box">
             {Array.from({ length: 5 }).map((_, i) => (
               <div key={i} className="flex items-center gap-3 px-4 py-3.5 border-b border-slate-100 last:border-0">
                 <div className="h-8 w-8 rounded-full skeleton shrink-0" />
@@ -617,7 +617,7 @@ export default function TeamManagement() {
 
         {/* ── Table ── */}
         {!loading && !error && (
-          <div className="rounded-2xl border border-slate-200 bg-white shadow-card overflow-hidden">
+          <div className="box">
 
             {/* Table hint */}
             {filtered.length > 0 && (
@@ -641,7 +641,7 @@ export default function TeamManagement() {
                     {canAddUser && (
                       <button
                         onClick={() => setShowAddModal(true)}
-                        className="mt-4 flex items-center gap-2 mx-auto rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 transition-colors"
+                        className="mt-4 flex items-center gap-2 mx-auto rounded-sm bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 transition-colors"
                       >
                         <UserPlus className="h-4 w-4" />
                         Adicionar primeiro membro
@@ -670,7 +670,7 @@ export default function TeamManagement() {
                   return (
                     <div key={u.id} className="px-4 py-3 space-y-2">
                       <div className="flex items-center gap-3">
-                        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold ${u.isActive ? 'bg-brand-100 text-brand-700' : 'bg-slate-100 text-slate-400'}`}>
+                        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold ${u.isActive ? 'bg-brand-100 text-brand-700' : 'bg-slate-100 text-slate-400'}`}>
                           {u.email.slice(0, 1).toUpperCase()}
                         </div>
                         <div className="flex-1 min-w-0">
@@ -782,7 +782,7 @@ export default function TeamManagement() {
                               <button
                                 disabled
                                 title="Indisponível na versão demo"
-                                className="flex items-center gap-1.5 rounded-lg border border-slate-100 bg-slate-50 px-2.5 py-1.5 text-xs text-slate-400 cursor-not-allowed"
+                                className="flex items-center gap-1.5 rounded-sm border border-slate-100 bg-slate-50 px-2.5 py-1.5 text-xs text-slate-400 cursor-not-allowed"
                               >
                                 <Lock className="h-3 w-3" />
                                 Senha
@@ -790,7 +790,7 @@ export default function TeamManagement() {
                               <button
                                 disabled
                                 title="Indisponível na versão demo"
-                                className="flex items-center gap-1.5 rounded-lg border border-slate-100 bg-slate-50 px-2.5 py-1.5 text-xs text-slate-400 cursor-not-allowed"
+                                className="flex items-center gap-1.5 rounded-sm border border-slate-100 bg-slate-50 px-2.5 py-1.5 text-xs text-slate-400 cursor-not-allowed"
                               >
                                 <Lock className="h-3 w-3" />
                                 {u.isActive ? 'Desativar' : 'Ativar'}
@@ -813,7 +813,7 @@ export default function TeamManagement() {
 
         {/* ── Demo notice ── */}
         {!loading && !error && users.length > 0 && (
-          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+          <div className="rounded-sm border border-amber-200 bg-amber-50 px-4 py-3">
             <div className="flex items-center gap-2 mb-1">
               <Lock className="h-3.5 w-3.5 text-amber-600" />
               <p className="text-[11px] font-semibold text-amber-800 uppercase tracking-wide">Versão de Demonstração</p>

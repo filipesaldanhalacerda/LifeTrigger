@@ -1,7 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  TrendingUp, TrendingDown, Minus, RotateCcw,
   AlertTriangle, ShieldAlert, ShieldCheck, Target,
   ChevronRight, Activity, EyeOff, FilePlus, Zap,
   BarChart2, Clock, ArrowUpRight,
@@ -13,20 +12,12 @@ import {
   actionColors, actionLabel, riskColors, riskLabel, formatDate,
 } from '../lib/utils'
 import { useAuth } from '../contexts/AuthContext'
-import type { PilotReport, EvaluationSummary, RecommendedAction, EvaluationStatusType } from '../types/api'
+import type { PilotReport, EvaluationSummary } from '../types/api'
 
-const STATUS_CONFIG: Record<EvaluationStatusType, { label: string; dot: string }> = {
-  ABERTO:            { label: 'Aberto',     dot: 'bg-blue-500'    },
-  CONVERTIDO:        { label: 'Convertido', dot: 'bg-emerald-500' },
-  CONVERTIDO_PARCIAL:{ label: 'Parcial',    dot: 'bg-amber-500'   },
-  ARQUIVADO:         { label: 'Arquivado',  dot: 'bg-slate-400'   },
-}
-
-const ACTION_ICONS: Record<RecommendedAction, React.ElementType> = {
-  AUMENTAR: TrendingUp,
-  MANTER:   Minus,
-  REDUZIR:  TrendingDown,
-  REVISAR:  RotateCcw,
+const RISK_DOT: Record<string, string> = {
+  CRITICO:  'bg-red-500',
+  MODERADO: 'bg-amber-500',
+  ADEQUADO: 'bg-emerald-500',
 }
 
 function pct(value: number, total: number) {
@@ -62,7 +53,7 @@ export default function Dashboard() {
     try {
       const [pilotData, listData] = await Promise.allSettled([
         getPilotReport(tenantId, { limit: 500 }),
-        getEvaluations(tenantId, { limit: 8 }),
+        getEvaluations(tenantId, { limit: 10 }),
       ])
       if (pilotData.status === 'fulfilled') setReport(pilotData.value)
       if (listData.status  === 'fulfilled') setRecent(listData.value.items)
@@ -73,11 +64,9 @@ export default function Dashboard() {
 
   useEffect(() => { void load() }, [load])
 
-  // Pending = ABERTO only (risk/action distributions are based on this)
   const pending = report?.totalEvaluations ?? 0
   const totalAll = report?.totalAll ?? pending
 
-  // Status funnel — if API doesn't include statusDistribution, derive from totalAll/pending
   const rawSt = report?.statusDistribution
   const st = rawSt ?? { aberto: pending, convertido: totalAll - pending, parcial: 0, arquivado: 0 }
   const critico = report?.riskDistribution.critico ?? 0
@@ -87,7 +76,6 @@ export default function Dashboard() {
   const conversionRate = totalAll > 0 ? Math.round((converted / totalAll) * 100) : 0
   const noPending = totalAll > 0 && pending === 0
 
-  // Health score: based only on ABERTO (pending) evaluations
   const healthScore = noPending
     ? 100
     : pending > 0
@@ -96,6 +84,13 @@ export default function Dashboard() {
   const health = noPending
     ? { label: 'Protegida', color: 'text-emerald-600', ringStroke: '#059669', dot: 'bg-emerald-500' }
     : healthConfig(healthScore)
+
+  const moderado = report?.riskDistribution.moderado ?? 0
+  const adequado = report?.riskDistribution.adequado ?? 0
+  const manter = report?.actionDistribution.manter ?? 0
+  const reduzir = report?.actionDistribution.reduzir ?? 0
+  const revisar = report?.actionDistribution.revisar ?? 0
+  const protectedRate = totalAll > 0 ? Math.round(((totalAll - pending) / totalAll) * 100) : 0
 
   const emailPrefix = user?.email?.split('@')[0] ?? ''
   const userName = emailPrefix.charAt(0).toUpperCase() + emailPrefix.slice(1)
@@ -107,330 +102,363 @@ export default function Dashboard() {
         subtitle={isBroker ? 'Suas avaliações' : 'Visão consolidada da carteira'}
       />
 
-      <div className="p-4 sm:p-6 space-y-4 sm:space-y-5">
+      <div className="p-3 sm:p-4 lg:p-5">
 
-        {/* Viewer read-only banner */}
+        {/* Viewer banner */}
         {isViewer && (
-          <div className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 animate-fadeIn">
-            <EyeOff className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
-            <div>
-              <p className="text-sm font-semibold text-slate-700">Modo Visualização</p>
-              <p className="mt-0.5 text-xs text-slate-500">
-                Seu perfil permite apenas consultar dados. Para criar avaliações ou registrar gatilhos, solicite acesso de Corretor ao administrador da corretora.
-              </p>
+          <div className="box mb-4 animate-fadeIn">
+            <div className="flex items-start gap-3 px-4 py-3">
+              <EyeOff className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
+              <div>
+                <p className="text-sm font-semibold text-slate-700">Modo Visualização</p>
+                <p className="mt-0.5 text-xs text-slate-500">
+                  Seu perfil permite apenas consultar dados. Para criar avaliações, solicite acesso de Corretor.
+                </p>
+              </div>
             </div>
           </div>
         )}
 
-        {/* Loading skeleton */}
+        {/* Loading */}
         {loading && (
-          <div className="space-y-5 animate-fadeIn">
-            <div className="skeleton h-20 w-full rounded-2xl" />
-            <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-              {[0,1,2,3].map(i => <div key={i} className="skeleton h-20 sm:h-24 rounded-2xl" />)}
+          <div className="space-y-4 animate-fadeIn">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+              {[0,1,2,3].map(i => <div key={i} className="skeleton h-[100px] rounded-sm" />)}
             </div>
-            <div className="skeleton h-72 w-full rounded-2xl" />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+              {[0,1,2].map(i => <div key={i} className="skeleton h-56 rounded-sm" />)}
+            </div>
           </div>
         )}
 
         {/* Empty state */}
         {!loading && !report && (
-          <div className="flex flex-col items-center justify-center py-24 text-center animate-fadeIn">
-            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-50">
-              <Activity className="h-7 w-7 text-brand-500" />
+          <div className="box animate-fadeIn">
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-sm bg-brand-50">
+                <Activity className="h-6 w-6 text-brand-500" />
+              </div>
+              <p className="text-sm font-semibold text-slate-800">Nenhuma avaliação encontrada</p>
+              <p className="mt-1 max-w-xs text-xs text-slate-400">
+                {isViewer
+                  ? 'Nenhuma avaliação foi realizada na carteira ainda.'
+                  : 'Realize a primeira avaliação para visualizar os dados.'}
+              </p>
+              {!isViewer && (
+                <button
+                  onClick={() => navigate('/evaluations/new')}
+                  className="mt-4 flex items-center gap-2 rounded-sm bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 transition-colors"
+                >
+                  <FilePlus className="h-4 w-4" />
+                  Nova Avaliação
+                </button>
+              )}
             </div>
-            <p className="text-sm font-semibold text-slate-700">Nenhuma avaliação encontrada</p>
-            <p className="mt-1 max-w-xs text-xs text-slate-400">
-              {isViewer
-                ? 'Nenhuma avaliação foi realizada na carteira ainda.'
-                : 'Realize a primeira avaliação para que os dados da carteira apareçam aqui.'}
-            </p>
-            {!isViewer && (
-              <button
-                onClick={() => navigate('/evaluations/new')}
-                className="mt-5 flex items-center gap-2 rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-600/20 hover:bg-brand-700 transition-all"
-              >
-                <FilePlus className="h-4 w-4" />
-                Nova Avaliação
-              </button>
-            )}
           </div>
         )}
 
         {!loading && report && (
-          <>
-            {/* ── Greeting + Health Score ── */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-card animate-fadeIn">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                {/* Left: greeting + portfolio bar */}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-slate-500">
-                    {greeting()}, <span className="font-semibold text-slate-800">{userName}</span>
-                  </p>
-                  <p className="mt-0.5 text-xs text-slate-400">
-                    {totalAll} avaliações na carteira
-                    {noPending && ' — todas resolvidas'}
-                    {!noPending && pending > 0 && ` · ${pending} pendente${pending !== 1 ? 's' : ''}`}
-                  </p>
+          <div className="space-y-4">
 
-                  {/* Stacked bar — shows portfolio status funnel */}
-                  <div className="mt-3 flex h-2 w-full overflow-hidden rounded-full bg-slate-100">
-                    {pct(st.convertido, totalAll) > 0 && (
-                      <div className="bg-emerald-500 transition-all duration-700" style={{ width: `${pct(st.convertido, totalAll)}%` }} />
-                    )}
-                    {pct(st.parcial, totalAll) > 0 && (
-                      <div className="bg-amber-400 transition-all duration-700" style={{ width: `${pct(st.parcial, totalAll)}%` }} />
-                    )}
-                    {pct(st.aberto, totalAll) > 0 && (
-                      <div className="bg-brand-400 transition-all duration-700" style={{ width: `${pct(st.aberto, totalAll)}%` }} />
-                    )}
-                    {pct(st.arquivado, totalAll) > 0 && (
-                      <div className="bg-slate-300 transition-all duration-700" style={{ width: `${pct(st.arquivado, totalAll)}%` }} />
-                    )}
-                  </div>
-                  <div className="mt-2 flex flex-wrap items-center gap-3 sm:gap-4">
-                    {st.convertido > 0 && <LegendDot color="bg-emerald-500" label={st.convertido === 1 ? 'Convertida' : 'Convertidas'} count={st.convertido} />}
-                    {st.parcial > 0 && <LegendDot color="bg-amber-400" label={st.parcial === 1 ? 'Parcial' : 'Parciais'} count={st.parcial} />}
-                    {st.aberto > 0 && <LegendDot color="bg-brand-400" label={st.aberto === 1 ? 'Aberta' : 'Abertas'} count={st.aberto} />}
-                    {st.arquivado > 0 && <LegendDot color="bg-slate-300" label={st.arquivado === 1 ? 'Arquivada' : 'Arquivadas'} count={st.arquivado} />}
-                  </div>
-                </div>
-
-                {/* Right: health ring */}
-                <div className="flex items-center gap-3 shrink-0">
-                  <div className="relative h-14 w-14">
-                    <svg viewBox="0 0 36 36" className="h-14 w-14 -rotate-90">
-                      <circle cx="18" cy="18" r="15.5" fill="none" strokeWidth="3" className="text-slate-100" stroke="currentColor" />
-                      <circle
-                        cx="18" cy="18" r="15.5" fill="none" strokeWidth="3"
-                        pathLength={100}
-                        strokeDasharray={`${healthScore} 100`}
-                        strokeLinecap="round"
-                        stroke={health.ringStroke}
-                        style={{ transition: 'stroke-dasharray 1s ease' }}
-                      />
-                    </svg>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <span className={`text-base font-extrabold tabular-nums ${health.color}`}>{healthScore}</span>
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Saúde</p>
-                    <div className="flex items-center gap-1.5 mt-0.5">
-                      <div className={`h-1.5 w-1.5 rounded-full ${health.dot}`} />
-                      <span className={`text-xs font-semibold ${health.color}`}>{health.label}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* ── Indicator cards — different from Reports ── */}
-            <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-              <IndicatorCard
+            {/* ── Row 1: 4 Stat Cards ── */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+              <StatCard
                 icon={ShieldAlert}
-                iconBg="bg-red-50" iconColor="text-red-500"
-                label="Pendentes em Risco"
+                iconBg="bg-red-100/80" iconColor="text-red-500"
+                label="Risco Crítico"
                 value={critico}
-                sub={critico > 0 ? 'precisam de ação urgente' : 'nenhum pendente crítico'}
-                alert={critico > 0}
-                delay={0}
+                subtitle={pending > 0 ? `de ${pending} pendentes` : 'nenhuma pendente'}
+                progress={pending > 0 ? Math.round((critico / pending) * 100) : 0}
+                progressColor="bg-red-300"
               />
-              <IndicatorCard
+              <StatCard
                 icon={Target}
-                iconBg="bg-orange-50" iconColor="text-orange-500"
+                iconBg="bg-orange-100/80" iconColor="text-orange-500"
                 label="Oportunidades"
                 value={aumentar}
-                sub={aumentar > 0 ? 'pendentes com gap de cobertura' : 'sem oportunidades pendentes'}
-                alert={aumentar > 3}
-                delay={75}
+                subtitle="precisam aumentar cobertura"
+                progress={pending > 0 ? Math.round((aumentar / pending) * 100) : 0}
+                progressColor="bg-orange-300"
               />
-              <IndicatorCard
+              <StatCard
                 icon={ShieldCheck}
-                iconBg="bg-emerald-50" iconColor="text-emerald-500"
-                label="Taxa de Conversão"
+                iconBg="bg-emerald-100/80" iconColor="text-emerald-500"
+                label="Conversão"
                 value={`${conversionRate}%`}
-                sub={`${converted} de ${totalAll} convertida${converted !== 1 ? 's' : ''}`}
-                delay={150}
+                subtitle={`${converted} de ${totalAll} convertidas`}
+                progress={conversionRate}
+                progressColor="bg-emerald-300"
               />
-              <IndicatorCard
+              <StatCard
                 icon={Zap}
-                iconBg="bg-accent-50" iconColor="text-accent-600"
-                label="Gatilhos de Vida"
+                iconBg="bg-accent-100/80" iconColor="text-accent-600"
+                label="Gatilhos"
                 value={triggerCount}
-                sub="eventos registrados"
-                delay={225}
+                subtitle={`${totalAll} avaliações processadas`}
+                progress={totalAll > 0 ? Math.min(Math.round((triggerCount / totalAll) * 100), 100) : 0}
+                progressColor="bg-brand-300"
               />
             </div>
 
-            {/* ── Priority alerts ── */}
-            {critico > 0 && (
-              <div className="flex flex-col sm:flex-row sm:items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 animate-fadeIn">
-                <div className="flex items-start gap-3 flex-1">
-                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
-                  <div>
-                    <p className="text-sm font-semibold text-red-800">
-                      {critico} cliente{critico !== 1 ? 's' : ''} com risco crítico
-                    </p>
-                    <p className="mt-0.5 text-xs text-red-700">
-                      {critico !== 1 ? 'Esses clientes estão' : 'Esse cliente está'} com cobertura muito abaixo do necessário. Priorize o contato para revisão de proteção.
-                    </p>
-                  </div>
+            {/* ── Row 2: Health + Risk Distribution + Atividade Recente ── */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+
+              {/* Health / Greeting */}
+              <div className="box">
+                <div className="box-header">
+                  <span className="box-header-title">Saúde da Carteira</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{totalAll} {totalAll === 1 ? 'avaliação' : 'avaliações'}</span>
                 </div>
-                <button
-                  onClick={() => navigate('/evaluations')}
-                  className="shrink-0 flex items-center justify-center gap-1 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-700 transition-colors"
-                >
-                  Ver histórico
-                  <ArrowUpRight className="h-3 w-3" />
-                </button>
-              </div>
-            )}
-
-            {aumentar >= 3 && critico === 0 && (
-              <div className="flex flex-col sm:flex-row sm:items-start gap-3 rounded-2xl border border-orange-200 bg-orange-50 p-4 animate-fadeIn">
-                <div className="flex items-start gap-3 flex-1">
-                  <TrendingUp className="mt-0.5 h-4 w-4 shrink-0 text-orange-600" />
-                  <div>
-                    <p className="text-sm font-semibold text-orange-800">
-                      {aumentar} oportunidade{aumentar !== 1 ? 's' : ''} de venda identificada{aumentar !== 1 ? 's' : ''}
-                    </p>
-                    <p className="mt-0.5 text-xs text-orange-700">
-                      O motor detectou clientes com gap de cobertura. Acesse o relatório para detalhes por corretor.
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => navigate('/reports')}
-                  className="shrink-0 flex items-center justify-center gap-1 rounded-lg bg-orange-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-orange-700 transition-colors"
-                >
-                  Relatórios
-                  <ArrowUpRight className="h-3 w-3" />
-                </button>
-              </div>
-            )}
-
-            {/* ── Two-column: Recent + Actions ── */}
-            <div className="grid grid-cols-1 gap-4 sm:gap-5 lg:grid-cols-3">
-
-              {/* Recent evaluations (2/3 width) */}
-              <div className="lg:col-span-2 rounded-2xl border border-slate-200 bg-white shadow-card overflow-hidden animate-fadeIn" style={{ animationDelay: '100ms' }}>
-                <div className="flex items-center justify-between border-b border-slate-100 px-4 sm:px-5 py-3 sm:py-4">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-slate-400" />
-                    <div>
-                      <h2 className="text-sm font-bold text-slate-900">Atividade Recente</h2>
-                      <p className="text-[11px] text-slate-400">Últimas avaliações processadas</p>
+                <div className="px-4 py-3">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="relative h-14 w-14 shrink-0">
+                      <svg viewBox="0 0 36 36" className="h-14 w-14 -rotate-90">
+                        <circle cx="18" cy="18" r="15" fill="none" strokeWidth="3" stroke="#f1f5f9" />
+                        <circle
+                          cx="18" cy="18" r="15" fill="none" strokeWidth="3"
+                          pathLength={100}
+                          strokeDasharray={`${healthScore} 100`}
+                          strokeLinecap="round"
+                          stroke={health.ringStroke}
+                          style={{ transition: 'stroke-dasharray 1s ease' }}
+                        />
+                      </svg>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className={`text-lg font-extrabold tabular-nums ${health.color}`}>{healthScore}</span>
+                      </div>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[13px] text-slate-500">
+                        {greeting()}, <span className="font-semibold text-slate-800">{userName}</span>
+                      </p>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <div className={`h-1.5 w-1.5 rounded-full ${health.dot}`} />
+                        <span className={`text-[13px] font-bold ${health.color}`}>{health.label}</span>
+                      </div>
+                      <p className="text-[11px] text-slate-400">
+                        {noPending ? 'Todas resolvidas' : `${pending} pendente${pending !== 1 ? 's' : ''}`}
+                      </p>
                     </div>
                   </div>
-                  <button
-                    onClick={() => navigate('/evaluations')}
-                    className="flex items-center gap-1 text-xs font-semibold text-brand-600 hover:text-brand-700 transition-colors"
-                  >
-                    Ver todas
-                    <ChevronRight className="h-3.5 w-3.5" />
+
+                  {/* Stacked status bar */}
+                  {totalAll > 0 && (
+                    <div className="mb-3">
+                      <div className="flex h-2 rounded-full overflow-hidden bg-slate-100">
+                        {st.convertido > 0 && <div className="bg-emerald-300 transition-all duration-700" style={{ width: `${pct(st.convertido, totalAll)}%` }} />}
+                        {st.parcial > 0 && <div className="bg-amber-300 transition-all duration-700" style={{ width: `${pct(st.parcial, totalAll)}%` }} />}
+                        {st.aberto > 0 && <div className="bg-brand-300 transition-all duration-700" style={{ width: `${pct(st.aberto, totalAll)}%` }} />}
+                        {st.arquivado > 0 && <div className="bg-slate-300 transition-all duration-700" style={{ width: `${pct(st.arquivado, totalAll)}%` }} />}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="space-y-2">
+                    <StatusRow label="Convertidas" count={st.convertido} total={totalAll} color="bg-emerald-500" />
+                    <StatusRow label="Parciais" count={st.parcial} total={totalAll} color="bg-amber-400" />
+                    <StatusRow label="Abertas" count={st.aberto} total={totalAll} color="bg-brand-500" />
+                    <StatusRow label="Arquivadas" count={st.arquivado} total={totalAll} color="bg-slate-400" />
+                  </div>
+
+                  {/* Protection rate footer */}
+                  <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
+                    <span className="text-[11px] font-medium text-slate-400">Taxa de proteção</span>
+                    <span className={`text-[13px] font-bold tabular-nums ${protectedRate >= 50 ? 'text-emerald-600' : 'text-amber-600'}`}>{protectedRate}%</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Distribution card */}
+              <div className="box">
+                <div className="box-header">
+                  <span className="box-header-title">Distribuição de Risco</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{pending} pendentes</span>
+                </div>
+                <div className="px-4 py-3">
+                  {pending === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-6 text-center">
+                      <ShieldCheck className="h-8 w-8 text-emerald-300 mb-2" />
+                      <p className="text-sm font-semibold text-slate-600">Sem pendências</p>
+                      <p className="text-[11px] text-slate-400 mt-0.5">Todas as avaliações foram resolvidas</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="space-y-3">
+                        <RiskBar label="Crítico" count={critico} total={pending} color="bg-red-300" textColor="text-red-500" />
+                        <RiskBar label="Moderado" count={moderado} total={pending} color="bg-amber-300" textColor="text-amber-500" />
+                        <RiskBar label="Adequado" count={adequado} total={pending} color="bg-emerald-300" textColor="text-emerald-500" />
+                      </div>
+
+                      <div className="mt-3 pt-3 border-t border-slate-100 grid grid-cols-2 gap-2">
+                        <div className="flex items-center gap-1.5">
+                          <Zap className="h-3.5 w-3.5 text-accent-600" />
+                          <span className="text-[12px] text-slate-500">Gatilhos</span>
+                          <span className="text-[13px] font-bold text-slate-800 tabular-nums ml-auto">{triggerCount}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <Target className="h-3.5 w-3.5 text-orange-500" />
+                          <span className="text-[12px] text-slate-500">Ação</span>
+                          <span className="text-[13px] font-bold text-slate-800 tabular-nums ml-auto">{aumentar}</span>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Activity Timeline */}
+              <div className="box md:col-span-2 lg:col-span-1">
+                <div className="box-header">
+                  <span className="box-header-title">Atividade Recente</span>
+                  <button onClick={() => navigate('/clients')} className="text-xs font-semibold text-brand-600 hover:text-brand-700 transition-colors">
+                    Ver Todas
                   </button>
                 </div>
 
-                <div className="divide-y divide-slate-100">
-                  {recent.length === 0 ? (
-                    <p className="py-10 text-center text-sm text-slate-400">Nenhuma avaliação recente.</p>
-                  ) : (
-                    recent.map((ev) => {
-                      const ActionIcon = ACTION_ICONS[ev.action]
-                      const scoreColor =
-                        ev.score >= 70 ? 'text-emerald-600' :
-                        ev.score >= 45 ? 'text-amber-600'   : 'text-red-600'
-                      const barColor =
-                        ev.score >= 70 ? 'bg-emerald-500' :
-                        ev.score >= 45 ? 'bg-amber-500'   : 'bg-red-500'
-                      const statusCfg = STATUS_CONFIG[ev.status ?? 'ABERTO']
-
-                      return (
-                        <button
-                          key={ev.id}
-                          onClick={() => navigate(`/evaluations/${ev.id}`)}
-                          className="flex w-full items-center gap-2 sm:gap-3 px-4 sm:px-5 py-3 text-left hover:bg-slate-50 transition-colors group"
-                        >
-                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 group-hover:bg-white transition-colors">
-                            <ActionIcon className="h-3.5 w-3.5 text-slate-500" />
-                          </div>
-
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <Badge className={riskColors(ev.risk)} size="sm">{riskLabel(ev.risk)}</Badge>
-                              <Badge className={actionColors(ev.action)} size="sm">{actionLabel(ev.action)}</Badge>
-                              <span className="inline-flex items-center gap-1 text-[10px] font-medium text-slate-500">
-                                <span className={`h-1.5 w-1.5 rounded-full ${statusCfg.dot}`} />
-                                {statusCfg.label}
-                              </span>
-                            </div>
-                            <p className="mt-0.5 text-[11px] text-slate-400">{formatDate(ev.timestamp)}</p>
-                          </div>
-
-                          <div className="hidden sm:flex items-center gap-2 shrink-0">
-                            <div className="flex items-center gap-1.5">
-                              <span className={`text-sm font-bold tabular-nums ${scoreColor}`}>{ev.score.toFixed(0)}</span>
-                              <span className="text-[10px] text-slate-400">pts</span>
-                            </div>
-                            <div className="w-16 h-1.5 rounded-full bg-slate-100 overflow-hidden">
-                              <div className={`h-full rounded-full ${barColor} transition-all`} style={{ width: `${Math.min(ev.score, 100)}%` }} />
-                            </div>
-                          </div>
-
-                          <ChevronRight className="h-4 w-4 text-slate-300 shrink-0 group-hover:text-slate-500 transition-colors" />
-                        </button>
-                      )
-                    })
-                  )}
-                </div>
-              </div>
-
-              {/* Right sidebar: Quick Actions + Links */}
-              <div className="space-y-4 animate-fadeIn" style={{ animationDelay: '150ms' }}>
-                {/* Quick actions */}
-                {!isViewer && (
-                  <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-card space-y-2">
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-3">Ações Rápidas</p>
-                    <button
-                      onClick={() => navigate('/evaluations/new')}
-                      className="group flex w-full items-center gap-3 rounded-xl border border-slate-200 p-3 text-left hover:border-brand-200 hover:bg-brand-50 transition-all"
-                    >
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-600 shadow-sm group-hover:scale-105 transition-transform">
-                        <FilePlus className="h-4 w-4 text-white" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-xs font-bold text-slate-800 group-hover:text-brand-700 transition-colors">Nova Avaliação</p>
-                        <p className="text-[11px] text-slate-400">Diagnóstico completo em 4 passos</p>
-                      </div>
-                    </button>
-                    <button
-                      onClick={() => navigate('/evaluations')}
-                      className="group flex w-full items-center gap-3 rounded-xl border border-slate-200 p-3 text-left hover:border-accent-200 hover:bg-accent-50 transition-all"
-                    >
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-600 shadow-sm group-hover:scale-105 transition-transform">
-                        <Clock className="h-4 w-4 text-white" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-xs font-bold text-slate-800 group-hover:text-accent-700 transition-colors">Ver Histórico</p>
-                        <p className="text-[11px] text-slate-400">Avaliações e gatilhos registrados</p>
-                      </div>
-                    </button>
+                {/* Risk summary mini-pills */}
+                {recent.length > 0 && (
+                  <div className="flex items-center gap-2 px-4 py-2 border-b border-slate-100 bg-slate-50/50">
+                    {(() => {
+                      const rc = recent.reduce((acc, ev) => { acc[ev.risk] = (acc[ev.risk] || 0) + 1; return acc }, {} as Record<string, number>)
+                      return Object.entries(rc).map(([risk, count]) => (
+                        <span key={risk} className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${riskColors(risk as import('../types/api').RiskClassification)}`}>
+                          <span className={`h-1.5 w-1.5 rounded-full ${RISK_DOT[risk] ?? 'bg-slate-400'}`} />
+                          {count}
+                        </span>
+                      ))
+                    })()}
+                    <span className="text-[10px] text-slate-400 ml-auto">{recent.length} últimas</span>
                   </div>
                 )}
 
-                {/* Navigation shortcuts */}
-                <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-card space-y-1">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-3">Navegação</p>
-                  <NavLink icon={BarChart2} label="Relatórios" desc="Análise detalhada por período" onClick={() => navigate('/reports')} />
-                  <NavLink icon={Clock} label="Histórico" desc="Todas as avaliações da carteira" onClick={() => navigate('/evaluations')} />
-                  {!isBroker && !isViewer && (
-                    <NavLink icon={Target} label="Clientes" desc="Visão por cliente e ConsentID" onClick={() => navigate('/clients')} />
+                <div className="px-3 py-2 max-h-[280px] overflow-y-auto">
+                  {recent.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-8 text-center">
+                      <Clock className="h-7 w-7 text-slate-300 mb-2" />
+                      <p className="text-sm font-medium text-slate-500">Nenhuma atividade</p>
+                      <p className="text-[11px] text-slate-400 mt-0.5">As avaliações aparecerão aqui</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-0">
+                      {recent.map((ev, idx) => {
+                        const dotColor = RISK_DOT[ev.risk] ?? 'bg-slate-400'
+                        const isLast = idx === recent.length - 1
+                        return (
+                          <button
+                            key={ev.id}
+                            onClick={() => navigate(`/evaluations/${ev.id}`)}
+                            className="group flex gap-2.5 w-full text-left py-2 hover:bg-slate-50/50 px-1 rounded-sm transition-colors"
+                          >
+                            <div className="flex flex-col items-center pt-1.5">
+                              <div className={`h-2 w-2 rounded-full shrink-0 ${dotColor} ring-2 ring-white`} />
+                              {!isLast && <div className="w-px flex-1 bg-slate-200 mt-1" />}
+                            </div>
+                            <div className="flex-1 min-w-0 pb-0.5">
+                              <div className="flex items-center gap-1 flex-wrap">
+                                <Badge className={riskColors(ev.risk)} size="sm">{riskLabel(ev.risk)}</Badge>
+                                <Badge className={actionColors(ev.action)} size="sm">{actionLabel(ev.action)}</Badge>
+                              </div>
+                              <p className="mt-0.5 text-[10px] text-slate-400">
+                                Score <span className="font-semibold text-slate-600">{ev.score.toFixed(0)}</span> pts
+                              </p>
+                            </div>
+                            <span className="text-[10px] text-slate-400 shrink-0 pt-0.5 tabular-nums">
+                              {formatDate(ev.timestamp).split(',')[1]?.trim() || formatDate(ev.timestamp)}
+                            </span>
+                          </button>
+                        )
+                      })}
+                    </div>
                   )}
                 </div>
               </div>
             </div>
-          </>
+
+            {/* ── Row 3: Quick Actions + Resumo por Ação ── */}
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 sm:gap-4">
+              {!isViewer && (
+                <div className="sm:col-span-4 box">
+                  <div className="box-header">
+                    <span className="box-header-title">Ações Rápidas</span>
+                  </div>
+                  <div className="p-2 space-y-0.5">
+                    <ActionBtn icon={FilePlus} iconBg="bg-brand-600" label="Nova Avaliação" desc="Diagnóstico completo" onClick={() => navigate('/evaluations/new')} />
+                    <ActionBtn icon={Clock} iconBg="bg-accent-600" label="Meus Clientes" desc={`${totalAll} avaliações`} onClick={() => navigate('/clients')} />
+                    <ActionBtn icon={BarChart2} iconBg="bg-emerald-600" label="Relatórios" desc="Análise da carteira" onClick={() => navigate('/reports')} />
+                  </div>
+                  {/* Mini stats footer */}
+                  <div className="px-4 py-2.5 border-t border-slate-100 bg-slate-50/50">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] text-slate-400">Pendentes</span>
+                      <span className="text-[11px] font-bold text-slate-600 tabular-nums">{pending}</span>
+                    </div>
+                    <div className="flex items-center justify-between mt-1">
+                      <span className="text-[10px] text-slate-400">Resolvidas</span>
+                      <span className="text-[11px] font-bold text-emerald-600 tabular-nums">{totalAll - pending}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className={`box ${!isViewer ? 'sm:col-span-8' : 'sm:col-span-12'}`}>
+                <div className="box-header">
+                  <span className="box-header-title">Resumo por Ação</span>
+                  <button onClick={() => navigate('/reports')} className="text-xs font-semibold text-brand-600 hover:text-brand-700 transition-colors">
+                    Ver Todos
+                  </button>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full table-synto">
+                    <thead>
+                      <tr>
+                        <th className="text-left">Ação</th>
+                        <th className="text-center">Qtd</th>
+                        <th className="text-center">%</th>
+                        <th className="text-left">Progresso</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <ActionRow label="Aumentar" count={aumentar} total={pending} color="bg-red-300" />
+                      <ActionRow label="Manter" count={manter} total={pending} color="bg-emerald-300" />
+                      <ActionRow label="Reduzir" count={reduzir} total={pending} color="bg-blue-300" />
+                      <ActionRow label="Revisar" count={revisar} total={pending} color="bg-amber-300" />
+                    </tbody>
+                  </table>
+                </div>
+                {/* Table summary footer */}
+                <div className="px-4 py-2.5 border-t border-slate-100 flex items-center justify-between bg-slate-50/30">
+                  <span className="text-[11px] text-slate-400">Total de pendentes</span>
+                  <span className="text-[13px] font-bold text-slate-700 tabular-nums">{pending}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Alert banner */}
+            {critico > 0 && (
+              <div className="box border-l-4 border-l-red-300 animate-fadeIn">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 px-4 py-3">
+                  <div className="flex items-start gap-2.5 flex-1">
+                    <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0 text-red-600" />
+                    <div>
+                      <p className="text-[13px] font-semibold text-red-800">
+                        {critico} cliente{critico !== 1 ? 's' : ''} com risco crítico
+                      </p>
+                      <p className="text-xs text-red-600/80">
+                        Cobertura muito abaixo do necessário. Priorize o contato.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => navigate('/clients')}
+                    className="shrink-0 flex items-center gap-1.5 rounded-sm bg-red-400 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-500 transition-colors"
+                  >
+                    Ver clientes <ArrowUpRight className="h-3 w-3" />
+                  </button>
+                </div>
+              </div>
+            )}
+
+          </div>
         )}
       </div>
     </div>
@@ -439,58 +467,114 @@ export default function Dashboard() {
 
 // ── Sub-components ────────────────────────────────────────────────
 
-function LegendDot({ color, label, count }: { color: string; label: string; count: number }) {
-  return (
-    <div className="flex items-center gap-1.5">
-      <div className={`h-2 w-2 shrink-0 rounded-full ${color}`} />
-      <span className="text-xs font-medium text-slate-600">{label}</span>
-      <span className="text-xs text-slate-400 tabular-nums">({count})</span>
-    </div>
-  )
-}
-
-function IndicatorCard({
-  icon: Icon, iconBg, iconColor, label, value, sub, alert = false, delay = 0,
+function StatCard({
+  icon: Icon, iconBg, iconColor, label, value, subtitle, progress = 0, progressColor = 'bg-brand-500',
 }: {
   icon: React.ElementType
   iconBg: string; iconColor: string
   label: string; value: number | string
-  sub?: string; alert?: boolean; delay?: number
+  subtitle?: string
+  progress?: number; progressColor?: string
 }) {
   const display = typeof value === 'number' ? value.toLocaleString('pt-BR') : value
   return (
-    <div
-      className={`rounded-2xl border bg-white p-3 sm:p-4 shadow-card transition-all duration-200 hover:shadow-card-hover hover:-translate-y-0.5 animate-fadeIn ${alert ? 'border-orange-200' : 'border-slate-200'}`}
-      style={{ animationDelay: `${delay}ms` }}
-    >
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{label}</p>
-          <p className="mt-1 sm:mt-1.5 text-xl sm:text-2xl font-extrabold text-slate-900 tabular-nums">{display}</p>
-          {sub && <p className="mt-0.5 text-[11px] text-slate-500 leading-snug">{sub}</p>}
+    <div className="box animate-fadeIn">
+      <div className="px-4 py-3">
+        <div className="flex items-start justify-between gap-1">
+          <p className="text-[12px] font-medium text-slate-500 leading-tight">{label}</p>
+          <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${iconBg}`}>
+            <Icon className={`h-4 w-4 ${iconColor}`} />
+          </div>
         </div>
-        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${iconBg}`}>
-          <Icon className={`h-4 w-4 ${iconColor}`} />
+        <p className="mt-1 text-[1.5rem] font-extrabold text-slate-900 tabular-nums leading-none">{display}</p>
+        {subtitle && <p className="mt-1 text-[10px] text-slate-400 leading-tight">{subtitle}</p>}
+        <div className="mt-2 flex items-center gap-2">
+          <div className="flex-1 h-[4px] rounded-full bg-slate-100 overflow-hidden">
+            <div
+              className={`h-full rounded-full ${progressColor} transition-all duration-700`}
+              style={{ width: `${Math.min(progress, 100)}%` }}
+            />
+          </div>
+          <span className="text-[11px] font-medium text-slate-400 tabular-nums">{progress}%</span>
         </div>
       </div>
     </div>
   )
 }
 
-function NavLink({ icon: Icon, label, desc, onClick }: {
-  icon: React.ElementType; label: string; desc: string; onClick: () => void
+function StatusRow({ label, count, total, color }: {
+  label: string; count: number; total: number; color: string
+}) {
+  const p = pct(count, total)
+  return (
+    <div className="flex items-center gap-2.5">
+      <div className={`h-1.5 w-1.5 rounded-full shrink-0 ${color}`} />
+      <span className="text-[13px] text-slate-600 flex-1">{label}</span>
+      <span className="text-[13px] font-bold text-slate-800 tabular-nums">{count}</span>
+      <span className="text-[11px] text-slate-400 tabular-nums w-8 text-right">{p}%</span>
+    </div>
+  )
+}
+
+function RiskBar({ label, count, total, color, textColor }: {
+  label: string; count: number; total: number; color: string; textColor: string
+}) {
+  const p = pct(count, total)
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-[13px] font-medium text-slate-600">{label}</span>
+        <span className={`text-[13px] font-bold tabular-nums ${textColor}`}>{count}</span>
+      </div>
+      <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
+        <div
+          className={`h-full rounded-full ${color} transition-all duration-700`}
+          style={{ width: `${p}%` }}
+        />
+      </div>
+    </div>
+  )
+}
+
+function ActionBtn({ icon: Icon, iconBg, label, desc, onClick }: {
+  icon: React.ElementType; iconBg: string; label: string; desc: string; onClick: () => void
 }) {
   return (
     <button
       onClick={onClick}
-      className="group flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left hover:bg-slate-50 transition-colors"
+      className="group flex w-full items-center gap-2.5 rounded-sm px-2.5 py-2 text-left hover:bg-slate-50 transition-colors"
     >
-      <Icon className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-brand-500 transition-colors" />
-      <div className="flex-1 min-w-0">
-        <p className="text-xs font-semibold text-slate-700">{label}</p>
-        <p className="text-[10px] text-slate-400">{desc}</p>
+      <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-sm ${iconBg} text-white`}>
+        <Icon className="h-3.5 w-3.5" />
       </div>
-      <ChevronRight className="h-3.5 w-3.5 text-slate-300 shrink-0 group-hover:text-slate-500 transition-colors" />
+      <div className="flex-1 min-w-0">
+        <p className="text-[13px] font-semibold text-slate-700 group-hover:text-slate-900 leading-tight">{label}</p>
+        <p className="text-[10px] text-slate-400 leading-tight">{desc}</p>
+      </div>
+      <ChevronRight className="h-3.5 w-3.5 text-slate-300 group-hover:text-slate-500 transition-colors" />
     </button>
+  )
+}
+
+function ActionRow({ label, count, total, color }: {
+  label: string; count: number; total: number; color: string
+}) {
+  const p = pct(count, total)
+  return (
+    <tr>
+      <td>
+        <div className="flex items-center gap-2">
+          <div className={`h-2 w-2 rounded-full ${color}`} />
+          <span className="font-medium">{label}</span>
+        </div>
+      </td>
+      <td className="text-center font-semibold tabular-nums">{count}</td>
+      <td className="text-center tabular-nums">{p}%</td>
+      <td>
+        <div className="w-16 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+          <div className={`h-full rounded-full ${color} transition-all duration-500`} style={{ width: `${p}%` }} />
+        </div>
+      </td>
+    </tr>
   )
 }

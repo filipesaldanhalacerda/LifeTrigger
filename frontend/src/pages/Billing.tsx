@@ -43,10 +43,10 @@ function UsageBar({
   const barColor = isCritical ? 'bg-red-500' : isWarning ? 'bg-amber-500' : 'bg-brand-500'
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-card">
+    <div className="rounded-sm border border-slate-200 bg-white p-4 sm:p-5 shadow-card">
       <div className="flex items-center justify-between gap-3 mb-4">
         <div className="flex items-center gap-3">
-          <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${iconBg}`}>
+          <div className={`flex h-9 w-9 items-center justify-center rounded-sm ${iconBg}`}>
             <Icon className={`h-5 w-5 ${iconColor}`} />
           </div>
           <div>
@@ -124,7 +124,7 @@ export default function Billing() {
         subtitle="Consumo e informações do plano ativo"
       />
 
-      <div className="p-4 sm:p-6 space-y-4 sm:space-y-5 animate-fadeIn">
+      <div className="p-3 sm:p-4 lg:p-5 space-y-3 sm:space-y-4 animate-fadeIn">
 
         {loading && (
           <div className="flex items-center justify-center gap-2 py-20 text-slate-400">
@@ -136,7 +136,7 @@ export default function Billing() {
         {!loading && (
           <>
             {/* ── Plan card ── */}
-            <div className="rounded-2xl border border-brand-200 bg-gradient-to-br from-brand-50 to-white p-4 sm:p-6 shadow-card">
+            <div className="rounded-sm border border-brand-200 bg-gradient-to-br from-brand-50 to-white p-4 sm:p-6 shadow-card">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-2 mb-2">
@@ -171,7 +171,7 @@ export default function Billing() {
             {/* ── Usage ── */}
             <div>
               <h3 className="mb-3 text-sm font-bold text-slate-900">Consumo do Mês</h3>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
                 <UsageBar
                   label="Avaliações"
                   used={totalEvaluations}
@@ -200,7 +200,7 @@ export default function Billing() {
             </div>
 
             {/* ── Info card ── */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-card">
+            <div className="rounded-sm border border-slate-200 bg-white p-4 sm:p-5 shadow-card">
               <h3 className="mb-3 text-sm font-bold text-slate-900">Informações de Cobrança</h3>
               <div className="space-y-3">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -226,7 +226,7 @@ export default function Billing() {
 
             {/* ── Upgrade banner ── */}
             {(totalEvaluations / PLAN.maxEvaluationsPerMonth > 0.7 || activeUsers / PLAN.maxUsers > 0.7) && (
-              <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+              <div className="flex items-start gap-3 rounded-sm border border-amber-200 bg-amber-50 p-4">
                 <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
                 <div>
                   <p className="text-sm font-semibold text-amber-800">Você está se aproximando do limite do plano</p>

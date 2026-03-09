@@ -248,7 +248,7 @@ export function DateRangePicker({ startDate, endDate, onChange, maxDate, align =
       <button
         type="button"
         onClick={openPicker}
-        className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-card hover:border-brand-300 hover:shadow-md transition-all"
+        className="flex items-center gap-2 rounded-sm border border-slate-200 bg-white px-3 py-2 shadow-card hover:border-brand-300 hover:shadow-md transition-all"
       >
         <Calendar className="h-4 w-4 text-brand-500" />
         <span className="text-sm font-medium text-slate-700">
@@ -262,7 +262,7 @@ export function DateRangePicker({ startDate, endDate, onChange, maxDate, align =
 
       {/* Dropdown */}
       {open && (
-        <div className={`absolute top-full z-50 mt-2 flex flex-col sm:flex-row rounded-2xl border border-slate-200 bg-white shadow-elevated animate-scaleIn max-w-[calc(100vw-2rem)] ${align === 'right' ? 'right-0 origin-top-right' : 'left-0 origin-top-left'}`}>
+        <div className={`absolute top-full z-50 mt-2 flex flex-col sm:flex-row rounded-sm border border-slate-200 bg-white shadow-elevated animate-scaleIn max-w-[calc(100vw-2rem)] ${align === 'right' ? 'right-0 origin-top-right' : 'left-0 origin-top-left'}`}>
           {/* Presets — horizontal on mobile, sidebar on desktop */}
           <div className="border-b sm:border-b-0 sm:border-r border-slate-100 py-2 sm:py-3 px-2 sm:min-w-[140px]">
             <p className="px-2 pb-1.5 sm:pb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Período</p>
@@ -272,7 +272,7 @@ export function DateRangePicker({ startDate, endDate, onChange, maxDate, align =
                   key={p.label}
                   type="button"
                   onClick={() => applyPreset(p)}
-                  className="rounded-lg px-2.5 py-1.5 text-xs text-slate-600 hover:bg-brand-50 hover:text-brand-700 transition-colors sm:w-full sm:text-left"
+                  className="rounded-sm px-2.5 py-1.5 text-xs text-slate-600 hover:bg-brand-50 hover:text-brand-700 transition-colors sm:w-full sm:text-left"
                 >
                   {p.label}
                 </button>
@@ -333,7 +333,7 @@ export function DateRangePicker({ startDate, endDate, onChange, maxDate, align =
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
-                  className="rounded-lg px-3 py-1.5 text-xs text-slate-500 hover:bg-slate-100 transition-colors"
+                  className="rounded-sm px-3 py-1.5 text-xs text-slate-500 hover:bg-slate-100 transition-colors"
                 >
                   Cancelar
                 </button>
@@ -341,7 +341,7 @@ export function DateRangePicker({ startDate, endDate, onChange, maxDate, align =
                   type="button"
                   onClick={handleApply}
                   disabled={!tempStart || !tempEnd}
-                  className="rounded-lg bg-brand-600 px-4 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-brand-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="rounded-sm bg-brand-600 px-4 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-brand-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   Aplicar
                 </button>
@@ -408,15 +408,15 @@ export function DatePicker({ value, onChange, maxDate, placeholder, className, e
   }
 
   const borderCls = error
-    ? 'border-red-300 focus-within:border-red-400 focus-within:ring-red-100'
-    : 'border-slate-200 focus-within:border-brand-400 focus-within:ring-brand-100'
+    ? 'border-red-400 focus-within:border-red-400 focus-within:ring-2 focus-within:ring-red-100'
+    : 'border-slate-200 focus-within:border-brand-400 focus-within:ring-2 focus-within:ring-brand-100'
 
   return (
     <div ref={ref} className="relative">
       <button
         type="button"
         onClick={handleOpen}
-        className={`flex items-center gap-2 rounded-lg border bg-white px-3 py-2 text-sm shadow-card transition-all w-full text-left ${borderCls} ${className ?? ''}`}
+        className={`flex items-center gap-2 rounded-sm border bg-white px-3 py-2.5 text-sm shadow-xs transition-all w-full text-left focus:outline-none ${borderCls} ${className ?? ''}`}
       >
         <Calendar className="h-4 w-4 text-slate-400 shrink-0" />
         {value
@@ -426,7 +426,7 @@ export function DatePicker({ value, onChange, maxDate, placeholder, className, e
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full z-50 mt-2 rounded-2xl border border-slate-200 bg-white p-3 sm:p-4 shadow-elevated animate-scaleIn origin-top-left w-[calc(100vw-2rem)] sm:w-auto max-w-[calc(100vw-2rem)]">
+        <div className="absolute left-0 bottom-full z-50 mb-2 rounded-sm border border-slate-200 bg-white p-3 sm:p-4 shadow-elevated animate-scaleIn origin-bottom-left w-[calc(100vw-2rem)] sm:w-auto max-w-[calc(100vw-2rem)]">
           <CalendarMonth
             year={viewYear}
             month={viewMonth}

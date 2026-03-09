@@ -31,7 +31,7 @@ function TenantRow({ row }: { row: TenantWithStats }) {
       {/* Tenant name */}
       <td className="px-4 py-3">
         <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-50">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-sm bg-brand-50">
             <Building2 className="h-4 w-4 text-brand-600" />
           </div>
           <div>
@@ -125,7 +125,7 @@ function TenantCard({ row }: { row: TenantWithStats }) {
   return (
     <div className="p-4 space-y-3">
       <div className="flex items-center gap-3">
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-50">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-sm bg-brand-50">
           <Building2 className="h-4 w-4 text-brand-600" />
         </div>
         <div className="min-w-0 flex-1">
@@ -250,36 +250,36 @@ export default function PlatformOverview() {
         subtitle={loading ? 'Carregando…' : `${rows.length} corretora${rows.length !== 1 ? 's' : ''} · ${totalEvals.toLocaleString('pt-BR')} avaliações`}
       />
 
-      <div className="p-4 sm:p-6 space-y-4 sm:space-y-5 animate-fadeIn">
+      <div className="p-3 sm:p-4 lg:p-5 space-y-3 sm:space-y-4 animate-fadeIn">
 
         {/* ── Summary cards ── */}
         {!loading && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:grid-cols-4">
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-card">
+            <div className="rounded-sm border border-slate-200 bg-white p-4 sm:p-5 shadow-card">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Corretoras</p>
                   <p className="mt-2 text-2xl font-bold text-slate-900 tabular-nums">{rows.length}</p>
                   <p className="mt-0.5 text-xs text-slate-500"><span className="tabular-nums">{activeTenants}</span> ativas</p>
                 </div>
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-brand-50">
                   <Building2 className="h-5 w-5 text-brand-600" />
                 </div>
               </div>
             </div>
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-card">
+            <div className="rounded-sm border border-slate-200 bg-white p-4 sm:p-5 shadow-card">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Avaliações Totais</p>
                   <p className="mt-2 text-2xl font-bold text-slate-900 tabular-nums">{totalEvals.toLocaleString('pt-BR')}</p>
                   <p className="mt-0.5 text-xs text-slate-500">todas as corretoras</p>
                 </div>
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-emerald-50">
                   <Activity className="h-5 w-5 text-emerald-600" />
                 </div>
               </div>
             </div>
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-card">
+            <div className="rounded-sm border border-slate-200 bg-white p-4 sm:p-5 shadow-card">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Risco Crítico Global</p>
@@ -288,12 +288,12 @@ export default function PlatformOverview() {
                   </p>
                   <p className="mt-0.5 text-xs text-slate-500">da carteira total</p>
                 </div>
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-50">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-red-50">
                   <AlertTriangle className="h-5 w-5 text-red-500" />
                 </div>
               </div>
             </div>
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-card">
+            <div className="rounded-sm border border-slate-200 bg-white p-4 sm:p-5 shadow-card">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Gatilhos de Vida</p>
@@ -302,7 +302,7 @@ export default function PlatformOverview() {
                   </p>
                   <p className="mt-0.5 text-xs text-slate-500">eventos registrados</p>
                 </div>
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-50">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-violet-50">
                   <TrendingUp className="h-5 w-5 text-violet-600" />
                 </div>
               </div>
@@ -320,13 +320,13 @@ export default function PlatformOverview() {
 
         {/* ── Tenants table ── */}
         {!loading && (
-          <div className="rounded-2xl border border-slate-200 bg-white shadow-card overflow-hidden">
+          <div className="rounded-sm border border-slate-200 bg-white shadow-card overflow-hidden">
             <div className="flex items-center gap-2 border-b border-slate-100 px-5 py-4">
               <Users className="h-4 w-4 text-slate-400" />
               <h2 className="text-sm font-bold text-slate-900">Corretoras na Plataforma</h2>
               <button
                 onClick={() => void load()}
-                className="ml-auto flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50 transition-colors"
+                className="ml-auto flex items-center gap-1.5 rounded-sm border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50 transition-colors"
               >
                 <RefreshCw className="h-3 w-3" />
                 Atualizar

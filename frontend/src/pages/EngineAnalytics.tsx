@@ -66,7 +66,7 @@ export default function EngineAnalytics() {
         subtitle={loading ? 'Carregando…' : `${data?.total ?? 0} avaliações no período`}
       />
 
-      <div className="p-4 sm:p-6 space-y-4 sm:space-y-5 animate-fadeIn">
+      <div className="p-3 sm:p-4 lg:p-5 space-y-3 sm:space-y-4 animate-fadeIn">
         <DateRangePicker
           startDate={startDate}
           endDate={endDate}
@@ -181,9 +181,9 @@ function SummaryCard({ label, value, icon: Icon, iconBg, iconColor }: {
   label: string; value: number | string; icon: React.ElementType; iconBg: string; iconColor: string
 }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-3 sm:p-4 shadow-card">
+    <div className="rounded-sm border border-slate-200 bg-white p-3 sm:p-4 shadow-card">
       <div className="flex items-center gap-3">
-        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${iconBg}`}>
+        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-sm ${iconBg}`}>
           <Icon className={`h-4 w-4 ${iconColor}`} />
         </div>
         <div className="min-w-0">
@@ -201,7 +201,7 @@ function DistributionCard({ title, items, total }: {
   total: number
 }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white shadow-card overflow-hidden">
+    <div className="rounded-sm border border-slate-200 bg-white shadow-card overflow-hidden">
       <div className="px-4 sm:px-5 py-4 border-b border-slate-100">
         <h2 className="text-sm font-bold text-slate-900">{title}</h2>
       </div>
@@ -243,7 +243,7 @@ function EvalChart({ data }: { data: { date: string; count: number }[] }) {
   const labelEvery = Math.max(1, Math.ceil(data.length / 10))
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white shadow-card overflow-hidden">
+    <div className="rounded-sm border border-slate-200 bg-white shadow-card overflow-hidden">
       <div className="flex items-center justify-between px-4 sm:px-5 pt-4 sm:pt-5 pb-3">
         <div>
           <h2 className="text-sm font-bold text-slate-900">Avaliações por Dia</h2>
@@ -269,7 +269,7 @@ function EvalChart({ data }: { data: { date: string; count: number }[] }) {
                 style={{ cursor: 'pointer', width: `${Math.min(100 / data.length, 12)}%`, maxWidth: 48 }}
               >
                 {isHovered && (
-                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[11px] px-2 py-1 rounded-lg whitespace-nowrap z-10 shadow-lg pointer-events-none">
+                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[11px] px-2 py-1 rounded-sm whitespace-nowrap z-10 shadow-lg pointer-events-none">
                     <span className="font-semibold">{d.count}</span> avaliações
                   </div>
                 )}
@@ -303,7 +303,7 @@ function RankingCard({ title, icon: Icon, items, maxCount }: {
   maxCount: number
 }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white shadow-card overflow-hidden">
+    <div className="rounded-sm border border-slate-200 bg-white shadow-card overflow-hidden">
       <div className="flex items-center gap-2 border-b border-slate-100 px-4 sm:px-5 py-4">
         <Icon className="h-4 w-4 text-slate-400" />
         <h2 className="text-sm font-bold text-slate-900">{title}</h2>

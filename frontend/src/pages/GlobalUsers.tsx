@@ -86,11 +86,11 @@ export default function GlobalUsers() {
         subtitle={loading ? 'Carregando…' : `${users.length} usuário${users.length !== 1 ? 's' : ''} na plataforma`}
       />
 
-      <div className="p-4 sm:p-6 space-y-4 sm:space-y-5 animate-fadeIn">
+      <div className="p-3 sm:p-4 lg:p-5 space-y-3 sm:space-y-4 animate-fadeIn">
 
         {/* ── Stats strip ── */}
         {!loading && (
-          <div className="flex flex-wrap items-center gap-5 rounded-2xl border border-slate-200 bg-white px-5 py-3.5 shadow-card">
+          <div className="flex flex-wrap items-center gap-5 rounded-sm border border-slate-200 bg-white px-5 py-3.5 shadow-card">
             <span className="text-xs text-slate-500">Total: <span className="font-bold text-slate-800 tabular-nums">{users.length}</span></span>
             <span className="text-xs text-slate-500">Ativos: <span className="font-bold text-emerald-700 tabular-nums">{activeCount}</span></span>
             <span className="text-xs text-slate-500">Inativos: <span className="font-bold text-slate-400 tabular-nums">{inactiveCount}</span></span>
@@ -115,7 +115,7 @@ export default function GlobalUsers() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Buscar por e-mail…"
-              className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm shadow-card focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100"
+              className="w-full rounded-sm border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm shadow-card focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100"
             />
           </div>
           <div className="flex items-center gap-2 flex-wrap">
@@ -123,7 +123,7 @@ export default function GlobalUsers() {
             <select
               value={filterRole}
               onChange={(e) => setFilterRole(e.target.value)}
-              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-card focus:border-brand-400 focus:outline-none"
+              className="rounded-sm border border-slate-200 bg-white px-3 py-2 text-sm shadow-card focus:border-brand-400 focus:outline-none"
             >
               <option value="">Todos os perfis</option>
               {Object.entries(ROLE_META).map(([role, meta]) => (
@@ -133,7 +133,7 @@ export default function GlobalUsers() {
             <select
               value={filterTenant}
               onChange={(e) => setFilterTenant(e.target.value)}
-              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-card focus:border-brand-400 focus:outline-none"
+              className="rounded-sm border border-slate-200 bg-white px-3 py-2 text-sm shadow-card focus:border-brand-400 focus:outline-none"
             >
               <option value="">Todas as corretoras</option>
               {tenants.map((t) => (
@@ -143,7 +143,7 @@ export default function GlobalUsers() {
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-card focus:border-brand-400 focus:outline-none"
+              className="rounded-sm border border-slate-200 bg-white px-3 py-2 text-sm shadow-card focus:border-brand-400 focus:outline-none"
             >
               <option value="">Todos os status</option>
               <option value="active">Ativos</option>
@@ -152,7 +152,7 @@ export default function GlobalUsers() {
             {hasFilters && (
               <button
                 onClick={clearFilters}
-                className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-500 shadow-card hover:text-slate-700 hover:bg-slate-50 transition-colors"
+                className="rounded-sm border border-slate-200 bg-white px-3 py-2 text-xs text-slate-500 shadow-card hover:text-slate-700 hover:bg-slate-50 transition-colors"
               >
                 Limpar filtros
               </button>
@@ -160,7 +160,7 @@ export default function GlobalUsers() {
             <button
               onClick={() => void load()}
               disabled={loading}
-              className="sm:ml-auto flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600 shadow-card hover:bg-slate-50 transition-colors disabled:opacity-50"
+              className="sm:ml-auto flex items-center gap-1.5 rounded-sm border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600 shadow-card hover:bg-slate-50 transition-colors disabled:opacity-50"
             >
               <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
               Atualizar
@@ -170,7 +170,7 @@ export default function GlobalUsers() {
 
         {/* ── Error ── */}
         {error && (
-          <div className="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          <div className="flex items-start gap-3 rounded-sm border border-red-200 bg-red-50 p-4 text-sm text-red-700">
             <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
             <div>
               <p className="font-semibold">Erro ao carregar</p>
@@ -189,7 +189,7 @@ export default function GlobalUsers() {
 
         {/* ── Table ── */}
         {!loading && !error && (
-          <div className="rounded-2xl border border-slate-200 bg-white shadow-card overflow-hidden">
+          <div className="rounded-sm border border-slate-200 bg-white shadow-card overflow-hidden">
             {filtered.length === 0 ? (
               <div className="py-16 text-center">
                 <Search className="mx-auto mb-3 h-10 w-10 text-slate-200" />
@@ -322,7 +322,7 @@ export default function GlobalUsers() {
                         <td className="px-4 py-3 text-right">
                           <span
                             title="Indisponível na versão de demonstração"
-                            className="flex items-center gap-1.5 ml-auto rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-600 cursor-not-allowed opacity-60"
+                            className="flex items-center gap-1.5 ml-auto rounded-sm border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-600 cursor-not-allowed opacity-60"
                           >
                             <Lock className="h-3.5 w-3.5" />
                             Demo

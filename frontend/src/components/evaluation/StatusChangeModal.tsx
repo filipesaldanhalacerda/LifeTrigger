@@ -186,21 +186,21 @@ export function StatusChangeModal({
       onClick={onCancel}
     >
       <div
-        className={`relative mx-4 w-full rounded-2xl bg-white p-6 shadow-2xl animate-scaleIn ${
+        className={`relative mx-4 w-full rounded-sm bg-white p-6 shadow-2xl animate-scaleIn ${
           status === 'CONVERTIDO_PARCIAL' ? 'max-w-lg' : 'max-w-md'
         }`}
         onClick={(e) => e.stopPropagation()}
       >
         <button
           onClick={onCancel}
-          className="absolute right-4 top-4 rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+          className="absolute right-4 top-4 rounded-sm p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
         >
           <X className="h-4 w-4" />
         </button>
 
         {/* Header */}
         <div className="flex items-start gap-4">
-          <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${cfg.iconBg}`}>
+          <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-sm ${cfg.iconBg}`}>
             <Icon className={`h-5 w-5 ${cfg.iconColor}`} />
           </div>
           <div className="flex-1">
@@ -236,14 +236,14 @@ export function StatusChangeModal({
         <div className="mt-5 flex items-center justify-end gap-2">
           <button
             onClick={onCancel}
-            className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+            className="rounded-sm border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
           >
             Cancelar
           </button>
           <button
             onClick={confirm}
             disabled={confirmDisabled}
-            className={`rounded-lg px-4 py-2 text-sm font-semibold text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${cfg.btnBg}`}
+            className={`rounded-sm px-4 py-2 text-sm font-semibold text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${cfg.btnBg}`}
           >
             {cfg.btnLabel}
           </button>
@@ -314,7 +314,7 @@ function CoverageChecklist({
         {items.map((item) => (
           <div
             key={item.key}
-            className={`rounded-xl border p-3 transition-all ${
+            className={`rounded-sm border p-3 transition-all ${
               item.covered ? 'border-emerald-200 bg-emerald-50/50' : 'border-slate-200 bg-slate-50/50'
             }`}
           >
@@ -341,7 +341,7 @@ function CoverageChecklist({
                       value={formatCurrencyLive(item.soldAmount)}
                       onChange={(e) => onAmountChange(item.key, e.target.value.replace(/\D/g, ''))}
                       onClick={(e) => e.stopPropagation()}
-                      className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-sm tabular-nums focus:border-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-200"
+                      className="w-full rounded-sm border border-slate-200 bg-white px-2.5 py-1.5 text-sm tabular-nums focus:border-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-200"
                       placeholder="0,00"
                     />
                   </div>
@@ -353,7 +353,7 @@ function CoverageChecklist({
       </div>
 
       {!isFullConversion && (
-        <div className="mt-3 flex items-center justify-between rounded-lg bg-amber-50 px-3 py-2 text-xs">
+        <div className="mt-3 flex items-center justify-between rounded-sm bg-amber-50 px-3 py-2 text-xs">
           <span className="text-amber-700 font-medium">
             {items.filter((i) => i.covered).length} de {items.length} coberturas vendidas
           </span>
@@ -364,7 +364,7 @@ function CoverageChecklist({
       )}
 
       {isFullConversion && (
-        <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3">
+        <div className="mt-3 rounded-sm border border-emerald-200 bg-emerald-50 p-3">
           <div className="flex items-start gap-2">
             <BadgeCheck className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
             <div className="flex-1">
@@ -376,7 +376,7 @@ function CoverageChecklist({
               </p>
               <button
                 onClick={onSwitchToFull}
-                className="mt-2 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 transition-colors"
+                className="mt-2 rounded-sm bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 transition-colors"
               >
                 Marcar como Convertido
               </button>
@@ -402,7 +402,7 @@ function CoverageSummary({ loading, items }: { loading: boolean; items: Coverage
       <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Coberturas contratadas</p>
       <div className="space-y-1.5">
         {items.map((item) => (
-          <div key={item.key} className="flex items-center justify-between rounded-lg border border-emerald-200 bg-emerald-50/50 px-3 py-2">
+          <div key={item.key} className="flex items-center justify-between rounded-sm border border-emerald-200 bg-emerald-50/50 px-3 py-2">
             <div className="flex items-center gap-2">
               <CheckCircle className="h-4 w-4 text-emerald-500" />
               <span className="text-sm font-medium text-slate-700">{item.label}</span>
@@ -413,7 +413,7 @@ function CoverageSummary({ loading, items }: { loading: boolean; items: Coverage
           </div>
         ))}
       </div>
-      <div className="mt-2 flex items-center justify-between rounded-lg bg-emerald-100 px-3 py-2 text-xs">
+      <div className="mt-2 flex items-center justify-between rounded-sm bg-emerald-100 px-3 py-2 text-xs">
         <span className="text-emerald-700 font-medium">
           {items.length} de {items.length} coberturas
         </span>

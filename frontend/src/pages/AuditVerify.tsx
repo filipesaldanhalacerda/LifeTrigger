@@ -92,12 +92,12 @@ export default function AuditVerify() {
     <div>
       <TopBar title="Verificação de Auditoria" subtitle="Valida a integridade criptográfica de avaliações" />
 
-      <div className="p-4 sm:p-6 animate-fadeIn">
+      <div className="p-3 sm:p-4 lg:p-5 animate-fadeIn">
         <div className="mx-auto max-w-xl space-y-4 sm:space-y-5">
           {/* Explanation card */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
+          <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-card">
             <div className="flex items-start gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-50">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-brand-50">
                 <Shield className="h-5 w-5 text-brand-600" />
               </div>
               <div>
@@ -112,7 +112,7 @@ export default function AuditVerify() {
           </div>
 
           {/* Search form */}
-          <form onSubmit={handleVerify} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card space-y-3">
+          <form onSubmit={handleVerify} className="rounded-sm border border-slate-200 bg-white p-5 shadow-card space-y-3">
             <h2 className="text-sm font-semibold text-slate-900">Verificar Avaliação</h2>
 
             <div className="space-y-1.5">
@@ -124,7 +124,7 @@ export default function AuditVerify() {
                     onChange={(e) => handleChange(e.target.value)}
                     placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
                     spellCheck={false}
-                    className={`w-full rounded-lg border bg-white px-3 py-2.5 font-mono text-sm placeholder:text-slate-300 focus:outline-none focus:ring-2 transition-colors ${
+                    className={`w-full rounded-sm border bg-white px-3 py-2.5 font-mono text-sm placeholder:text-slate-300 focus:outline-none focus:ring-2 transition-colors ${
                       inputError
                         ? 'border-red-400 focus:border-red-400 focus:ring-red-100'
                         : inputIsValid
@@ -145,7 +145,7 @@ export default function AuditVerify() {
                 <button
                   type="submit"
                   disabled={loading || !inputIsValid}
-                  className="flex items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50 transition-colors sm:py-2"
+                  className="flex items-center justify-center gap-2 rounded-sm bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50 transition-colors sm:py-2"
                 >
                   <Search className="h-4 w-4" />
                   {loading ? 'Verificando…' : 'Verificar'}
@@ -175,7 +175,7 @@ export default function AuditVerify() {
 
           {/* Error */}
           {error && (
-            <div className="flex items-start gap-2.5 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+            <div className="flex items-start gap-2.5 rounded-sm border border-red-200 bg-red-50 p-4 text-sm text-red-700">
               <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
               <div>
                 <p className="font-semibold">Não foi possível verificar</p>
@@ -186,7 +186,7 @@ export default function AuditVerify() {
 
           {/* Result */}
           {result && (
-            <div className={`rounded-2xl border p-5 shadow-card ${
+            <div className={`rounded-sm border p-5 shadow-card ${
               result.status === 'PASS' ? 'border-emerald-200 bg-emerald-50' :
               result.status === 'FAIL' ? 'border-red-200 bg-red-50' :
               'border-slate-200 bg-slate-50'
@@ -242,7 +242,7 @@ export default function AuditVerify() {
           )}
 
           {/* How it works */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
+          <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-card">
             <h2 className="mb-3 text-sm font-semibold text-slate-900">Como funciona?</h2>
             <ol className="space-y-2.5 text-sm text-slate-600">
               {[
@@ -268,7 +268,7 @@ export default function AuditVerify() {
 
 function HashRow({ label, value, match }: { label: string; value: string; match: boolean }) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-3">
+    <div className="rounded-sm border border-slate-200 bg-white p-3">
       <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">{label}</p>
       <p className={`break-all font-mono text-xs tabular-nums ${match ? 'text-emerald-700' : 'text-red-700'}`}>
         {value}

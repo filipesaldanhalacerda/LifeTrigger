@@ -23,9 +23,9 @@ export default function EngineInfo() {
     <div>
       <TopBar title="Motor & Sistema" subtitle="Versão do motor e status operacional" />
 
-      <div className="p-4 sm:p-6 space-y-4 sm:space-y-5 animate-fadeIn">
+      <div className="p-3 sm:p-4 lg:p-5 space-y-3 sm:space-y-4 animate-fadeIn">
         {/* Health status */}
-        <div className={`flex items-center gap-3 rounded-2xl border p-4 shadow-card ${
+        <div className={`flex items-center gap-3 rounded-sm border p-4 shadow-card ${
           health === 'healthy' ? 'border-emerald-200 bg-emerald-50' :
           health === 'unhealthy' ? 'border-red-200 bg-red-50' :
           'border-slate-200 bg-slate-50'
@@ -79,14 +79,14 @@ export default function EngineInfo() {
 
         {/* Description */}
         {info?.description && (
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-card">
+          <div className="rounded-sm border border-slate-200 bg-white p-4 sm:p-5 shadow-card">
             <h2 className="mb-2 text-sm font-semibold text-slate-900">Descrição do Motor</h2>
             <p className="text-sm text-slate-600">{info.description}</p>
           </div>
         )}
 
         {/* Architecture summary */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-card">
+        <div className="rounded-sm border border-slate-200 bg-white p-4 sm:p-5 shadow-card">
           <h2 className="mb-4 text-sm font-semibold text-slate-900">Arquitetura</h2>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {[
@@ -97,7 +97,7 @@ export default function EngineInfo() {
               { label: 'Rate Limiting', desc: '60 req/min por IP (fixed window). Proteção contra abuso e scraping.' },
               { label: 'Correlation ID', desc: 'Cada request recebe X-Correlation-ID propagado nos logs estruturados.' },
             ].map((item) => (
-              <div key={item.label} className="rounded-lg border border-slate-100 bg-slate-50 p-3">
+              <div key={item.label} className="rounded-sm border border-slate-100 bg-slate-50 p-3">
                 <p className="text-xs font-semibold text-slate-800">{item.label}</p>
                 <p className="mt-1 text-xs text-slate-500">{item.desc}</p>
               </div>
@@ -106,7 +106,7 @@ export default function EngineInfo() {
         </div>
 
         {/* Endpoints reference */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-card">
+        <div className="rounded-sm border border-slate-200 bg-white p-4 sm:p-5 shadow-card">
           <h2 className="mb-4 text-sm font-semibold text-slate-900">Endpoints Disponíveis</h2>
           <div className="space-y-1">
             {[
@@ -120,7 +120,7 @@ export default function EngineInfo() {
               ['GET',  '/api/v1/engine/versions', 'Versão do motor'],
               ['GET',  '/health', 'Health check'],
             ].map(([method, path, desc]) => (
-              <div key={path} className="flex items-center gap-3 rounded-lg py-2 px-1 hover:bg-slate-50">
+              <div key={path} className="flex items-center gap-3 rounded-sm py-2 px-1 hover:bg-slate-50">
                 <span className={`w-12 shrink-0 rounded px-1.5 py-0.5 text-center font-mono text-[11px] font-bold ${
                   method === 'POST' ? 'bg-emerald-100 text-emerald-700' :
                   method === 'PUT' ? 'bg-amber-100 text-amber-700' :
@@ -146,8 +146,8 @@ function InfoCard({
   icon: React.ElementType; iconColor: string; iconBg: string; label: string; value: string; sub: string
 }) {
   return (
-    <div className="flex items-start gap-4 rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-card">
-      <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${iconBg}`}>
+    <div className="flex items-start gap-4 rounded-sm border border-slate-200 bg-white p-4 sm:p-5 shadow-card">
+      <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-sm ${iconBg}`}>
         <Icon className={`h-5 w-5 ${iconColor}`} />
       </div>
       <div>

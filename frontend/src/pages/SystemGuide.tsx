@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import {
   BookOpen, Target, Shield, TrendingUp, Users, Zap, BarChart3,
   Cpu, CheckCircle, ChevronDown, ChevronUp,
@@ -21,19 +21,30 @@ function Accordion({ id, title, icon: Icon, children, openId, onToggle }: {
   onToggle: (id: string) => void
 }) {
   const open = openId === id
+  const ref = useRef<HTMLDivElement>(null)
+
+  function handleToggle() {
+    onToggle(id)
+    setTimeout(() => {
+      if (!ref.current) return
+      const top = ref.current.getBoundingClientRect().top + window.scrollY - 80
+      window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' })
+    }, 60)
+  }
+
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white shadow-card overflow-hidden">
+    <div ref={ref} className="box scroll-mt-[5rem]">
       <button
-        onClick={() => onToggle(id)}
-        className="flex w-full items-center gap-3 px-4 sm:px-6 py-4 text-left hover:bg-slate-50 transition-colors"
+        onClick={handleToggle}
+        className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-slate-50 transition-colors"
       >
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-50">
-          <Icon className="h-4.5 w-4.5 text-brand-600" />
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-100/80">
+          <Icon className="h-4 w-4 text-brand-600" />
         </div>
         <span className="flex-1 text-sm font-semibold text-slate-900">{title}</span>
         {open ? <ChevronUp className="h-4 w-4 text-slate-400" /> : <ChevronDown className="h-4 w-4 text-slate-400" />}
       </button>
-      {open && <div className="border-t border-slate-100 px-4 sm:px-6 py-4 sm:py-5">{children}</div>}
+      {open && <div className="border-t border-slate-100 px-4 py-4">{children}</div>}
     </div>
   )
 }
@@ -44,17 +55,17 @@ function SectionLabel({ children, color = 'text-brand-600' }: { children: React.
 }
 
 // ── Info Card (icon + title + desc) ─────────────────────────────
-function InfoCard({ icon: Icon, title, desc, bg = 'bg-brand-600' }: {
-  icon: React.ElementType; title: string; desc: string; bg?: string
+function InfoCard({ icon: Icon, title, desc, iconBg = 'bg-brand-100/80', iconColor = 'text-brand-600' }: {
+  icon: React.ElementType; title: string; desc: string; iconBg?: string; iconColor?: string
 }) {
   return (
-    <div className="flex gap-3 rounded-xl border border-slate-100 bg-slate-50 p-4">
-      <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${bg}`}>
-        <Icon className="h-5 w-5 text-white" />
+    <div className="flex gap-3 rounded-sm border border-slate-100 bg-slate-50/80 px-4 py-3">
+      <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${iconBg}`}>
+        <Icon className={`h-4 w-4 ${iconColor}`} />
       </div>
-      <div>
+      <div className="min-w-0">
         <p className="text-sm font-semibold text-slate-800">{title}</p>
-        <p className="mt-1 text-xs text-slate-500 leading-relaxed">{desc}</p>
+        <p className="mt-0.5 text-xs text-slate-500 leading-relaxed">{desc}</p>
       </div>
     </div>
   )
@@ -65,11 +76,11 @@ function FieldRow({ icon: Icon, title, children }: {
   icon: React.ElementType; title: string; children: React.ReactNode
 }) {
   return (
-    <div className="flex gap-3 rounded-lg border border-slate-100 bg-slate-50 p-3">
+    <div className="flex gap-3 rounded-sm border border-slate-100 bg-slate-50/80 px-4 py-3">
       <Icon className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
       <div>
         <p className="text-xs font-semibold text-slate-800">{title}</p>
-        <p className="mt-1 text-xs text-slate-500 leading-relaxed">{children}</p>
+        <p className="mt-0.5 text-xs text-slate-500 leading-relaxed">{children}</p>
       </div>
     </div>
   )
@@ -81,17 +92,17 @@ function HighlightBox({ icon: Icon, title, children, variant = 'brand' }: {
   variant?: 'brand' | 'amber' | 'emerald'
 }) {
   const styles = {
-    brand:   { border: 'border-brand-100',   bg: 'bg-brand-50',   icon: 'text-brand-600',   text: 'text-brand-800' },
-    amber:   { border: 'border-amber-200',   bg: 'bg-amber-50',   icon: 'text-amber-600',   text: 'text-amber-800' },
-    emerald: { border: 'border-emerald-100', bg: 'bg-emerald-50', icon: 'text-emerald-600', text: 'text-emerald-800' },
+    brand:   { border: 'border-brand-100',   bg: 'bg-brand-50/80',   icon: 'text-brand-600',   text: 'text-brand-800' },
+    amber:   { border: 'border-amber-200',   bg: 'bg-amber-50/80',   icon: 'text-amber-600',   text: 'text-amber-800' },
+    emerald: { border: 'border-emerald-100', bg: 'bg-emerald-50/80', icon: 'text-emerald-600', text: 'text-emerald-800' },
   }
   const s = styles[variant]
   return (
-    <div className={`flex gap-3 rounded-xl border ${s.border} ${s.bg} p-4`}>
+    <div className={`flex gap-3 rounded-sm border ${s.border} ${s.bg} px-4 py-3`}>
       <Icon className={`mt-0.5 h-4 w-4 shrink-0 ${s.icon}`} />
       <div>
         {title && <p className={`text-sm font-semibold ${s.text}`}>{title}</p>}
-        <div className={`${title ? 'mt-1 ' : ''}text-xs ${s.text} leading-relaxed`}>{children}</div>
+        <div className={`${title ? 'mt-0.5 ' : ''}text-xs ${s.text} leading-relaxed`}>{children}</div>
       </div>
     </div>
   )
@@ -102,14 +113,14 @@ function ScreenRef({ icon: Icon, name, path, desc }: {
   icon: React.ElementType; name: string; path: string; desc: string
 }) {
   return (
-    <div className="flex items-start gap-3 rounded-xl border border-slate-100 bg-white p-4">
+    <div className="flex items-start gap-3 rounded-sm border border-slate-100 bg-slate-50/80 px-4 py-3">
       <Icon className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
       <div>
         <div className="flex items-center gap-2">
           <p className="text-sm font-semibold text-slate-800">{name}</p>
           <span className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[10px] text-slate-500">{path}</span>
         </div>
-        <p className="mt-1 text-xs text-slate-500 leading-relaxed">{desc}</p>
+        <p className="mt-0.5 text-xs text-slate-500 leading-relaxed">{desc}</p>
       </div>
     </div>
   )
@@ -134,10 +145,11 @@ function EndpointRow({ method, path, desc }: { method: string; path: string; des
     POST:     'bg-emerald-100 text-emerald-700',
     GET:      'bg-blue-100 text-blue-700',
     'GET/PUT':'bg-violet-100 text-violet-700',
+    PATCH:    'bg-amber-100 text-amber-700',
     DELETE:   'bg-red-100 text-red-700',
   }
   return (
-    <div className="flex items-start gap-3 rounded-lg border border-slate-100 bg-slate-50 p-3">
+    <div className="flex items-start gap-3 rounded-sm border border-slate-100 bg-slate-50/80 px-4 py-3">
       <code className={`mt-0.5 shrink-0 rounded px-2 py-0.5 text-[10px] font-bold ${colors[method] ?? 'bg-slate-100 text-slate-700'}`}>{method}</code>
       <div>
         <code className="text-xs font-semibold text-slate-800">{path}</code>
@@ -156,38 +168,40 @@ export default function SystemGuide() {
     <div>
       <TopBar title="Guia do Sistema" subtitle="Entenda o que o LifeTrigger faz e como usar cada funcionalidade" />
 
-      <div className="p-4 sm:p-6 space-y-4 sm:space-y-5 animate-fadeIn max-w-4xl">
+      <div className="p-3 sm:p-4 lg:p-5 space-y-3 sm:space-y-4 animate-fadeIn max-w-4xl">
 
         {/* ── Hero ── */}
-        <div className="rounded-2xl border border-brand-200 bg-gradient-to-br from-brand-50 to-white p-4 sm:p-6 shadow-card">
-          <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-600 shadow-lg shadow-brand-900/20">
-              <Activity className="h-6 w-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-lg font-bold text-slate-900">LifeTrigger Engine</h1>
-              <p className="mt-1 text-sm text-slate-600 leading-relaxed">
-                Motor inteligente de avaliação de seguro de vida para corretoras. Analisa o perfil de cada cliente
-                e entrega em segundos um diagnóstico completo: score de proteção, gap de cobertura, recomendação
-                de ação e insights prontos para usar na conversa com o cliente.
-              </p>
-              <p className="mt-3 text-sm text-slate-600 leading-relaxed">
-                Objetivo: <strong className="text-brand-700">ajudar corretores a vender mais e melhor</strong>,
-                com dados concretos e argumentação técnica que transforma uma conversa de vendas em uma consultoria de proteção.
-              </p>
+        <div className="box border-l-4 border-l-brand-300">
+          <div className="px-4 py-3">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-100/80">
+                <Activity className="h-5 w-5 text-brand-600" />
+              </div>
+              <div>
+                <h1 className="text-base font-bold text-slate-900">LifeTrigger Engine</h1>
+                <p className="mt-1 text-xs text-slate-600 leading-relaxed">
+                  Motor inteligente de avaliação de seguro de vida para corretoras. Analisa o perfil de cada cliente
+                  e entrega em segundos um diagnóstico completo: score de proteção, gap de cobertura, recomendação
+                  de ação e insights prontos para usar na conversa com o cliente.
+                </p>
+                <p className="mt-2 text-xs text-slate-600 leading-relaxed">
+                  Objetivo: <strong className="text-brand-700">ajudar corretores a vender mais e melhor</strong>,
+                  com dados concretos e argumentação técnica que transforma uma conversa de vendas em uma consultoria de proteção.
+                </p>
+              </div>
             </div>
           </div>
         </div>
 
         {/* ━━ 1. O QUE O SISTEMA FAZ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
         <Accordion id="what" title="O que o LifeTrigger faz?" icon={Target} openId={openId} onToggle={toggle}>
-          <div className="space-y-6">
+          <div className="space-y-5">
 
             {/* A Dor */}
             <div>
               <SectionLabel color="text-red-500">O Problema</SectionLabel>
-              <div className="rounded-xl border border-red-100 bg-red-50 p-4 space-y-2">
-                <p className="text-sm text-red-900 leading-relaxed">
+              <div className="rounded-sm border border-red-200 bg-red-50/80 px-4 py-3 space-y-2">
+                <p className="text-xs text-red-900 leading-relaxed">
                   Hoje, a maioria dos corretores de seguro de vida <strong>vende no achismo</strong>. Não tem ferramenta que diga
                   quanto de cobertura o cliente realmente precisa, nem dados concretos para justificar a recomendação.
                 </p>
@@ -204,39 +218,39 @@ export default function SystemGuide() {
             {/* A Solução */}
             <div>
               <SectionLabel>A Solução</SectionLabel>
-              <p className="text-sm text-slate-600 leading-relaxed mb-4">
+              <p className="text-xs text-slate-600 leading-relaxed mb-3">
                 O LifeTrigger é um <strong>motor de inteligência de proteção de vida</strong> que recebe os dados do cliente
                 e devolve uma análise completa em milissegundos. Em vez de achismo, o corretor passa a ter
                 <strong> dados concretos, argumentação técnica e registro auditável</strong> de cada recomendação.
               </p>
 
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <InfoCard icon={Shield}     title="Score de Proteção (0-100)"  desc="Nota única que resume o quão protegido o cliente está. Quanto maior, melhor a cobertura em relação a necessidade real." bg="bg-brand-600" />
-                <InfoCard icon={DollarSign}  title="Gap de Cobertura"          desc="Diferença exata entre a cobertura atual e a recomendada, em reais e em percentual. Mostra o 'buraco' na proteção." bg="bg-red-500" />
-                <InfoCard icon={TrendingUp}  title="Recomendação de Ação"      desc="AUMENTAR, MANTER, REDUZIR ou REVISAR — diretriz clara para o corretor saber o que fazer." bg="bg-amber-500" />
-                <InfoCard icon={BarChart3}   title="Classificação de Risco"    desc="CRITICO, MODERADO ou ADEQUADO — cruza idade, profissão, fumante e dependentes para classificar." bg="bg-violet-500" />
-                <InfoCard icon={Lightbulb}   title="5 Insights por Avaliação"  desc="Abertura de conversa, argumento principal, objeção prevista, produto sugerido e próximo passo." bg="bg-sky-500" />
-                <InfoCard icon={Zap}         title="Gatilhos de Vida"          desc="Casamento, filho, promoção, divórcio — eventos que recalculam a proteção automaticamente." bg="bg-emerald-500" />
+                <InfoCard icon={Shield}     title="Score de Proteção (0-100)"  desc="Nota única que resume o quão protegido o cliente está. Quanto maior, melhor a cobertura em relação a necessidade real." iconBg="bg-brand-100/80" iconColor="text-brand-600" />
+                <InfoCard icon={DollarSign}  title="Gap de Cobertura"          desc="Diferença exata entre a cobertura atual e a recomendada, em reais e em percentual. Mostra o 'buraco' na proteção." iconBg="bg-red-100/80" iconColor="text-red-500" />
+                <InfoCard icon={TrendingUp}  title="Recomendação de Ação"      desc="AUMENTAR, MANTER, REDUZIR ou REVISAR — diretriz clara para o corretor saber o que fazer." iconBg="bg-amber-100/80" iconColor="text-amber-600" />
+                <InfoCard icon={BarChart3}   title="Classificação de Risco"    desc="CRITICO, MODERADO ou ADEQUADO — cruza idade, profissão, fumante e dependentes para classificar." iconBg="bg-violet-100/80" iconColor="text-violet-500" />
+                <InfoCard icon={Lightbulb}   title="5 Insights por Avaliação"  desc="Abertura de conversa, argumento principal, objeção prevista, produto sugerido e próximo passo." iconBg="bg-sky-100/80" iconColor="text-sky-500" />
+                <InfoCard icon={Zap}         title="Gatilhos de Vida"          desc="Casamento, filho, promoção, divórcio — eventos que recalculam a proteção automaticamente." iconBg="bg-emerald-100/80" iconColor="text-emerald-500" />
               </div>
             </div>
 
             {/* ConsentId e Proteção Jurídica */}
-            <div className="rounded-xl border border-brand-200 bg-brand-50 p-4 space-y-3">
+            <div className="rounded-sm border border-brand-200 bg-brand-50/80 px-4 py-3 space-y-2">
               <div className="flex gap-2">
                 <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-brand-700" />
-                <p className="text-sm font-semibold text-brand-800">ID de vinculação e proteção jurídica do corretor</p>
+                <p className="text-xs font-semibold text-brand-800">ID de vinculação e proteção jurídica do corretor</p>
               </div>
-              <p className="text-xs text-brand-700 leading-relaxed">
+              <p className="text-[11px] text-brand-700 leading-relaxed">
                 Cada avaliação é vinculada a um <strong>Consent ID</strong> — identificador único que conecta a análise ao cliente
                 no sistema do corretor. O LifeTrigger <strong>não armazena nome, CPF, email nem qualquer dado pessoal</strong>.
                 Apenas dados demográficos anonimizados (idade, faixa de renda, quantidade de dependentes).
               </p>
-              <p className="text-xs text-brand-700 leading-relaxed">
+              <p className="text-[11px] text-brand-700 leading-relaxed">
                 Cada avaliação gera um registro imutável com hash SHA-256, timestamp, versão do motor e resultado completo.
                 Se no futuro houver qualquer questionamento, o corretor tem uma <strong>prova técnica auditável</strong> de que
                 a análise foi feita com base em dados concretos e regras determinísticas — sem possibilidade de adulteração.
               </p>
-              <p className="text-xs text-brand-700 leading-relaxed">
+              <p className="text-[11px] text-brand-700 leading-relaxed">
                 <strong>Você mantém o controle dos dados do seu cliente; nós fornecemos a inteligência técnica e o registro de prova.</strong>
               </p>
             </div>
@@ -245,23 +259,23 @@ export default function SystemGuide() {
 
         {/* ━━ 2. COMO FUNCIONA ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
         <Accordion id="how" title="Como funciona na prática?" icon={ClipboardCheck} openId={openId} onToggle={toggle}>
-          <div className="space-y-5">
-            <p className="text-sm text-slate-600 leading-relaxed">
+          <div className="space-y-4">
+            <p className="text-xs text-slate-600 leading-relaxed">
               O fluxo de trabalho do corretor segue 4 passos simples:
             </p>
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {[
                 { n: 1, title: 'Coleta dos dados', desc: 'Formulário guiado em 4 etapas (Pessoal, Financeiro, Família, Operacional) com validação em tempo real e formatação BRL automática.' },
                 { n: 2, title: 'Motor processa', desc: 'Mais de 30 regras determinísticas cruzadas em milissegundos. Mesmo input, mesmo resultado — sempre.' },
                 { n: 3, title: 'Resultado completo', desc: 'Score, gap, ação, justificativas e 5 insights prontos para usar na conversa com o cliente.' },
                 { n: 4, title: 'Histórico e acompanhamento', desc: 'Todas as avaliações ficam salvas com hash de auditoria imutável. Consulte e acompanhe a evolução.' },
               ].map(({ n, title, desc }) => (
-                <div key={n} className="flex gap-3 rounded-xl border border-slate-100 bg-slate-50 p-4">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-600 text-sm font-bold text-white">{n}</div>
-                  <div className="pt-0.5">
-                    <p className="text-sm font-semibold text-slate-800">{title}</p>
-                    <p className="mt-1 text-xs text-slate-500 leading-relaxed">{desc}</p>
+                <div key={n} className="flex gap-3 rounded-sm border border-slate-100 bg-slate-50/80 px-4 py-3">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-600 text-xs font-bold text-white">{n}</div>
+                  <div>
+                    <p className="text-xs font-semibold text-slate-800">{title}</p>
+                    <p className="mt-0.5 text-xs text-slate-500 leading-relaxed">{desc}</p>
                   </div>
                 </div>
               ))}
@@ -276,8 +290,8 @@ export default function SystemGuide() {
 
         {/* ━━ 3. POTÊNCIA DO MOTOR ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
         <Accordion id="engine-power" title="Potência do motor: determinismo, complexidade e auditoria" icon={Cpu} openId={openId} onToggle={toggle}>
-          <div className="space-y-6">
-            <p className="text-sm text-slate-600 leading-relaxed">
+          <div className="space-y-5">
+            <p className="text-xs text-slate-600 leading-relaxed">
               O LifeTrigger é um <strong>motor de regras determinístico de alta complexidade</strong>, projetado para
               entregar diagnósticos de grau institucional com a robustez que seguradoras e auditorias exigem.
             </p>
@@ -300,7 +314,7 @@ export default function SystemGuide() {
             {/* Pipeline de 6 fases */}
             <div>
               <SectionLabel>Pipeline de Cálculo (6 Fases)</SectionLabel>
-              <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-2.5">
+              <div className="rounded-sm border border-slate-100 bg-slate-50/80 px-4 py-3 space-y-2.5">
                 <PipelinePhase n={1} title="Substituição de Renda" desc="Calcula quantos anos de renda a família precisa (2-10 anos), com bonificação por dependente (até +3), limitada por teto configurável." />
                 <PipelinePhase n={2} title="Quitação de Dívidas" desc="Soma o saldo total de dívidas para garantir que a cobertura cubra 100% dos débitos pendentes." />
                 <PipelinePhase n={3} title="Reserva de Transição" desc="Adiciona colchão de segurança (3-9 meses de renda), descontando reserva existente. Clampeado por limites rígidos." />
@@ -308,9 +322,9 @@ export default function SystemGuide() {
                 <PipelinePhase n={5} title="Score + Penalidades" desc="Protection Score (razão cobertura/necessidade) com 3 penalidades independentes: dependentes subprotegidos (-10), dívida alta (-10), sem reserva (-10)." />
                 <PipelinePhase n={6} title="Overrides de Ação + Insights" desc={`Verifica condições especiais (revisão > 12 meses, dados não confirmados, gatilho recente) que forçam REVISAR. Gera 5 insights personalizados.`} />
               </div>
-              <div className="mt-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <div className="mt-2 rounded-sm border border-slate-100 bg-slate-50/80 px-4 py-3">
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  <strong>20 regras catalogadas</strong> em enum fortemente tipado (<code className="text-brand-600 bg-white px-1 rounded">EngineRuleId</code>),
+                  <strong>20 regras catalogadas</strong> em enum fortemente tipado (<code className="text-brand-600 bg-slate-100 px-1 rounded">EngineRuleId</code>),
                   cada uma com template de justificativa e rastreabilidade completa. Nenhuma "string mágica" — tudo validado em compilação.
                 </p>
               </div>
@@ -319,24 +333,24 @@ export default function SystemGuide() {
             {/* Tipos de Apólice */}
             <div>
               <SectionLabel>Tipos de Apólice e Cobertura Efetiva</SectionLabel>
-              <p className="text-xs text-slate-500 mb-2 leading-relaxed">
+              <p className="text-[11px] text-slate-500 mb-2 leading-relaxed">
                 O motor reconhece diferentes tipos de apólice e aplica percentuais de cobertura efetiva:
               </p>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                <div className="rounded-lg border border-slate-100 bg-slate-50 p-3">
+                <div className="rounded-sm border border-slate-100 bg-slate-50/80 px-4 py-3">
                   <p className="text-xs font-semibold text-slate-800">Individual / Famíliar</p>
                   <p className="text-[11px] text-slate-500">100% da cobertura contabilizada</p>
                 </div>
-                <div className="rounded-lg border border-slate-100 bg-slate-50 p-3">
+                <div className="rounded-sm border border-slate-100 bg-slate-50/80 px-4 py-3">
                   <p className="text-xs font-semibold text-slate-800">Grupo Empresarial</p>
                   <p className="text-[11px] text-slate-500">100% contabilizado, mas sinaliza risco de portabilidade (vinculado ao emprego)</p>
                 </div>
-                <div className="rounded-lg border border-slate-100 bg-slate-50 p-3">
+                <div className="rounded-sm border border-slate-100 bg-slate-50/80 px-4 py-3">
                   <p className="text-xs font-semibold text-slate-800">Acidentes Pessoais (AP)</p>
                   <p className="text-[11px] text-slate-500">Apenas 25% contabilizado — não cobre morte natural</p>
                 </div>
               </div>
-              <div className="mt-2 rounded-lg border border-slate-100 bg-slate-50 p-3">
+              <div className="mt-2 rounded-sm border border-slate-100 bg-slate-50/80 px-4 py-3">
                 <p className="text-xs font-semibold text-slate-800">Prestamista</p>
                 <p className="text-[11px] text-slate-500">0% contabilizado — cobertura vinculada ao financiamento, não protege a família</p>
               </div>
@@ -345,7 +359,7 @@ export default function SystemGuide() {
             {/* Composição da Cobertura Recomendada */}
             <div>
               <SectionLabel>Composição da Cobertura Recomendada (6 Componentes)</SectionLabel>
-              <p className="text-xs text-slate-500 mb-2 leading-relaxed">
+              <p className="text-[11px] text-slate-500 mb-2 leading-relaxed">
                 O valor final de cobertura recomendada é composto por até 6 parcelas independentes:
               </p>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -357,7 +371,7 @@ export default function SystemGuide() {
                   { title: 'ITCMD / Inventário',       desc: 'Custos estimados de inventário e impostos sobre herança.' },
                   { title: 'Custos de Inventário',     desc: 'Percentual configurável sobre patrimônio para custos legais.' },
                 ].map(({ title, desc }) => (
-                  <div key={title} className="rounded-lg border border-slate-100 bg-slate-50 p-3">
+                  <div key={title} className="rounded-sm border border-slate-100 bg-slate-50/80 px-4 py-3">
                     <p className="text-xs font-semibold text-slate-800">{title}</p>
                     <p className="mt-0.5 text-[11px] text-slate-500 leading-relaxed">{desc}</p>
                   </div>
@@ -369,10 +383,10 @@ export default function SystemGuide() {
             <div>
               <SectionLabel>Auditoria e Integridade</SectionLabel>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <InfoCard icon={Hash}     title="Hash SHA-256 Imutável"    desc="Cada avaliação recebe hash criptográfico na criação. Qualquer alteração posterior invalida o hash. Verificável na tela de Auditoria." bg="bg-violet-600" />
-                <InfoCard icon={Layers}   title="Snapshot Completo"        desc="Congela regras aplicadas, justificativas, versão do motor e timestamp. A 'foto' jurídica do momento da avaliação." bg="bg-brand-600" />
-                <InfoCard icon={Lock}     title="Imutabilidade por Design" desc="Avaliações salvas NUNCA são alteradas. Parâmetros mudam? Avaliações anteriores mantém resultado original." bg="bg-red-500" />
-                <InfoCard icon={Database} title="Isolamento Multi-Tenant"  desc="Cada corretora em silo isolado via tenant_id no JWT. Impossível que dados vazem entre corretoras." bg="bg-sky-600" />
+                <InfoCard icon={Hash}     title="Hash SHA-256 Imutável"    desc="Cada avaliação recebe hash criptográfico na criação. Qualquer alteração posterior invalida o hash. Verificável na tela de Auditoria." iconBg="bg-violet-100/80" iconColor="text-violet-500" />
+                <InfoCard icon={Layers}   title="Snapshot Completo"        desc="Congela regras aplicadas, justificativas, versão do motor e timestamp. A 'foto' jurídica do momento da avaliação." iconBg="bg-brand-100/80" iconColor="text-brand-600" />
+                <InfoCard icon={Lock}     title="Imutabilidade por Design" desc="Avaliações salvas NUNCA são alteradas. Parâmetros mudam? Avaliações anteriores mantém resultado original." iconBg="bg-red-100/80" iconColor="text-red-500" />
+                <InfoCard icon={Database} title="Isolamento Multi-Tenant"  desc="Cada corretora em silo isolado via tenant_id no JWT. Impossível que dados vazem entre corretoras." iconBg="bg-sky-100/80" iconColor="text-sky-500" />
               </div>
             </div>
 
@@ -400,7 +414,7 @@ export default function SystemGuide() {
               </div>
             </div>
 
-            <div className="rounded-xl border border-brand-200 bg-brand-50 p-4">
+            <div className="rounded-sm border border-brand-200 bg-brand-50/80 px-4 py-3">
               <p className="text-xs text-brand-800 leading-relaxed">
                 <strong>Em resumo:</strong> precisão de um motor determinístico + rastreabilidade de sistema de auditoria +
                 segurança de arquitetura zero-trust. Cada avaliação é reproduzível, verificável, imutável e segregada.
@@ -411,8 +425,8 @@ export default function SystemGuide() {
 
         {/* ━━ 4. TELAS DO SISTEMA ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
         <Accordion id="screens" title="Telas do sistema" icon={Eye} openId={openId} onToggle={toggle}>
-          <div className="space-y-5">
-            <p className="text-sm text-slate-600 leading-relaxed">
+          <div className="space-y-4">
+            <p className="text-xs text-slate-600 leading-relaxed">
               Cada perfil de usuário vê um conjunto diferente de telas. Abaixo está o mapa completo:
             </p>
 
@@ -445,7 +459,7 @@ export default function SystemGuide() {
         {/* ━━ 5. PERFIS DE ACESSO ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
         <Accordion id="roles" title="Perfis de acesso (Roles)" icon={Users} openId={openId} onToggle={toggle}>
           <div className="space-y-4">
-            <p className="text-sm text-slate-600 leading-relaxed">
+            <p className="text-xs text-slate-600 leading-relaxed">
               4 perfis <strong>cumulativos</strong> — cada perfil inclui todas as permissões dos perfis abaixo dele:
             </p>
 
@@ -456,7 +470,7 @@ export default function SystemGuide() {
                 { role: 'Corretor',     level: 2, color: 'bg-emerald-600',desc: 'Operacional. Cria avaliações, registra gatilhos, consulta clientes. Vê apenas suas avaliações.' },
                 { role: 'Observador',   level: 1, color: 'bg-slate-500',  desc: 'Visualização apenas. Dashboard (sem ações), histórico e perfil. Ideal para auditores.' },
               ].map(({ role, level, color, desc }) => (
-                <div key={role} className="flex items-start gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3">
+                <div key={role} className="flex items-start gap-3 rounded-sm border border-slate-100 bg-slate-50/80 px-4 py-3">
                   <div className="flex items-center gap-2 shrink-0">
                     <span className={`inline-block rounded-full px-2.5 py-1 text-xs font-bold text-white ${color}`}>{role}</span>
                     <span className="text-[10px] font-mono text-slate-400">Lv {level}</span>
@@ -466,7 +480,7 @@ export default function SystemGuide() {
               ))}
             </div>
 
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+            <div className="rounded-sm border border-slate-100 bg-slate-50/80 px-4 py-3">
               <p className="text-xs text-slate-600 leading-relaxed">
                 <strong>Hierarquia cumulativa:</strong> Proprietário (4) {'>'} Gerente (3) {'>'} Corretor (2) {'>'} Observador (1).
                 Não é preciso atribuir múltiplos roles — um nível inclui todos os anteriores.
@@ -478,7 +492,7 @@ export default function SystemGuide() {
         {/* ━━ 6. RESULTADO DA AVALIAÇÃO ━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
         <Accordion id="result" title="Entendendo o resultado da avaliação" icon={CheckCircle} openId={openId} onToggle={toggle}>
           <div className="space-y-4">
-            <p className="text-sm text-slate-600 leading-relaxed">
+            <p className="text-xs text-slate-600 leading-relaxed">
               O motor retorna um conjunto completo de informações. Aqui está o significado de cada campo:
             </p>
 
@@ -490,7 +504,7 @@ export default function SystemGuide() {
                   Nota que resume a adequação da cobertura. Acima de 70 é saudável. Abaixo de 45 requer atenção.
                 </FieldRow>
                 <FieldRow icon={Target} title="Eficiência de Cobertura (0-100)">
-                  Quao bem a cobertura atual se aproxima da ideal. 100 = perfeito. Acima = sobresegurado.
+                  Quão bem a cobertura atual se aproxima da ideal. 100 = perfeito. Acima = sobresegurado.
                 </FieldRow>
                 <FieldRow icon={DollarSign} title="Gap de Proteção (R$ e %)">
                   Diferença entre a cobertura recomendada e a atual. Positivo = subprotegido. Negativo = sobresegurado.
@@ -502,7 +516,7 @@ export default function SystemGuide() {
             <div>
               <SectionLabel>Classificações</SectionLabel>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                <div className="rounded-lg border border-slate-100 bg-slate-50 p-3">
+                <div className="rounded-sm border border-slate-100 bg-slate-50/80 px-4 py-3">
                   <p className="text-xs font-semibold text-slate-800 mb-2">Ação Recomendada</p>
                   <div className="space-y-1">
                     <p className="text-[11px] text-slate-500"><strong className="text-amber-600">AUMENTAR</strong> — cobertura insuficiente, ampliar apólice</p>
@@ -511,7 +525,7 @@ export default function SystemGuide() {
                     <p className="text-[11px] text-slate-500"><strong className="text-violet-600">REVISAR</strong> — dados incompletos ou situação atípica</p>
                   </div>
                 </div>
-                <div className="rounded-lg border border-slate-100 bg-slate-50 p-3">
+                <div className="rounded-sm border border-slate-100 bg-slate-50/80 px-4 py-3">
                   <p className="text-xs font-semibold text-slate-800 mb-2">Classificação de Risco</p>
                   <div className="space-y-1">
                     <p className="text-[11px] text-slate-500"><strong className="text-red-600">CRITICO</strong> — alta vulnerabilidade, atenção imediata</p>
@@ -525,7 +539,7 @@ export default function SystemGuide() {
             {/* Insights */}
             <div>
               <SectionLabel>5 Insights para o Corretor</SectionLabel>
-              <div className="rounded-lg border border-slate-100 bg-slate-50 p-3">
+              <div className="rounded-sm border border-slate-100 bg-slate-50/80 px-4 py-3">
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-5">
                   {[
                     { title: 'Abertura',            desc: 'Frase para iniciar a conversa' },
@@ -534,7 +548,7 @@ export default function SystemGuide() {
                     { title: 'Produto Sugerido',     desc: 'Tipo de apólice mais indicado' },
                     { title: 'Próximo Passo',        desc: 'Ação concreta após a conversa' },
                   ].map(({ title, desc }) => (
-                    <div key={title} className="text-center p-2 rounded-lg bg-white border border-slate-100">
+                    <div key={title} className="text-center p-2 rounded-sm bg-white/80 border border-slate-100">
                       <p className="text-[10px] font-bold text-brand-600 uppercase tracking-wider">{title}</p>
                       <p className="mt-1 text-[10px] text-slate-500">{desc}</p>
                     </div>
@@ -548,7 +562,7 @@ export default function SystemGuide() {
         {/* ━━ 7. STATUS E ACOMPANHAMENTO ━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
         <Accordion id="status" title="Status de avaliação e acompanhamento" icon={Repeat} openId={openId} onToggle={toggle}>
           <div className="space-y-4">
-            <p className="text-sm text-slate-600 leading-relaxed">
+            <p className="text-xs text-slate-600 leading-relaxed">
               Cada avaliação possui um <strong>status de acompanhamento</strong> que permite ao corretor controlar
               o progresso comercial após o diagnóstico técnico. O status é independente da ação recomendada pelo motor.
             </p>
@@ -556,29 +570,29 @@ export default function SystemGuide() {
             <div>
               <SectionLabel>4 Status Disponíveis</SectionLabel>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                <div className="rounded-lg border border-slate-100 bg-slate-50 p-3 flex items-start gap-2">
-                  <span className="mt-1 h-2.5 w-2.5 rounded-full bg-blue-500 shrink-0" />
+                <div className="rounded-sm border border-slate-100 bg-slate-50/80 px-4 py-3 flex items-start gap-2">
+                  <span className="mt-1 h-2.5 w-2.5 rounded-full bg-blue-400 shrink-0" />
                   <div>
                     <p className="text-xs font-semibold text-slate-800">Aberto</p>
                     <p className="text-[11px] text-slate-500">Status inicial. Avaliação realizada, aguardando ação do corretor.</p>
                   </div>
                 </div>
-                <div className="rounded-lg border border-slate-100 bg-slate-50 p-3 flex items-start gap-2">
-                  <span className="mt-1 h-2.5 w-2.5 rounded-full bg-emerald-500 shrink-0" />
+                <div className="rounded-sm border border-slate-100 bg-slate-50/80 px-4 py-3 flex items-start gap-2">
+                  <span className="mt-1 h-2.5 w-2.5 rounded-full bg-emerald-400 shrink-0" />
                   <div>
                     <p className="text-xs font-semibold text-slate-800">Convertido</p>
                     <p className="text-[11px] text-slate-500">Cliente contratou a cobertura recomendada. Venda concluída com sucesso.</p>
                   </div>
                 </div>
-                <div className="rounded-lg border border-slate-100 bg-slate-50 p-3 flex items-start gap-2">
-                  <span className="mt-1 h-2.5 w-2.5 rounded-full bg-amber-500 shrink-0" />
+                <div className="rounded-sm border border-slate-100 bg-slate-50/80 px-4 py-3 flex items-start gap-2">
+                  <span className="mt-1 h-2.5 w-2.5 rounded-full bg-amber-400 shrink-0" />
                   <div>
                     <p className="text-xs font-semibold text-slate-800">Convertido Parcial</p>
                     <p className="text-[11px] text-slate-500">Cliente contratou cobertura, mas abaixo do recomendado. Oportunidade de upsell futura.</p>
                   </div>
                 </div>
-                <div className="rounded-lg border border-slate-100 bg-slate-50 p-3 flex items-start gap-2">
-                  <span className="mt-1 h-2.5 w-2.5 rounded-full bg-slate-400 shrink-0" />
+                <div className="rounded-sm border border-slate-100 bg-slate-50/80 px-4 py-3 flex items-start gap-2">
+                  <span className="mt-1 h-2.5 w-2.5 rounded-full bg-slate-300 shrink-0" />
                   <div>
                     <p className="text-xs font-semibold text-slate-800">Arquivado</p>
                     <p className="text-[11px] text-slate-500">Avaliação descartada ou cliente desistiu. Pode ser reaberta se necessário.</p>
@@ -600,7 +614,7 @@ export default function SystemGuide() {
               </div>
             </div>
 
-            <div className="rounded-xl border border-brand-200 bg-brand-50 p-3">
+            <div className="rounded-sm border border-brand-200 bg-brand-50/80 px-4 py-3">
               <p className="text-xs text-brand-800 leading-relaxed">
                 <strong>Importante:</strong> o status é comercial, não técnico. A ação recomendada (AUMENTAR, MANTER, REDUZIR, REVISAR)
                 é o que o motor sugere. O status é o que o corretor registra como resultado da abordagem comercial.
@@ -612,7 +626,7 @@ export default function SystemGuide() {
         {/* ━━ 8. CONFIGURAÇÕES ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
         <Accordion id="settings" title="Configurações personalizáveis" icon={Settings} openId={openId} onToggle={toggle}>
           <div className="space-y-4">
-            <p className="text-sm text-slate-600 leading-relaxed">
+            <p className="text-xs text-slate-600 leading-relaxed">
               Cada corretora personaliza as fórmulas do motor para adaptar a sua estratégia comercial:
             </p>
 
@@ -626,14 +640,14 @@ export default function SystemGuide() {
                 { title: 'Máximo de Anos de Substituição',            desc: 'Limite superior de anos para cálculo de substituição de renda. Padrão: 10 anos.' },
                 { title: 'Taxa de Inventário (ITCMD)',                desc: 'Percentual usado para estimar custos de inventário e ITCMD. Padrão: 8%.' },
               ].map(({ title, desc }) => (
-                <div key={title} className="rounded-lg border border-slate-100 bg-slate-50 p-3">
+                <div key={title} className="rounded-sm border border-slate-100 bg-slate-50/80 px-4 py-3">
                   <p className="text-xs font-semibold text-slate-800">{title}</p>
-                  <p className="mt-1 text-xs text-slate-500 leading-relaxed">{desc}</p>
+                  <p className="mt-0.5 text-xs text-slate-500 leading-relaxed">{desc}</p>
                 </div>
               ))}
             </div>
 
-            <div className="rounded-xl border border-brand-200 bg-brand-50 p-3">
+            <div className="rounded-sm border border-brand-200 bg-brand-50/80 px-4 py-3">
               <p className="text-xs text-brand-800 leading-relaxed">
                 <strong>Dica:</strong> alterações impactam apenas avaliações futuras. Avaliações já realizadas mantém
                 o resultado original (imutável). Use a simulação ao vivo na tela de Configurações para testar antes de salvar.
@@ -642,22 +656,22 @@ export default function SystemGuide() {
           </div>
         </Accordion>
 
-        {/* ━━ 8. SEGURANÇA E LGPD ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+        {/* ━━ 9. SEGURANÇA E LGPD ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
         <Accordion id="security" title="Segurança, LGPD e Conformidade" icon={Shield} openId={openId} onToggle={toggle}>
           <div className="space-y-4">
-            <p className="text-sm text-slate-600 leading-relaxed">
+            <p className="text-xs text-slate-600 leading-relaxed">
               Projetado com segurança e conformidade desde o primeiro dia:
             </p>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <InfoCard icon={Shield}      title="Sem Dados Pessoais na API"  desc="Sem nome, CPF ou qualquer PII. Apenas perfil demográfico anonimizado. LGPD by design." bg="bg-brand-600" />
-              <InfoCard icon={CheckCircle} title="Consentimento Obrigatório"  desc="Toda avaliação exige consentimento ativo + consentId. Sem consentimento, a API recusa." bg="bg-emerald-500" />
-              <InfoCard icon={Hash}        title="Audit Hash Imutável"       desc="SHA-256 na criação. Qualquer alteração quebra o hash — detectável na tela de Auditoria." bg="bg-violet-500" />
-              <InfoCard icon={Database}    title="Isolamento Multi-tenant"   desc="Cada corretora em isolamento total. Avaliações, usuários e configurações segregados por tenant." bg="bg-sky-500" />
+              <InfoCard icon={Shield}      title="Sem Dados Pessoais na API"  desc="Sem nome, CPF ou qualquer PII. Apenas perfil demográfico anonimizado. LGPD by design." iconBg="bg-brand-100/80" iconColor="text-brand-600" />
+              <InfoCard icon={CheckCircle} title="Consentimento Obrigatório"  desc="Toda avaliação exige consentimento ativo + consentId. Sem consentimento, a API recusa." iconBg="bg-emerald-100/80" iconColor="text-emerald-500" />
+              <InfoCard icon={Hash}        title="Audit Hash Imutável"       desc="SHA-256 na criação. Qualquer alteração quebra o hash — detectável na tela de Auditoria." iconBg="bg-violet-100/80" iconColor="text-violet-500" />
+              <InfoCard icon={Database}    title="Isolamento Multi-tenant"   desc="Cada corretora em isolamento total. Avaliações, usuários e configurações segregados por tenant." iconBg="bg-sky-100/80" iconColor="text-sky-500" />
             </div>
           </div>
         </Accordion>
 
-        {/* ━━ 9. DICAS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+        {/* ━━ 10. DICAS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
         <Accordion id="tips" title="Dicas para tirar o máximo do LifeTrigger" icon={Lightbulb} openId={openId} onToggle={toggle}>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {[
@@ -674,10 +688,10 @@ export default function SystemGuide() {
           </div>
         </Accordion>
 
-        {/* ━━ 10. ESTRATÉGIAS DE VENDA ━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+        {/* ━━ 11. ESTRATÉGIAS DE VENDA ━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
         <Accordion id="sales" title="Estratégias de venda, recontato e captação" icon={Rocket} openId={openId} onToggle={toggle}>
-          <div className="space-y-6">
-            <p className="text-sm text-slate-600 leading-relaxed">
+          <div className="space-y-5">
+            <p className="text-xs text-slate-600 leading-relaxed">
               O LifeTrigger é uma <strong>plataforma de inteligência comercial</strong> que ajuda o corretor a vender mais,
               no momento certo, com os argumentos certos.
             </p>
@@ -739,7 +753,7 @@ export default function SystemGuide() {
               </div>
             </div>
 
-            <div className="rounded-xl border border-brand-200 bg-brand-50 p-3">
+            <div className="rounded-sm border border-brand-200 bg-brand-50/80 px-4 py-3">
               <p className="text-xs text-brand-800 leading-relaxed">
                 <strong>Resumo:</strong> gatilhos de vida, revisão anual automática, formulário completo, visão por cliente
                 e 5 insights personalizados já disponíveis. Funcionalidades marcadas "Em breve" expandirão a plataforma para
@@ -749,10 +763,10 @@ export default function SystemGuide() {
           </div>
         </Accordion>
 
-        {/* ━━ 11. API E INTEGRAÇÕES ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+        {/* ━━ 12. API E INTEGRAÇÕES ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
         <Accordion id="api" title="API 100% integrável — conecte a qualquer sistema" icon={Plug} openId={openId} onToggle={toggle}>
-          <div className="space-y-6">
-            <p className="text-sm text-slate-600 leading-relaxed">
+          <div className="space-y-5">
+            <p className="text-xs text-slate-600 leading-relaxed">
               O LifeTrigger tem <strong>API REST completa</strong> integrável a qualquer sistema: CRM, ERP, chatbot, WhatsApp, app mobile ou plataforma própria.
               Tudo o que o frontend faz, a API faz programaticamente.
             </p>
@@ -776,16 +790,16 @@ export default function SystemGuide() {
             {/* Características técnicas */}
             <div>
               <SectionLabel>Características Técnicas</SectionLabel>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
                 {[
-                  { icon: FileJson,   title: 'REST + JSON',         desc: 'Qualquer linguagem: Python, Node, Java, PHP, no-code', bg: 'bg-brand-600' },
-                  { icon: Lock,       title: 'JWT Auth',            desc: 'Todas as rotas protegidas. Refresh automático',        bg: 'bg-violet-600' },
-                  { icon: RefreshCcw, title: 'Idempotência',        desc: 'Header Idempotency-Key. Seguro para retries',          bg: 'bg-sky-600' },
-                  { icon: Database,   title: 'Multi-tenant',        desc: 'Silo isolado por tenant_id no JWT',                    bg: 'bg-emerald-600' },
-                ] .map(({ icon: FIcon, title, desc, bg }) => (
-                  <div key={title} className="rounded-xl border border-slate-100 bg-slate-50 p-3 text-center">
-                    <div className={`mx-auto mb-2 flex h-9 w-9 items-center justify-center rounded-lg ${bg}`}>
-                      <FIcon className="h-4 w-4 text-white" />
+                  { icon: FileJson,   title: 'REST + JSON',         desc: 'Qualquer linguagem: Python, Node, Java, PHP, no-code', iconBg: 'bg-brand-100/80', iconColor: 'text-brand-600' },
+                  { icon: Lock,       title: 'JWT Auth',            desc: 'Todas as rotas protegidas. Refresh automático',        iconBg: 'bg-violet-100/80', iconColor: 'text-violet-500' },
+                  { icon: RefreshCcw, title: 'Idempotência',        desc: 'Header Idempotency-Key. Seguro para retries',          iconBg: 'bg-sky-100/80', iconColor: 'text-sky-500' },
+                  { icon: Database,   title: 'Multi-tenant',        desc: 'Silo isolado por tenant_id no JWT',                    iconBg: 'bg-emerald-100/80', iconColor: 'text-emerald-500' },
+                ].map(({ icon: FIcon, title, desc, iconBg, iconColor }) => (
+                  <div key={title} className="rounded-sm border border-slate-100 bg-slate-50/80 px-4 py-3 text-center">
+                    <div className={`mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-full ${iconBg}`}>
+                      <FIcon className={`h-4 w-4 ${iconColor}`} />
                     </div>
                     <p className="text-xs font-semibold text-slate-800">{title}</p>
                     <p className="mt-0.5 text-[10px] text-slate-500">{desc}</p>
@@ -825,7 +839,7 @@ export default function SystemGuide() {
               </div>
             </div>
 
-            <div className="rounded-xl border border-brand-200 bg-brand-50 p-3">
+            <div className="rounded-sm border border-brand-200 bg-brand-50/80 px-4 py-3">
               <p className="text-xs text-brand-800 leading-relaxed">
                 <strong>A API é o produto.</strong> O frontend web é uma das formas de usar o motor.
                 A API RESTful permite integrar o motor ao ecossistema da corretora — cada ponto de contato vira oportunidade de diagnóstico e venda.
@@ -835,9 +849,11 @@ export default function SystemGuide() {
         </Accordion>
 
         {/* Footer */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-card text-center">
-          <p className="text-sm font-semibold text-slate-700">LifeTrigger Engine v1.0.0</p>
-          <p className="mt-1 text-xs text-slate-400">Motor de Inteligência de Proteção de Vida · B2B SaaS</p>
+        <div className="box">
+          <div className="px-4 py-3 text-center">
+            <p className="text-sm font-semibold text-slate-700">LifeTrigger Engine v1.0.0</p>
+            <p className="mt-0.5 text-xs text-slate-400">Motor de Inteligência de Proteção de Vida · B2B SaaS</p>
+          </div>
         </div>
       </div>
     </div>

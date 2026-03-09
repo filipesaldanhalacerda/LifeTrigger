@@ -24,7 +24,7 @@ export function MetricCard({
 }: MetricCardProps) {
   return (
     <div className={cn(
-      'rounded-2xl border border-slate-200 bg-white p-5 shadow-card transition-all duration-200 hover:shadow-card-hover hover:-translate-y-0.5',
+      'rounded-sm border border-slate-200 bg-white p-5 shadow-card transition-all duration-200 hover:shadow-card-hover hover:-translate-y-0.5',
       className,
     )}>
       <div className="flex items-start justify-between">
@@ -41,7 +41,7 @@ export function MetricCard({
           )}
         </div>
         {Icon && (
-          <div className={cn('rounded-xl p-2.5', iconBg)}>
+          <div className={cn('rounded-sm p-2.5', iconBg)}>
             <Icon className={cn('h-5 w-5', iconColor)} />
           </div>
         )}

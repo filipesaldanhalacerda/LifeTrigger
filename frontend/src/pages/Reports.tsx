@@ -230,7 +230,7 @@ export default function Reports() {
         subtitle={loading ? 'Carregando…' : `${totalAll} avaliações no período · ${pending} pendente${pending !== 1 ? 's' : ''}`}
       />
 
-      <div className="p-4 lg:p-5 space-y-4 animate-fadeIn">
+      <div className="p-3 sm:p-4 lg:p-5 space-y-3 sm:space-y-4 animate-fadeIn">
 
         {/* ── Date range + actions ── */}
         <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3">
@@ -272,7 +272,7 @@ export default function Reports() {
         {!loading && report && (
           <>
             {/* ── Metric cards ── */}
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-4 lg:gap-4">
               <MetricCard
                 icon={BarChart2}
                 iconBg="bg-brand-100/80" iconColor="text-brand-500"
@@ -306,7 +306,7 @@ export default function Reports() {
             </div>
 
             {/* ── Distribution charts ── */}
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-2">
               {/* Risk */}
               <div className="box">
                 <div className="box-header">

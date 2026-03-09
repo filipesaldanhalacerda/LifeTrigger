@@ -110,17 +110,17 @@ export default function PlatformHealth() {
         subtitle="Status dos serviços, banco de dados e infraestrutura"
       />
 
-      <div className="p-4 sm:p-6 space-y-5 animate-fadeIn">
+      <div className="p-3 sm:p-4 lg:p-5 space-y-3 sm:space-y-4 animate-fadeIn">
 
         {/* Overall status banner */}
-        <div className={`rounded-2xl border p-4 sm:p-5 flex items-center gap-4 ${
+        <div className={`rounded-sm border p-4 sm:p-5 flex items-center gap-4 ${
           overallStatus === 'operational'
             ? 'border-emerald-200 bg-emerald-50'
             : overallStatus === 'degraded'
               ? 'border-amber-200 bg-amber-50'
               : 'border-red-200 bg-red-50'
         }`}>
-          <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${
+          <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-sm ${
             overallStatus === 'operational'
               ? 'bg-emerald-100'
               : overallStatus === 'degraded'
@@ -152,7 +152,7 @@ export default function PlatformHealth() {
           <button
             onClick={() => void load()}
             disabled={loading}
-            className="shrink-0 flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-50"
+            className="shrink-0 flex items-center gap-1.5 rounded-sm border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-50"
           >
             <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
             Atualizar
@@ -167,7 +167,7 @@ export default function PlatformHealth() {
         )}
 
         {/* Infrastructure overview */}
-        <div className="rounded-2xl border border-slate-200 bg-white shadow-card overflow-hidden">
+        <div className="rounded-sm border border-slate-200 bg-white shadow-card overflow-hidden">
           <div className="flex items-center gap-2 border-b border-slate-100 px-4 sm:px-5 py-4">
             <Cloud className="h-4 w-4 text-slate-400" />
             <h2 className="text-sm font-bold text-slate-900">Infraestrutura de Produção</h2>
@@ -230,7 +230,7 @@ export default function PlatformHealth() {
         </div>
 
         {/* Database details */}
-        <div className="rounded-2xl border border-slate-200 bg-white shadow-card overflow-hidden">
+        <div className="rounded-sm border border-slate-200 bg-white shadow-card overflow-hidden">
           <div className="flex items-center gap-2 border-b border-slate-100 px-4 sm:px-5 py-4">
             <Database className="h-4 w-4 text-slate-400" />
             <h2 className="text-sm font-bold text-slate-900">Banco de Dados — {INFRA.database.dbName}</h2>
@@ -358,7 +358,7 @@ function InfraRow({
         href={dashboardUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="shrink-0 flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-medium text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-colors"
+        className="shrink-0 flex items-center gap-1 rounded-sm px-2 py-1 text-[10px] font-medium text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-colors"
       >
         Dashboard
         <ExternalLink className="h-3 w-3" />
@@ -377,9 +377,9 @@ function ServiceCard({
   icon: React.ElementType
 }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white shadow-card overflow-hidden">
+    <div className="rounded-sm border border-slate-200 bg-white shadow-card overflow-hidden">
       <div className="flex items-center gap-3 px-4 sm:px-5 py-4 border-b border-slate-100">
-        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
+        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-sm ${
           status === 'healthy' ? 'bg-emerald-50' : status === 'degraded' ? 'bg-amber-50' : 'bg-red-50'
         }`}>
           <Icon className={`h-5 w-5 ${

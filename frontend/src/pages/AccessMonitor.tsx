@@ -78,7 +78,7 @@ export default function AccessMonitor() {
         subtitle={loading ? 'Carregando…' : `${s?.totalLogins ?? 0} logins no período selecionado`}
       />
 
-      <div className="p-4 sm:p-6 space-y-4 sm:space-y-5 animate-fadeIn">
+      <div className="p-3 sm:p-4 lg:p-5 space-y-3 sm:space-y-4 animate-fadeIn">
 
         {/* Period selector */}
         <DateRangePicker
@@ -153,7 +153,7 @@ export default function AccessMonitor() {
 
             {/* ── Top users ── */}
             {data.topUsers.length > 0 && (
-              <div className="rounded-2xl border border-slate-200 bg-white shadow-card overflow-hidden">
+              <div className="rounded-sm border border-slate-200 bg-white shadow-card overflow-hidden">
                 <div className="flex items-center gap-2 border-b border-slate-100 px-4 sm:px-5 py-4">
                   <Users className="h-4 w-4 text-slate-400" />
                   <h2 className="text-sm font-bold text-slate-900">Usuários Mais Ativos</h2>
@@ -208,7 +208,7 @@ export default function AccessMonitor() {
             )}
 
             {/* ── Recent events ── */}
-            <div className="rounded-2xl border border-slate-200 bg-white shadow-card overflow-hidden">
+            <div className="rounded-sm border border-slate-200 bg-white shadow-card overflow-hidden">
               <div className="flex items-center gap-2 border-b border-slate-100 px-4 sm:px-5 py-4">
                 <Shield className="h-4 w-4 text-slate-400" />
                 <h2 className="text-sm font-bold text-slate-900">Log de Acessos Recentes</h2>
@@ -316,7 +316,7 @@ function LoginChart({ data }: { data: { date: string; count: number }[] }) {
   const labelEvery = Math.max(1, Math.ceil(data.length / 10))
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white shadow-card overflow-hidden">
+    <div className="rounded-sm border border-slate-200 bg-white shadow-card overflow-hidden">
       <div className="flex items-center justify-between px-4 sm:px-5 pt-4 sm:pt-5 pb-3">
         <div>
           <h2 className="text-sm font-bold text-slate-900">Logins por Dia</h2>
@@ -348,7 +348,7 @@ function LoginChart({ data }: { data: { date: string; count: number }[] }) {
               >
                 {/* Tooltip */}
                 {isHovered && (
-                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[11px] px-2 py-1 rounded-lg whitespace-nowrap z-10 shadow-lg pointer-events-none">
+                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[11px] px-2 py-1 rounded-sm whitespace-nowrap z-10 shadow-lg pointer-events-none">
                     <span className="font-semibold">{d.count}</span> logins
                   </div>
                 )}
@@ -391,11 +391,11 @@ function SummaryCard({
   warn?: boolean
 }) {
   return (
-    <div className={`rounded-2xl border bg-white p-3 sm:p-4 shadow-card ${
+    <div className={`rounded-sm border bg-white p-3 sm:p-4 shadow-card ${
       highlight ? 'border-emerald-200 ring-1 ring-emerald-100' : warn ? 'border-red-200' : 'border-slate-200'
     }`}>
       <div className="flex items-center gap-2.5">
-        <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${iconBg}`}>
+        <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-sm ${iconBg}`}>
           <Icon className={`h-4 w-4 ${iconColor}`} />
         </div>
         <div className="min-w-0">

@@ -215,11 +215,11 @@ export default function NewEvaluation() {
     <div>
       <TopBar title="Nova Avaliação" subtitle="Diagnóstico de necessidade de proteção de vida" />
 
-      <div className="p-4 sm:p-6 animate-fadeIn">
+      <div className="p-3 sm:p-4 lg:p-5 animate-fadeIn">
         <div className="mx-auto max-w-2xl space-y-4 sm:space-y-5">
 
           {/* ── Stepper ── */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-card">
+          <div className="box box-body !p-4 sm:!p-5">
             <div className="mb-4 flex items-center justify-between text-xs text-slate-500">
               <span className="font-medium">Progresso</span>
               <span>Passo {step + 1} de {STEPS.length}</span>
@@ -265,8 +265,8 @@ export default function NewEvaluation() {
           </div>
 
           {/* ── Step header ── */}
-          <div className="flex items-center gap-3 rounded-2xl border border-brand-100 bg-gradient-to-r from-brand-50 to-white px-4 sm:px-5 py-4">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-600 shadow-sm">
+          <div className="flex items-center gap-3 rounded-sm border border-brand-100 bg-gradient-to-r from-brand-50 to-white px-4 sm:px-5 py-4">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-brand-600 shadow-sm">
               <StepIcon className="h-5 w-5 text-white" />
             </div>
             <div>
@@ -276,7 +276,7 @@ export default function NewEvaluation() {
           </div>
 
           {/* ── Form card ── */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-card">
+          <div className="box box-body !p-4 sm:!p-6">
 
             {/* ── Step 0: Personal ── */}
             {step === 0 && (
@@ -319,7 +319,7 @@ export default function NewEvaluation() {
                         key={opt.value}
                         type="button"
                         onClick={() => setProfessionRisk(opt.value)}
-                        className={`rounded-xl border p-3.5 text-left transition-all ${
+                        className={`rounded-sm border p-3.5 text-left transition-all ${
                           professionRisk === opt.value
                             ? 'border-brand-400 bg-brand-50 ring-1 ring-brand-400'
                             : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
@@ -337,7 +337,7 @@ export default function NewEvaluation() {
                   </div>
                 </Field>
 
-                <label className={`flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition-colors ${
+                <label className={`flex cursor-pointer items-start gap-3 rounded-sm border p-4 transition-colors ${
                   isSmoker ? 'border-amber-300 bg-amber-50' : 'border-slate-200 bg-slate-50 hover:bg-slate-100'
                 }`}>
                   <input
@@ -370,15 +370,15 @@ export default function NewEvaluation() {
                     <button
                       type="button"
                       onClick={() => setDepCount(-1)}
-                      className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-xl font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+                      className="flex h-11 w-11 items-center justify-center rounded-sm border border-slate-200 bg-white text-xl font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
                     >−</button>
-                    <div className="flex h-11 w-24 items-center justify-center rounded-xl border-2 border-brand-200 bg-brand-50 text-2xl font-bold text-brand-700">
+                    <div className="flex h-11 w-24 items-center justify-center rounded-sm border-2 border-brand-200 bg-brand-50 text-2xl font-bold text-brand-700">
                       {dependentsCount}
                     </div>
                     <button
                       type="button"
                       onClick={() => setDepCount(+1)}
-                      className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-xl font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+                      className="flex h-11 w-11 items-center justify-center rounded-sm border border-slate-200 bg-white text-xl font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
                     >+</button>
                     <span className="text-sm font-medium text-slate-600">
                       {Number(dependentsCount) === 0 ? 'Sem dependentes' :
@@ -427,7 +427,7 @@ export default function NewEvaluation() {
                   </div>
                 )}
 
-                <div className={`rounded-xl border p-4 ${
+                <div className={`rounded-sm border p-4 ${
                   Number(dependentsCount) === 0
                     ? 'border-slate-200 bg-slate-50'
                     : 'border-brand-100 bg-brand-50'
@@ -486,7 +486,7 @@ export default function NewEvaluation() {
                   </Field>
                 </div>
 
-                <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 space-y-4">
+                <div className="rounded-sm border border-slate-100 bg-slate-50 p-4 space-y-4">
                   <div>
                     <div className="flex items-center gap-2 mb-1">
                       <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Seguros de Vida Atuais</p>
@@ -506,7 +506,7 @@ export default function NewEvaluation() {
                           <button
                             type="button"
                             onClick={() => setPolicies(policies.filter((_, i) => i !== idx))}
-                            className="flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-medium text-red-500 hover:bg-red-50 transition-colors"
+                            className="flex items-center gap-1 rounded-sm px-2 py-1 text-[11px] font-medium text-red-500 hover:bg-red-50 transition-colors"
                           >
                             <Trash2 className="h-3 w-3" />
                             Remover
@@ -542,14 +542,14 @@ export default function NewEvaluation() {
                   <button
                     type="button"
                     onClick={() => setPolicies([...policies, { coverage: '', policyType: '' }])}
-                    className="flex items-center gap-1.5 rounded-lg border border-dashed border-slate-300 px-3 py-2 text-xs font-medium text-slate-500 hover:border-brand-400 hover:text-brand-600 transition-colors w-full justify-center"
+                    className="flex items-center gap-1.5 rounded-sm border border-dashed border-slate-300 px-3 py-2 text-xs font-medium text-slate-500 hover:border-brand-400 hover:text-brand-600 transition-colors w-full justify-center"
                   >
                     <Plus className="h-3.5 w-3.5" />
                     Adicionar outra apólice
                   </button>
                 </div>
 
-                <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 space-y-4">
+                <div className="rounded-sm border border-slate-100 bg-slate-50 p-4 space-y-4">
                   <div>
                     <div className="flex items-center gap-2 mb-1">
                       <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Passivos Financeiros</p>
@@ -580,7 +580,7 @@ export default function NewEvaluation() {
                 </div>
 
                 {Number(dependentsCount) > 0 && (
-                  <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 space-y-4">
+                  <div className="rounded-sm border border-slate-100 bg-slate-50 p-4 space-y-4">
                     <div>
                       <div className="flex items-center gap-2 mb-1">
                         <GraduationCap className="h-4 w-4 text-slate-500" />
@@ -594,7 +594,7 @@ export default function NewEvaluation() {
                     </div>
 
                     {/* Mode toggle */}
-                    <div className="flex gap-1 rounded-lg bg-slate-200/60 p-0.5">
+                    <div className="flex gap-1 rounded-sm bg-slate-200/60 p-0.5">
                       <button
                         type="button"
                         onClick={() => setEduMode('calc')}
@@ -625,7 +625,7 @@ export default function NewEvaluation() {
                             const targetNum = Number(eduTargetAge) || 21
                             const yearsLeft = Math.max(0, targetNum - ageNum)
                             return (
-                              <div key={i} className="rounded-lg border border-slate-200 bg-white p-3 space-y-2">
+                              <div key={i} className="rounded-sm border border-slate-200 bg-white p-3 space-y-2">
                                 <div className="flex items-center justify-between">
                                   <span className="text-xs font-semibold text-slate-700">
                                     Dependente {i + 1} — {ageNum > 0 ? `${ageNum} anos` : 'idade não informada'}
@@ -694,7 +694,7 @@ export default function NewEvaluation() {
                             setTimeout(() => setEducationCost(totalCents > 0 ? String(totalCents) : ''), 0)
                           }
                           return total > 0 ? (
-                            <div className="flex items-center justify-between rounded-lg border border-brand-200 bg-brand-50 px-4 py-3">
+                            <div className="flex items-center justify-between rounded-sm border border-brand-200 bg-brand-50 px-4 py-3">
                               <div>
                                 <p className="text-xs font-medium text-brand-700">Total estimado de educação</p>
                                 <p className="text-[10px] text-brand-500">
@@ -716,7 +716,7 @@ export default function NewEvaluation() {
                   </div>
                 )}
 
-                <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 space-y-4">
+                <div className="rounded-sm border border-slate-100 bg-slate-50 p-4 space-y-4">
                   <div>
                     <div className="flex items-center gap-2 mb-1">
                       <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Patrimônio e Sucessão</p>
@@ -783,7 +783,7 @@ export default function NewEvaluation() {
                 </Field>
 
                 <div className="space-y-3">
-                  <label className={`flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition-all ${
+                  <label className={`flex cursor-pointer items-start gap-3 rounded-sm border p-4 transition-all ${
                     consent
                       ? 'border-emerald-300 bg-emerald-50 shadow-sm'
                       : fieldErrors.consent
@@ -812,7 +812,7 @@ export default function NewEvaluation() {
                     </div>
                   </label>
 
-                  <label className={`flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition-colors ${
+                  <label className={`flex cursor-pointer items-start gap-3 rounded-sm border p-4 transition-colors ${
                     hasUnconfirmed ? 'border-amber-200 bg-amber-50' : 'border-slate-200 hover:bg-slate-50'
                   }`}>
                     <input
@@ -834,7 +834,7 @@ export default function NewEvaluation() {
                 </div>
 
                 {submitError && (
-                  <div className="flex items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                  <div className="flex items-start gap-2.5 rounded-sm border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                     <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
                     <span>{submitError}</span>
                   </div>
@@ -847,7 +847,7 @@ export default function NewEvaluation() {
               <button
                 onClick={() => { setStep((s) => s - 1); setFieldErrors({}) }}
                 disabled={step === 0}
-                className="flex items-center gap-1.5 rounded-lg px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-100 disabled:invisible transition-colors"
+                className="flex items-center gap-1.5 rounded-sm px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-100 disabled:invisible transition-colors"
               >
                 <ChevronLeft className="h-4 w-4" />
                 Anterior
@@ -858,7 +858,7 @@ export default function NewEvaluation() {
               {step < STEPS.length - 1 ? (
                 <button
                   onClick={handleNext}
-                  className="flex items-center gap-1.5 rounded-xl bg-brand-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-700 transition-colors"
+                  className="flex items-center gap-1.5 rounded-sm bg-brand-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-700 transition-colors"
                 >
                   Próximo
                   <ChevronRight className="h-4 w-4" />
@@ -867,7 +867,7 @@ export default function NewEvaluation() {
                 <button
                   onClick={handleSubmit}
                   disabled={loading}
-                  className="flex items-center gap-2 rounded-xl bg-brand-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-700 disabled:opacity-50 transition-colors"
+                  className="flex items-center gap-2 rounded-sm bg-brand-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-700 disabled:opacity-50 transition-colors"
                 >
                   {loading && <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />}
                   {loading ? 'Calculando…' : 'Gerar Diagnóstico'}
@@ -909,7 +909,7 @@ const BR_STATES = [
 ]
 
 function cls(hasError = false) {
-  return `w-full rounded-lg border ${
+  return `w-full rounded-sm border ${
     hasError
       ? 'border-red-400 focus:border-red-400 focus:ring-red-100'
       : 'border-slate-200 focus:border-brand-400 focus:ring-brand-100'
@@ -1001,7 +1001,7 @@ function StateCombobox({ value, onChange }: { value: string; onChange: (v: strin
       </button>
 
       {open && (
-        <div className="absolute z-50 bottom-full mb-1 w-full rounded-xl border border-slate-200 bg-white shadow-lg">
+        <div className="absolute z-50 bottom-full mb-1 w-full rounded-sm border border-slate-200 bg-white shadow-lg">
           <div className="p-2">
             <input
               type="text"
@@ -1009,7 +1009,7 @@ function StateCombobox({ value, onChange }: { value: string; onChange: (v: strin
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Buscar estado..."
-              className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm placeholder:text-slate-400 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100"
+              className="w-full rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-sm placeholder:text-slate-400 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100"
             />
           </div>
           <ul className="max-h-52 overflow-y-auto px-1 pb-1">
@@ -1017,7 +1017,7 @@ function StateCombobox({ value, onChange }: { value: string; onChange: (v: strin
               <button
                 type="button"
                 onClick={() => pick('')}
-                className={`w-full rounded-lg px-3 py-2 text-left text-sm transition-colors hover:bg-slate-50 ${!value ? 'bg-brand-50 font-semibold text-brand-700' : 'text-slate-600'}`}
+                className={`w-full rounded-sm px-3 py-2 text-left text-sm transition-colors hover:bg-slate-50 ${!value ? 'bg-brand-50 font-semibold text-brand-700' : 'text-slate-600'}`}
               >
                 Não informado (4% padrão)
               </button>
@@ -1027,7 +1027,7 @@ function StateCombobox({ value, onChange }: { value: string; onChange: (v: strin
                 <button
                   type="button"
                   onClick={() => pick(s.uf)}
-                  className={`w-full rounded-lg px-3 py-2 text-left text-sm transition-colors hover:bg-slate-50 ${value === s.uf ? 'bg-brand-50 font-semibold text-brand-700' : 'text-slate-700'}`}
+                  className={`w-full rounded-sm px-3 py-2 text-left text-sm transition-colors hover:bg-slate-50 ${value === s.uf ? 'bg-brand-50 font-semibold text-brand-700' : 'text-slate-700'}`}
                 >
                   <span className="font-medium">{s.uf}</span>
                   <span className="text-slate-500"> — {s.name}</span>
@@ -1151,7 +1151,7 @@ function PolicyTypeSelector({ value, onChange }: { value: string; onChange: (v: 
       </button>
 
       {open && (
-        <div className="absolute z-50 bottom-full mb-1 w-full rounded-xl border border-slate-200 bg-white shadow-lg max-h-[420px] overflow-y-auto">
+        <div className="absolute z-50 bottom-full mb-1 w-full rounded-sm border border-slate-200 bg-white shadow-lg max-h-[420px] overflow-y-auto">
           <div className="p-1.5 space-y-1">
             {POLICY_TYPE_OPTIONS.map((opt) => {
               const OptIcon = opt.icon
@@ -1161,7 +1161,7 @@ function PolicyTypeSelector({ value, onChange }: { value: string; onChange: (v: 
                   key={opt.value}
                   type="button"
                   onClick={() => pick(opt.value)}
-                  className={`w-full rounded-lg p-3 text-left transition-all hover:ring-1 ${opt.ring} ${
+                  className={`w-full rounded-sm p-3 text-left transition-all hover:ring-1 ${opt.ring} ${
                     isSelected ? `${opt.bg} ring-1 ${opt.ring}` : 'hover:bg-slate-50'
                   }`}
                 >

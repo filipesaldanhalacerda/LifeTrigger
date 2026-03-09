@@ -41,12 +41,12 @@ const SCORE_DESCRIPTIONS: Record<string, { title: string; description: string; t
   protection: {
     title: 'Score de Proteção',
     description: 'Mede o percentual da cobertura necessária que já está coberta pela apólice atual do cliente.',
-    tip: '100 = cobertura completa. Abaixo de 30 indica proteção crítica.',
+    tip: 'Score 100 significa que a apólice cobre 100% da necessidade calculada. Abaixo de 30, a família está em situação de vulnerabilidade financeira severa.',
   },
   efficiency: {
     title: 'Score de Eficiência',
     description: 'Avalia se a apólice está bem dimensionada, penalizando tanto subcobertura quanto sobrecobertura.',
-    tip: '100 = perfeitamente calibrada. Penaliza excesso ou falta.',
+    tip: 'Score 100 indica cobertura perfeitamente ajustada à necessidade. Valores menores indicam desperdício (excesso) ou exposição (falta) no dimensionamento.',
   },
 }
 
@@ -64,6 +64,7 @@ export default function EvaluationResult() {
   const [activeTab, setActiveTab] = useState<TabId>('resultado')
   const [previousResult, setPreviousResult] = useState<LifeInsuranceAssessmentResult | null>(null)
   const [showStatusMenu, setShowStatusMenu] = useState(false)
+  const [menuPos, setMenuPos] = useState<{ top: number; right: number } | null>(null)
   const [confirmAction, setConfirmAction] = useState<{ status: EvaluationStatusType } | null>(null)
 
   useEffect(() => {
@@ -115,6 +116,7 @@ export default function EvaluationResult() {
   function requestStatusChange(newStatus: EvaluationStatusType) {
     if (!record || !id || !result) return
     setShowStatusMenu(false)
+    setMenuPos(null)
     setConfirmAction({ status: newStatus })
   }
 
@@ -169,7 +171,7 @@ export default function EvaluationResult() {
         subtitle={record?.request.operationalData.recentLifeTrigger ? 'Gatilho de Vida' : undefined}
       />
 
-      <div className="p-4 lg:p-5 space-y-4">
+      <div className="p-3 sm:p-4 lg:p-5 space-y-3 sm:space-y-4">
 
         {/* ═══ HEADER: Back + ID + Status ═══ */}
         <div className="flex items-center justify-between gap-3 reveal-up">
@@ -182,42 +184,19 @@ export default function EvaluationResult() {
           </button>
           <div className="flex items-center gap-2">
             {record && (
-              <div className="relative z-[9999]">
+              <div className="relative">
                 <button
-                  onClick={() => setShowStatusMenu(!showStatusMenu)}
+                  onClick={(e) => {
+                    if (showStatusMenu) { setShowStatusMenu(false); setMenuPos(null); return }
+                    const rect = e.currentTarget.getBoundingClientRect()
+                    setMenuPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right })
+                    setShowStatusMenu(true)
+                  }}
                   className={`inline-flex items-center gap-1.5 rounded-sm border px-3 py-1.5 text-xs font-semibold transition-colors ${evalStatusColors((record.status || 'ABERTO') as EvaluationStatusType)}`}
                 >
                   {evalStatusLabel((record.status || 'ABERTO') as EvaluationStatusType)}
                   <ChevronDown className="h-3 w-3" />
                 </button>
-                {showStatusMenu && (
-                  <div className="absolute right-0 top-full mt-1 w-44 rounded-sm border border-slate-200 bg-white shadow-xl py-1.5">
-                    {(['ABERTO', 'CONVERTIDO', 'CONVERTIDO_PARCIAL', 'ARQUIVADO'] as EvaluationStatusType[])
-                      .filter((s) => s !== (record.status || 'ABERTO'))
-                      .map((s) => (
-                        <button
-                          key={s}
-                          type="button"
-                          onClick={() => requestStatusChange(s)}
-                          className="flex w-full items-center gap-2.5 px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 transition-colors"
-                        >
-                          {s === 'CONVERTIDO' && <BadgeCheck className="h-4 w-4 text-emerald-500" />}
-                          {s === 'CONVERTIDO_PARCIAL' && <PieChart className="h-4 w-4 text-amber-500" />}
-                          {s === 'ARQUIVADO' && <Archive className="h-4 w-4 text-slate-400" />}
-                          {s === 'ABERTO' && <CircleDot className="h-4 w-4 text-blue-500" />}
-                          <div className="text-left">
-                            <p className="font-semibold">{evalStatusLabel(s)}</p>
-                            <p className="text-[10px] text-slate-400 font-normal">
-                              {s === 'CONVERTIDO' && 'Venda realizada'}
-                              {s === 'CONVERTIDO_PARCIAL' && 'Venda parcial com gap'}
-                              {s === 'ARQUIVADO' && 'Sem interesse'}
-                              {s === 'ABERTO' && 'Reabrir caso'}
-                            </p>
-                          </div>
-                        </button>
-                      ))}
-                  </div>
-                )}
               </div>
             )}
             {id && (
@@ -289,7 +268,7 @@ export default function EvaluationResult() {
         </div>
 
         {/* ═══ METRIC STRIP: 4 stat cards ═══ */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {/* Protection Score */}
           <div className="box animate-fadeIn">
             <div className="px-4 py-3">
@@ -401,7 +380,7 @@ export default function EvaluationResult() {
                 </div>
                 <div className="px-4 py-3">
                   <p className="text-[12px] text-slate-500 mb-3">Comparação entre a avaliação anterior e o resultado após o evento de vida.</p>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
                     {([
                       { label: 'Cobertura Recomendada', prev: previousResult.recommendedCoverageAmount, curr: result.recommendedCoverageAmount, fmt: 'currency' as const },
                       { label: 'Score de Proteção', prev: previousResult.protectionScore, curr: result.protectionScore, fmt: 'pct' as const },
@@ -442,7 +421,7 @@ export default function EvaluationResult() {
             )}
 
             {/* Row: Coverage vs Necessity + Score Analysis */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
 
               {/* Coverage gap */}
               <div className="box">
@@ -549,7 +528,7 @@ export default function EvaluationResult() {
             )}
 
             {/* Row: Justifications + Client Context */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
 
               {/* Justifications */}
               {result.justificationsRendered?.length > 0 && (
@@ -850,6 +829,42 @@ export default function EvaluationResult() {
 
       </div>
 
+      {/* ── Fixed status dropdown (rendered outside .box stacking contexts) ── */}
+      {showStatusMenu && menuPos && record && (
+        <>
+          <div className="fixed inset-0 z-[9998]" onClick={() => { setShowStatusMenu(false); setMenuPos(null) }} />
+          <div
+            className="fixed z-[9999] w-44 rounded-sm border border-slate-200 bg-white shadow-xl py-1.5"
+            style={{ top: menuPos.top, right: menuPos.right }}
+          >
+            {(['ABERTO', 'CONVERTIDO', 'CONVERTIDO_PARCIAL', 'ARQUIVADO'] as EvaluationStatusType[])
+              .filter((s) => s !== (record.status || 'ABERTO'))
+              .map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => requestStatusChange(s)}
+                  className="flex w-full items-center gap-2.5 px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 transition-colors"
+                >
+                  {s === 'CONVERTIDO' && <BadgeCheck className="h-4 w-4 text-emerald-500" />}
+                  {s === 'CONVERTIDO_PARCIAL' && <PieChart className="h-4 w-4 text-amber-500" />}
+                  {s === 'ARQUIVADO' && <Archive className="h-4 w-4 text-slate-400" />}
+                  {s === 'ABERTO' && <CircleDot className="h-4 w-4 text-blue-500" />}
+                  <div className="text-left">
+                    <p className="font-semibold">{evalStatusLabel(s)}</p>
+                    <p className="text-[10px] text-slate-400 font-normal">
+                      {s === 'CONVERTIDO' && 'Venda realizada'}
+                      {s === 'CONVERTIDO_PARCIAL' && 'Venda parcial com gap'}
+                      {s === 'ARQUIVADO' && 'Sem interesse'}
+                      {s === 'ABERTO' && 'Reabrir caso'}
+                    </p>
+                  </div>
+                </button>
+              ))}
+          </div>
+        </>
+      )}
+
       {/* ── Status confirmation modal ── */}
       {confirmAction && id && (
         <StatusChangeModal
@@ -1025,7 +1040,7 @@ function ScoreRow({
         <span>100</span>
       </div>
 
-      <div className="mt-3 flex items-start gap-2 rounded-sm bg-white border border-slate-100 px-3 py-2">
+      <div className="mt-3 flex items-start gap-2 rounded-sm bg-slate-100/80 px-3 py-2">
         <Info className="h-3.5 w-3.5 shrink-0 text-slate-400 mt-0.5" />
         <p className="text-[11px] text-slate-500 leading-relaxed">{meta.tip}</p>
       </div>
@@ -1146,18 +1161,6 @@ function ContextCard({ icon: Icon, label, value }: { icon: React.ElementType; la
         <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{label}</p>
       </div>
       <p className="truncate text-sm font-medium text-slate-700">{value}</p>
-    </div>
-  )
-}
-
-function AuditRow({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string }) {
-  return (
-    <div className="rounded-sm border border-slate-100 bg-gradient-to-b from-slate-50 to-white p-4">
-      <div className="mb-1.5 flex items-center gap-2">
-        <Icon className="h-3.5 w-3.5 text-slate-400" />
-        <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">{label}</p>
-      </div>
-      <p className="text-sm font-semibold text-slate-800 truncate">{value}</p>
     </div>
   )
 }

@@ -13,9 +13,9 @@ const ROLE_META: Record<UserRole, { label: string; color: string }> = {
 // ── Demo restriction for password change ─────────────────────────────────────
 function ChangePasswordSection() {
   return (
-    <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 sm:p-6 shadow-card">
+    <div className="box !border-amber-200 !bg-amber-50 p-4 sm:p-6">
       <div className="flex items-center gap-3">
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-100">
+        <div className="flex h-9 w-9 items-center justify-center rounded-sm bg-amber-100">
           <Lock className="h-4 w-4 text-amber-600" />
         </div>
         <div>
@@ -50,9 +50,9 @@ export default function UserProfile() {
       </div>
 
       {/* Identity card */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-card">
+      <div className="box box-body !p-4 sm:!p-6">
         <div className="mb-5 flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-100">
+          <div className="flex h-9 w-9 items-center justify-center rounded-sm bg-brand-100">
             <User className="h-4 w-4 text-brand-700" />
           </div>
           <h2 className="text-base font-semibold text-slate-900">Dados da conta</h2>
@@ -60,7 +60,7 @@ export default function UserProfile() {
 
         <div className="flex items-center gap-5">
           {/* Avatar */}
-          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-brand-100 text-xl font-bold text-brand-700">
+          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-sm bg-brand-100 text-xl font-bold text-brand-700">
             {initials}
           </div>
 
@@ -100,7 +100,7 @@ export default function UserProfile() {
         </div>
 
         {/* Metadata */}
-        <div className="mt-5 grid grid-cols-2 gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4 sm:grid-cols-3">
+        <div className="mt-5 grid grid-cols-1 gap-3 rounded-sm border border-slate-200 bg-slate-50 p-3 sm:grid-cols-2 sm:gap-4 sm:p-4 lg:grid-cols-3">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">ID do usuário</p>
             <p className="mt-0.5 font-mono text-xs text-slate-700 tabular-nums">{user.id.slice(0, 8)}…</p>

@@ -24,7 +24,7 @@ export function AppLayout() {
 
   return (
     <MobileMenuContext.Provider value={menuCtx}>
-      <div className="flex min-h-screen bg-slate-50">
+      <div className="flex min-h-screen" style={{ backgroundColor: '#f2f6f9' }}>
         {/* Mobile backdrop */}
         {mobileOpen && (
           <div
@@ -43,8 +43,8 @@ export function AppLayout() {
         <div
           className={cn(
             'flex flex-1 flex-col transition-[padding-left] duration-300 ease-in-out',
-            'pl-0 lg:pl-64',
-            collapsed && 'lg:pl-20',
+            'pl-0 lg:pl-[16.5rem]',
+            collapsed && 'lg:pl-[4.5rem]',
           )}
         >
           <main className="flex-1">
