@@ -16,14 +16,14 @@ export function GapBar({ current, recommended }: GapBarProps) {
   const isMatch = current === recommended && current > 0
 
   const currentBarColor = isMatch
-    ? 'bg-gradient-to-r from-emerald-400 to-emerald-500'
+    ? 'bg-gradient-to-r from-emerald-200 to-emerald-300'
     : isUnder
-      ? 'bg-gradient-to-r from-amber-300 to-amber-400'
-      : 'bg-gradient-to-r from-sky-400 to-sky-500'
+      ? 'bg-gradient-to-r from-amber-200 to-amber-300'
+      : 'bg-gradient-to-r from-sky-200 to-sky-300'
 
   const recommendedBarColor = isMatch
-    ? 'bg-gradient-to-r from-emerald-400 to-emerald-500'
-    : 'bg-gradient-to-r from-brand-400 to-brand-600'
+    ? 'bg-gradient-to-r from-emerald-200 to-emerald-300'
+    : 'bg-gradient-to-r from-brand-200 to-brand-300'
 
   return (
     <div className="space-y-5">
@@ -66,7 +66,7 @@ export function GapBar({ current, recommended }: GapBarProps) {
 
       {/* Difference */}
       {isMatch ? (
-        <div className="flex items-center gap-3 rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-3">
+        <div className="flex items-center gap-3 rounded-sm bg-emerald-50 border border-emerald-200 px-4 py-3">
           <CheckCircle className="h-5 w-5 shrink-0 text-emerald-500" />
           <div className="flex-1">
             <p className="text-sm font-semibold text-emerald-800">Cobertura perfeitamente alinhada</p>
@@ -75,7 +75,7 @@ export function GapBar({ current, recommended }: GapBarProps) {
           <span className="text-lg font-extrabold tabular-nums text-emerald-600">0%</span>
         </div>
       ) : (
-        <div className={`rounded-xl border px-4 py-3 ${
+        <div className={`rounded-sm border px-4 py-3 ${
           isUnder ? 'bg-red-50 border-red-200' : 'bg-emerald-50 border-emerald-200'
         }`}>
           <div className="flex items-center justify-between">
