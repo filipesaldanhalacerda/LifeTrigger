@@ -30,16 +30,16 @@ function MetricCard({
   sub?: string; highlight?: boolean
 }) {
   return (
-    <div className={`rounded-2xl border bg-white p-3 sm:p-5 shadow-card ${highlight ? 'border-orange-200' : 'border-slate-200'}`}>
-      <div className="flex items-start justify-between gap-2 sm:gap-3">
-        <div className="min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">{label}</p>
-          <p className="mt-1 sm:mt-2 text-xl sm:text-2xl font-bold tabular-nums text-slate-900">{value}</p>
-          {sub && <p className="mt-0.5 text-xs text-slate-500 truncate">{sub}</p>}
+    <div className={`box ${highlight ? '!border-orange-200' : ''}`}>
+      <div className="px-4 py-3">
+        <div className="flex items-start justify-between gap-1">
+          <p className="text-[12px] font-medium text-slate-500 leading-tight">{label}</p>
+          <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${iconBg}`}>
+            <Icon className={`h-4 w-4 ${iconColor}`} />
+          </div>
         </div>
-        <div className={`flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl ${iconBg}`}>
-          <Icon className={`h-4 w-4 sm:h-5 sm:w-5 ${iconColor}`} />
-        </div>
+        <p className="mt-1 text-[1.5rem] font-extrabold text-slate-900 tabular-nums leading-none">{value}</p>
+        {sub && <p className="mt-1 text-[10px] text-slate-400 leading-tight truncate">{sub}</p>}
       </div>
     </div>
   )
@@ -87,32 +87,32 @@ function BrokerRow({ stats, rank }: { stats: BrokerStats; rank: number }) {
   const critPct = pct(stats.critico, stats.total)
   const adePct  = pct(stats.adequado, stats.total)
   return (
-    <tr className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
-      <td className="px-4 py-3 text-xs text-slate-400 font-mono tabular-nums">{rank}</td>
-      <td className="px-4 py-3">
+    <tr className="hover:bg-slate-50 transition-colors">
+      <td className="text-xs text-slate-400 font-mono tabular-nums">{rank}</td>
+      <td>
         <p className="text-sm font-medium text-slate-800">{stats.email.split('@')[0]}</p>
         <p className="text-[11px] text-slate-400">{stats.email}</p>
       </td>
-      <td className="px-4 py-3 text-sm font-bold text-slate-900 tabular-nums">{stats.total}</td>
-      <td className="px-4 py-3">
+      <td className="text-sm font-bold text-slate-900 tabular-nums">{stats.total}</td>
+      <td>
         <div className="flex items-center gap-1.5">
           <div className="h-1.5 w-24 overflow-hidden rounded-full bg-slate-100">
-            <div className="h-1.5 rounded-full bg-red-500 transition-all" style={{ width: `${critPct}%` }} />
+            <div className="h-1.5 rounded-full bg-red-300 transition-all" style={{ width: `${critPct}%` }} />
           </div>
           <span className={`text-xs font-semibold tabular-nums ${critPct > 40 ? 'text-red-600' : 'text-slate-500'}`}>
             {critPct}%
           </span>
         </div>
       </td>
-      <td className="px-4 py-3">
+      <td>
         <div className="flex items-center gap-1.5">
           <div className="h-1.5 w-24 overflow-hidden rounded-full bg-slate-100">
-            <div className="h-1.5 rounded-full bg-emerald-500 transition-all" style={{ width: `${adePct}%` }} />
+            <div className="h-1.5 rounded-full bg-emerald-300 transition-all" style={{ width: `${adePct}%` }} />
           </div>
           <span className="text-xs font-semibold tabular-nums text-slate-500">{adePct}%</span>
         </div>
       </td>
-      <td className="px-4 py-3">
+      <td>
         <span className="text-xs font-semibold tabular-nums text-emerald-600">{stats.converted}</span>
         <span className="ml-1 text-[11px] text-slate-400">/ {stats.total}</span>
       </td>
@@ -230,7 +230,7 @@ export default function Reports() {
         subtitle={loading ? 'Carregando…' : `${totalAll} avaliações no período · ${pending} pendente${pending !== 1 ? 's' : ''}`}
       />
 
-      <div className="p-4 sm:p-6 space-y-4 sm:space-y-5 animate-fadeIn">
+      <div className="p-4 lg:p-5 space-y-4 animate-fadeIn">
 
         {/* ── Date range + actions ── */}
         <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3">
@@ -243,7 +243,7 @@ export default function Reports() {
           <button
             onClick={() => exportCsv(evals, users)}
             disabled={evals.length === 0}
-            className="sm:ml-auto flex items-center justify-center gap-1.5 rounded-lg border border-brand-200 bg-brand-50 px-3 py-2 text-xs font-semibold text-brand-700 shadow-card hover:bg-brand-100 transition-colors disabled:opacity-40"
+            className="sm:ml-auto flex items-center justify-center gap-1.5 rounded-sm border border-brand-200 bg-brand-50 px-3 py-2 text-xs font-semibold text-brand-700 hover:bg-brand-100 transition-colors disabled:opacity-40"
           >
             <Download className="h-3.5 w-3.5" />
             Exportar CSV
@@ -260,7 +260,7 @@ export default function Reports() {
 
         {/* ── Error ── */}
         {!loading && error && (
-          <div className="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          <div className="flex items-start gap-3 rounded-sm border border-red-200 bg-red-50 p-4 text-sm text-red-700">
             <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
             <div>
               <p className="font-semibold">Erro ao carregar relatório</p>
@@ -272,24 +272,24 @@ export default function Reports() {
         {!loading && report && (
           <>
             {/* ── Metric cards ── */}
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <MetricCard
                 icon={BarChart2}
-                iconBg="bg-brand-50" iconColor="text-brand-600"
+                iconBg="bg-brand-100/80" iconColor="text-brand-500"
                 label="Total no Período"
                 value={totalAll.toLocaleString('pt-BR')}
                 sub={`${pending} pendente${pending !== 1 ? 's' : ''} · ${st.arquivado} arquivada${st.arquivado !== 1 ? 's' : ''}`}
               />
               <MetricCard
                 icon={CheckCircle}
-                iconBg="bg-emerald-50" iconColor="text-emerald-500"
+                iconBg="bg-emerald-100/80" iconColor="text-emerald-500"
                 label="Taxa de Conversão"
                 value={`${conversionRate}%`}
                 sub={`${st.convertido} total · ${st.parcial} parcial`}
               />
               <MetricCard
                 icon={AlertTriangle}
-                iconBg="bg-red-50" iconColor="text-red-500"
+                iconBg="bg-red-100/80" iconColor="text-red-500"
                 label="Pendentes Críticos"
                 value={`${critPct}%`}
                 sub={`${report.riskDistribution.critico} de ${pending} pendentes`}
@@ -297,7 +297,7 @@ export default function Reports() {
               />
               <MetricCard
                 icon={TrendingUp}
-                iconBg="bg-orange-50" iconColor="text-orange-500"
+                iconBg="bg-orange-100/80" iconColor="text-orange-500"
                 label="Precisam Aumentar"
                 value={`${aumentarPct}%`}
                 sub={`${report.actionDistribution.aumentar} pendentes com gap`}
@@ -306,42 +306,48 @@ export default function Reports() {
             </div>
 
             {/* ── Distribution charts ── */}
-            <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
               {/* Risk */}
-              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
-                <h2 className="mb-1 text-sm font-bold text-slate-900">Perfil de Risco</h2>
-                <p className="mb-4 text-xs text-slate-400">Distribuição das {pending} avaliações pendentes</p>
-                <div className="space-y-4">
-                  <DistBar dot="bg-red-500"     label="Crítico"  value={report.riskDistribution.critico}  total={pending} barColor="bg-red-500" />
-                  <DistBar dot="bg-amber-400"   label="Moderado" value={report.riskDistribution.moderado} total={pending} barColor="bg-amber-400" />
-                  <DistBar dot="bg-emerald-500" label="Adequado" value={report.riskDistribution.adequado} total={pending} barColor="bg-emerald-500" />
+              <div className="box">
+                <div className="box-header">
+                  <span className="box-header-title">Perfil de Risco</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{pending} pendentes</span>
+                </div>
+                <div className="px-4 py-3 space-y-4">
+                  <DistBar dot="bg-red-300"     label="Crítico"  value={report.riskDistribution.critico}  total={pending} barColor="bg-red-300" />
+                  <DistBar dot="bg-amber-300"   label="Moderado" value={report.riskDistribution.moderado} total={pending} barColor="bg-amber-300" />
+                  <DistBar dot="bg-emerald-300" label="Adequado" value={report.riskDistribution.adequado} total={pending} barColor="bg-emerald-300" />
                 </div>
               </div>
 
               {/* Action */}
-              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
-                <h2 className="mb-1 text-sm font-bold text-slate-900">Recomendações do Motor</h2>
-                <p className="mb-4 text-xs text-slate-400">Ação indicada para as {pending} avaliações pendentes</p>
-                <div className="space-y-4">
-                  <DistBar dot="bg-red-400"     label="Aumentar" value={report.actionDistribution.aumentar} total={pending} barColor="bg-red-400" />
-                  <DistBar dot="bg-emerald-400" label="Manter"   value={report.actionDistribution.manter}   total={pending} barColor="bg-emerald-400" />
-                  <DistBar dot="bg-violet-400"  label="Revisar"  value={report.actionDistribution.revisar}  total={pending} barColor="bg-violet-400" />
-                  <DistBar dot="bg-sky-400"     label="Reduzir"  value={report.actionDistribution.reduzir}  total={pending} barColor="bg-sky-400" />
+              <div className="box">
+                <div className="box-header">
+                  <span className="box-header-title">Recomendações do Motor</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{pending} pendentes</span>
+                </div>
+                <div className="px-4 py-3 space-y-4">
+                  <DistBar dot="bg-red-300"     label="Aumentar" value={report.actionDistribution.aumentar} total={pending} barColor="bg-red-300" />
+                  <DistBar dot="bg-emerald-300" label="Manter"   value={report.actionDistribution.manter}   total={pending} barColor="bg-emerald-300" />
+                  <DistBar dot="bg-violet-300"  label="Revisar"  value={report.actionDistribution.revisar}  total={pending} barColor="bg-violet-300" />
+                  <DistBar dot="bg-sky-300"     label="Reduzir"  value={report.actionDistribution.reduzir}  total={pending} barColor="bg-sky-300" />
                 </div>
               </div>
             </div>
 
             {/* ── Broker performance table ── */}
             {brokerStats.length > 0 && (
-              <div className="rounded-2xl border border-slate-200 bg-white shadow-card overflow-hidden">
-                <div className="border-b border-slate-100 px-4 sm:px-5 py-3 sm:py-4">
-                  <div className="flex items-center gap-2">
-                    <Users className="h-4 w-4 text-slate-400" />
-                    <h2 className="text-sm font-bold text-slate-900">Desempenho por Corretor</h2>
+              <div className="box">
+                <div className="box-header">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <Users className="h-4 w-4 text-slate-400" />
+                      <h2 className="box-header-title">Desempenho por Corretor</h2>
+                    </div>
+                    <p className="mt-0.5 text-xs text-slate-400">
+                      Avaliações realizadas por cada corretor no período selecionado
+                    </p>
                   </div>
-                  <p className="mt-0.5 text-xs text-slate-400">
-                    Avaliações realizadas por cada corretor no período selecionado
-                  </p>
                 </div>
                 {/* Mobile broker cards */}
                 <div className="divide-y divide-slate-100 sm:hidden">
@@ -366,8 +372,8 @@ export default function Reports() {
                               <span className="text-emerald-600 font-semibold">Adequado {adePct}%</span>
                             </div>
                             <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100 flex">
-                              <div className="h-1.5 bg-red-500 transition-all" style={{ width: `${critPct}%` }} />
-                              <div className="h-1.5 bg-emerald-500 transition-all ml-auto" style={{ width: `${adePct}%` }} />
+                              <div className="h-1.5 bg-red-300 transition-all" style={{ width: `${critPct}%` }} />
+                              <div className="h-1.5 bg-emerald-300 transition-all ml-auto" style={{ width: `${adePct}%` }} />
                             </div>
                           </div>
                           <div className="text-right shrink-0">
@@ -381,15 +387,15 @@ export default function Reports() {
                 </div>
 
                 <div className="overflow-x-auto hidden sm:block">
-                  <table className="w-full text-sm">
+                  <table className="table-synto w-full text-sm">
                     <thead>
-                      <tr className="border-b border-slate-100 bg-slate-50">
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 w-8">#</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Corretor</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Avaliações</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">% Crítico</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">% Adequado</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Conversões</th>
+                      <tr>
+                        <th className="text-left w-8">#</th>
+                        <th className="text-left">Corretor</th>
+                        <th className="text-left">Avaliações</th>
+                        <th className="text-left">% Crítico</th>
+                        <th className="text-left">% Adequado</th>
+                        <th className="text-left">Conversões</th>
                       </tr>
                     </thead>
                     <tbody>
