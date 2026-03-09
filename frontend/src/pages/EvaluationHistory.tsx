@@ -34,7 +34,7 @@ const STATUS_OPTIONS: { key: EvaluationStatusType; icon: React.ElementType; colo
 
 // ── Mini score bar ────────────────────────────────────────────────
 function ScoreBar({ score }: { score: number }) {
-  const fill = score < 30 ? 'bg-red-500' : score < 70 ? 'bg-amber-500' : 'bg-emerald-500'
+  const fill = score < 30 ? 'bg-red-300' : score < 70 ? 'bg-amber-300' : 'bg-emerald-300'
   return (
     <div className="flex items-center gap-2">
       <div className="h-1.5 w-16 rounded-full bg-slate-100">
@@ -61,18 +61,16 @@ function SummaryCard({ label, value, icon: Icon, iconBg, iconColor, hint, active
     <button
       type="button"
       onClick={onClick}
-      className={`w-full rounded-2xl border p-4 text-left shadow-card transition-all ${
+      className={`box w-full px-4 py-3 text-left transition-all ${
         active
-          ? 'border-brand-300 bg-brand-50 ring-2 ring-brand-100'
+          ? '!border-brand-300 !bg-brand-50 ring-2 ring-brand-100'
           : onClick
-            ? 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm cursor-pointer'
-            : 'border-slate-200 bg-white cursor-default'
+            ? 'hover:border-slate-300 cursor-pointer'
+            : 'cursor-default'
       }`}
     >
-      <div className="flex items-center justify-between mb-2">
-        <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${iconBg}`}>
-          <Icon className={`h-4 w-4 ${iconColor}`} />
-        </div>
+      <div className="flex items-center justify-between mb-1.5">
+        <Icon className={`h-4 w-4 ${iconColor}`} />
         {active && (
           <span className="rounded-full bg-brand-100 px-2 py-0.5 text-[10px] font-semibold text-brand-600">
             Filtrado
@@ -218,7 +216,7 @@ export default function EvaluationHistory() {
         subtitle={loading ? 'Carregando…' : `${filtered.length} de ${items.length} registros`}
       />
 
-      <div className="p-4 sm:p-6 space-y-4 sm:space-y-5 animate-fadeIn">
+      <div className="p-4 lg:p-5 space-y-4 animate-fadeIn">
 
         {/* Summary cards */}
         {!loading && !error && items.length > 0 && (
@@ -278,7 +276,7 @@ export default function EvaluationHistory() {
                 placeholder="Buscar por ID ou canal…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm shadow-card focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100"
+                className="w-full rounded-sm border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100"
               />
               {search && (
                 <button
@@ -334,7 +332,7 @@ export default function EvaluationHistory() {
             <select
               value={filterAction}
               onChange={(e) => setFilterAction(e.target.value)}
-              className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs shadow-card focus:border-brand-400 focus:outline-none"
+              className="rounded-sm border border-slate-200 bg-white px-3 py-1.5 text-xs focus:border-brand-400 focus:outline-none"
             >
               <option value="">Ação</option>
               <option value="AUMENTAR">Aumentar</option>
@@ -345,7 +343,7 @@ export default function EvaluationHistory() {
             <select
               value={filterRisk}
               onChange={(e) => setFilterRisk(e.target.value)}
-              className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs shadow-card focus:border-brand-400 focus:outline-none"
+              className="rounded-sm border border-slate-200 bg-white px-3 py-1.5 text-xs focus:border-brand-400 focus:outline-none"
             >
               <option value="">Risco</option>
               <option value="CRITICO">Crítico</option>
@@ -355,7 +353,7 @@ export default function EvaluationHistory() {
             <select
               value={filterType}
               onChange={(e) => setFilterType(e.target.value)}
-              className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs shadow-card focus:border-brand-400 focus:outline-none"
+              className="rounded-sm border border-slate-200 bg-white px-3 py-1.5 text-xs focus:border-brand-400 focus:outline-none"
             >
               <option value="">Tipo</option>
               <option value="evaluation">Avaliações</option>
@@ -365,7 +363,7 @@ export default function EvaluationHistory() {
               <select
                 value={filterUser}
                 onChange={(e) => setFilterUser(e.target.value)}
-                className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs shadow-card focus:border-brand-400 focus:outline-none"
+                className="rounded-sm border border-slate-200 bg-white px-3 py-1.5 text-xs focus:border-brand-400 focus:outline-none"
               >
                 <option value="">Corretor</option>
                 {users.filter((u) => u.role === 'Broker').map((u) => (
@@ -376,7 +374,7 @@ export default function EvaluationHistory() {
             {hasActiveFilters && (
               <button
                 onClick={clearFilters}
-                className="rounded-full border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] text-slate-500 shadow-card hover:text-slate-700 hover:bg-slate-50 transition-colors"
+                className="rounded-full border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] text-slate-500 hover:text-slate-700 hover:bg-slate-50 transition-colors"
               >
                 Limpar filtros
               </button>
@@ -387,17 +385,17 @@ export default function EvaluationHistory() {
         {/* Loading — skeleton rows */}
         {loading && (
           <div className="space-y-2">
-            <div className="skeleton h-14 w-full rounded-xl" />
-            <div className="skeleton h-14 w-full rounded-xl" />
-            <div className="skeleton h-14 w-full rounded-xl" />
-            <div className="skeleton h-14 w-full rounded-xl" />
-            <div className="skeleton h-14 w-full rounded-xl" />
+            <div className="skeleton h-14 w-full rounded-sm" />
+            <div className="skeleton h-14 w-full rounded-sm" />
+            <div className="skeleton h-14 w-full rounded-sm" />
+            <div className="skeleton h-14 w-full rounded-sm" />
+            <div className="skeleton h-14 w-full rounded-sm" />
           </div>
         )}
 
         {/* Error */}
         {!loading && error && (
-          <div className="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          <div className="flex items-start gap-3 rounded-sm border border-red-200 bg-red-50 p-4 text-sm text-red-700">
             <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
             <div>
               <p className="font-semibold">Não foi possível carregar</p>
@@ -408,11 +406,11 @@ export default function EvaluationHistory() {
 
         {/* Table */}
         {!loading && !error && (
-          <div className="rounded-2xl border border-slate-200 bg-white shadow-card overflow-hidden">
+          <div className="box overflow-hidden">
 
             {/* Table hint */}
             {filtered.length > 0 && (
-              <div className="border-b border-slate-100 bg-slate-50 px-4 py-2">
+              <div className="border-b border-[#f3f3f3] bg-slate-50/50 px-4 py-2">
                 <p className="text-[11px] text-slate-500">
                   <span className="font-semibold tabular-nums text-slate-700">{filtered.length}</span>{' '}
                   {filtered.length === 1 ? 'registro' : 'registros'}
@@ -458,10 +456,10 @@ export default function EvaluationHistory() {
                             {isChild && (
                               <div className="absolute left-6 top-1/2 w-4 h-px bg-amber-300" />
                             )}
-                            <div className={`relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg mt-0.5 ${ev.isTrigger ? 'bg-amber-100 ring-2 ring-amber-200' : iconBg}`}>
+                            <div className={`relative z-10 flex h-7 w-7 shrink-0 items-center justify-center rounded-sm mt-0.5 ${ev.isTrigger ? 'bg-amber-100 ring-1 ring-amber-200' : iconBg}`}>
                               {ev.isTrigger
-                                ? <Zap className="h-4 w-4 text-amber-600" />
-                                : <ActionIcon className={`h-4 w-4 ${iconColor}`} />
+                                ? <Zap className="h-3.5 w-3.5 text-amber-600" />
+                                : <ActionIcon className={`h-3.5 w-3.5 ${iconColor}`} />
                               }
                             </div>
                             <div className="flex-1 min-w-0">
@@ -507,39 +505,20 @@ export default function EvaluationHistory() {
             </div>
 
             <div className="hidden sm:block overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="table-synto w-full text-sm">
               <thead>
-                <tr className="border-b border-slate-100 bg-slate-50">
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    Avaliação
-                    <span className="ml-1 font-normal normal-case text-slate-400">ID + data</span>
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    Classificação
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    Ação
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    Protection Score
-                    <span className="ml-1 font-normal normal-case text-slate-400">0–100</span>
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    Gap de Cobertura
-                    <span className="ml-1 font-normal normal-case text-slate-400">déficit/excedente</span>
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    Canal
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    Status
-                  </th>
+                <tr>
+                  <th className="text-left">Avaliação</th>
+                  <th className="text-left">Classificação</th>
+                  <th className="text-left">Ação</th>
+                  <th className="text-left">Score</th>
+                  <th className="text-left">Gap</th>
+                  <th className="text-left">Canal</th>
+                  <th className="text-left">Status</th>
                   {isManagerPlus && (
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                      Corretor
-                    </th>
+                    <th className="text-left">Corretor</th>
                   )}
-                  <th className="px-4 py-3 w-8" />
+                  <th className="w-8" />
                 </tr>
               </thead>
               <tbody>
@@ -570,29 +549,26 @@ export default function EvaluationHistory() {
                         } ${idx === 0 && gIdx > 0 ? 'border-t-2 border-slate-100' : idx > 0 ? 'border-t border-slate-50' : ''}`}
                       >
                         {/* ID + date + tree connector */}
-                        <td className="px-4 py-3">
+                        <td>
                           <div className="flex items-center gap-2">
                             {/* Tree connector column */}
                             {(isChild || isParentWithChildren) && (
                               <div className="relative flex items-center justify-center w-5 shrink-0 self-stretch -my-3">
-                                {/* Vertical line */}
                                 {isParentWithChildren && (
                                   <div className="absolute left-1/2 -translate-x-1/2 bg-amber-300 w-px" style={{ top: '50%', bottom: '-12px' }} />
                                 )}
                                 {isChild && (
                                   <div className="absolute left-1/2 -translate-x-1/2 bg-amber-300 w-px" style={{ top: '-12px', bottom: isLastChild ? '50%' : '-12px' }} />
                                 )}
-                                {/* Horizontal branch for children */}
                                 {isChild && (
                                   <div className="absolute left-1/2 top-1/2 -translate-y-1/2 bg-amber-300 h-px" style={{ width: '10px' }} />
                                 )}
-                                {/* Node dot */}
                                 {isChild && (
                                   <div className="absolute right-0 top-1/2 -translate-y-1/2 h-1.5 w-1.5 rounded-full bg-amber-400" />
                                 )}
                               </div>
                             )}
-                            <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${iconBg} ${ev.isTrigger ? 'ring-1 ring-amber-200' : ''}`}>
+                            <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-sm ${iconBg} ${ev.isTrigger ? 'ring-1 ring-amber-200' : ''}`}>
                               {ev.isTrigger
                                 ? <Zap className={`h-3.5 w-3.5 ${iconColor}`} />
                                 : <ActionIcon className={`h-3.5 w-3.5 ${iconColor}`} />
@@ -628,29 +604,25 @@ export default function EvaluationHistory() {
                           </div>
                         </td>
 
-                        {/* Risk badge */}
-                        <td className="px-4 py-3">
+                        <td>
                           <Badge className={riskColors(ev.risk)} size="sm">{riskLabel(ev.risk)}</Badge>
                         </td>
 
-                        {/* Action badge */}
-                        <td className="px-4 py-3">
+                        <td>
                           <Badge className={actionColors(ev.action)} size="sm">{actionLabel(ev.action)}</Badge>
                         </td>
 
-                        {/* Score bar */}
-                        <td className="px-4 py-3">
+                        <td>
                           <ScoreBar score={ev.score} />
                         </td>
 
-                        {/* Gap */}
-                        <td className="px-4 py-3">
+                        <td>
                           <div className="flex items-center gap-1.5">
                             {ev.gapPct > 0
-                              ? <TrendingDown className="h-3.5 w-3.5 text-red-500" />
+                              ? <TrendingDown className="h-3.5 w-3.5 text-red-400" />
                               : ev.gapPct < 0
-                                ? <TrendingUp className="h-3.5 w-3.5 text-emerald-500" />
-                                : <CheckCircle className="h-3.5 w-3.5 text-emerald-500" />
+                                ? <TrendingUp className="h-3.5 w-3.5 text-emerald-400" />
+                                : <CheckCircle className="h-3.5 w-3.5 text-emerald-400" />
                             }
                             <span className={`text-xs font-semibold tabular-nums ${ev.gapPct > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
                               {ev.gapPct > 0 ? '+' : ''}{ev.gapPct.toFixed(1)}%
@@ -661,15 +633,13 @@ export default function EvaluationHistory() {
                           </div>
                         </td>
 
-                        {/* Channel */}
-                        <td className="px-4 py-3">
+                        <td>
                           <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600">
                             {ev.channel}
                           </span>
                         </td>
 
-                        {/* Status */}
-                        <td className="px-4 py-3">
+                        <td>
                           <button
                             type="button"
                             onClick={(e) => {
@@ -681,7 +651,7 @@ export default function EvaluationHistory() {
                                 setStatusMenuId(ev.id)
                               }
                             }}
-                            className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[11px] font-semibold transition-all cursor-pointer ${evalStatusColors((ev.status || 'ABERTO') as EvaluationStatusType)} hover:shadow-sm`}
+                            className={`inline-flex items-center gap-1.5 rounded-sm border px-2.5 py-1 text-[11px] font-semibold transition-all cursor-pointer ${evalStatusColors((ev.status || 'ABERTO') as EvaluationStatusType)} hover:shadow-sm`}
                           >
                             {(ev.status || 'ABERTO') === 'CONVERTIDO' && <BadgeCheck className="h-3.5 w-3.5" />}
                             {(ev.status || 'ABERTO') === 'CONVERTIDO_PARCIAL' && <PieChart className="h-3.5 w-3.5" />}
@@ -692,17 +662,15 @@ export default function EvaluationHistory() {
                           </button>
                         </td>
 
-                        {/* Broker (Manager+ only) */}
                         {isManagerPlus && (
-                          <td className="px-4 py-3">
+                          <td>
                             <span className="text-xs text-slate-500">
                               {brokerLabel(ev.createdByUserId)}
                             </span>
                           </td>
                         )}
 
-                        {/* Arrow */}
-                        <td className="px-4 py-3 text-right">
+                        <td className="text-right">
                           <ChevronRight className="h-4 w-4 text-slate-300 group-hover:text-slate-500 transition-colors" />
                         </td>
                       </tr>
@@ -724,7 +692,7 @@ export default function EvaluationHistory() {
                     </p>
                     <button
                       onClick={() => navigate('/evaluations/new')}
-                      className="mt-4 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 transition-colors"
+                      className="mt-4 rounded-sm bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 transition-colors"
                     >
                       Nova Avaliação
                     </button>
@@ -737,7 +705,7 @@ export default function EvaluationHistory() {
                     </p>
                     <button
                       onClick={clearFilters}
-                      className="mt-4 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 transition-colors"
+                      className="mt-4 rounded-sm border border-slate-200 bg-white px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 transition-colors"
                     >
                       Limpar filtros
                     </button>
@@ -763,7 +731,7 @@ export default function EvaluationHistory() {
         if (!ev) return null
         return (
           <div
-            className="fixed z-50 w-44 rounded-xl border border-slate-200 bg-white shadow-xl py-1.5"
+            className="fixed z-50 w-44 rounded-sm border border-slate-200 bg-white shadow-xl py-1.5"
             style={{ top: statusMenuPos.top, left: statusMenuPos.left }}
             onClick={(e) => e.stopPropagation()}
           >
