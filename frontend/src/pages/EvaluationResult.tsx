@@ -182,7 +182,7 @@ export default function EvaluationResult() {
           </button>
           <div className="flex items-center gap-2">
             {record && (
-              <div className="relative">
+              <div className="relative z-[9999]">
                 <button
                   onClick={() => setShowStatusMenu(!showStatusMenu)}
                   className={`inline-flex items-center gap-1.5 rounded-sm border px-3 py-1.5 text-xs font-semibold transition-colors ${evalStatusColors((record.status || 'ABERTO') as EvaluationStatusType)}`}
@@ -191,7 +191,7 @@ export default function EvaluationResult() {
                   <ChevronDown className="h-3 w-3" />
                 </button>
                 {showStatusMenu && (
-                  <div className="absolute right-0 top-full mt-1 z-[9999] w-44 rounded-sm border border-slate-200 bg-white shadow-xl py-1.5">
+                  <div className="absolute right-0 top-full mt-1 w-44 rounded-sm border border-slate-200 bg-white shadow-xl py-1.5">
                     {(['ABERTO', 'CONVERTIDO', 'CONVERTIDO_PARCIAL', 'ARQUIVADO'] as EvaluationStatusType[])
                       .filter((s) => s !== (record.status || 'ABERTO'))
                       .map((s) => (
